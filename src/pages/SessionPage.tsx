@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session } from '../types/database'
+import type { Session, Item } from '../types/database'
+import ItemForm from '../components/ItemForm'
+import ItemList from '../components/ItemList'
 
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
+  const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,7 +36,9 @@ export default function SessionPage() {
           return
         }
 
-        setSession(data)
+        const sessionData = data as Session
+        setSession(sessionData)
+        await fetchItems(sessionData.id)
       } catch (err) {
         console.error('Error fetching session:', err)
         setError('Failed to load session')
@@ -42,8 +47,51 @@ export default function SessionPage() {
       }
     }
 
+    const fetchItems = async (sessionId: string) => {
+      const { data, error: itemsError } = await supabase
+        .from('items')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('position', { ascending: true })
+
+      if (itemsError) {
+        console.error('Error fetching items:', itemsError)
+        return
+      }
+
+      setItems((data as Item[]) || [])
+    }
+
     fetchSession()
   }, [slug, navigate])
+
+  const handleAddItem = async (newItem: {
+    title: string
+    description: string
+  }) => {
+    if (!session) return
+
+    const position = items.length
+
+    const { data, error: insertError } = await supabase
+      .from('items')
+      .insert({
+        session_id: session.id,
+        title: newItem.title,
+        description: newItem.description || null,
+        position,
+      } as never)
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error('Error adding item:', insertError)
+      alert('Failed to add item. Please try again.')
+      return
+    }
+
+    setItems([...items, data as Item])
+  }
 
   if (loading) {
     return (
@@ -105,10 +153,28 @@ export default function SessionPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-600">
-            Session loaded successfully! Items feature coming next.
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Add Item Form */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow p-6 sticky top-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Add New Item
+              </h2>
+              <ItemForm onAdd={handleAddItem} />
+            </div>
+          </div>
+
+          {/* Items List */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Items ({items.length})
+                </h2>
+              </div>
+              <ItemList items={items} />
+            </div>
+          </div>
         </div>
       </main>
     </div>

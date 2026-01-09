@@ -51,23 +51,23 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 1.3 Add Items ⬜
-**As a** user  
-**I want** to add items to prioritise  
+### 1.3 Add Items ✅
+**As a** user
+**I want** to add items to prioritise
 **So that** I can build my backlog
 
 **Acceptance Criteria:**
-- [ ] Input field to add new item (title required)
-- [ ] Optional description field (expandable)
-- [ ] Items appear in a list below
-- [ ] Items persist to database
-- [ ] Items load when returning to session URL
+- [x] Input field to add new item (title required)
+- [x] Optional description field (expandable)
+- [x] Items appear in a list below
+- [x] Items persist to database
+- [x] Items load when returning to session URL
 
 **Tests:**
-- Can add item with title only
-- Can add item with title + description
-- Items persist and reload
-- Empty title is rejected
+- [x] Can add item with title only
+- [x] Can add item with title + description
+- [x] Items persist and reload
+- [x] Empty title is rejected
 
 ---
 
