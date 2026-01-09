@@ -6,7 +6,7 @@ import type { Framework } from '../../src/types/database'
 describe('FrameworkSelector', () => {
   it('renders framework selector with label', () => {
     render(<FrameworkSelector value="rice" onChange={vi.fn()} />)
-    expect(screen.getByText(/prioritization framework/i)).toBeInTheDocument()
+    expect(screen.getByText(/prioritisation framework/i)).toBeInTheDocument()
   })
 
   it('displays all framework options', () => {

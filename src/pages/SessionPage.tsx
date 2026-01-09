@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session, Item, Framework } from '../types/database'
+import type { Session, Item, ItemWithScore, Framework, Score } from '../types/database'
+import { calculateRiceScore } from '../lib/rice'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import ItemEditModal from '../components/ItemEditModal'
@@ -11,10 +12,59 @@ export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const [session, setSession] = useState<Session | null>(null)
-  const [items, setItems] = useState<Item[]>([])
+  const [items, setItems] = useState<ItemWithScore[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [updatingScores, setUpdatingScores] = useState<Set<string>>(new Set())
+  const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
+
+  // Helper function to fetch items with scores
+  const fetchItems = useCallback(async (sessionId: string, framework?: Framework) => {
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('items')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('position', { ascending: true })
+
+    if (itemsError) {
+      console.error('Error fetching items:', itemsError)
+      return
+    }
+
+    const items = (itemsData as Item[]) || []
+
+    // Fetch scores for all items
+    if (items.length > 0 && framework) {
+      const itemIds = items.map((item) => item.id)
+      const { data: scoresData } = await supabase
+        .from('scores')
+        .select('*')
+        .in('item_id', itemIds)
+        .eq('framework', framework)
+
+      const scores = (scoresData as Score[]) || []
+
+      // Attach scores to items
+      const itemsWithScores: ItemWithScore[] = items.map((item) => ({
+        ...item,
+        score: scores.find((s) => s.item_id === item.id),
+      }))
+
+      // Sort by score if framework is rice
+      if (framework === 'rice') {
+        itemsWithScores.sort((a, b) => {
+          const scoreA = a.score?.calculated_score || 0
+          const scoreB = b.score?.calculated_score || 0
+          return scoreB - scoreA // Descending order
+        })
+      }
+
+      setItems(itemsWithScores)
+    } else {
+      setItems(items)
+    }
+  }, [])
 
   useEffect(() => {
     if (!slug) {
@@ -41,7 +91,7 @@ export default function SessionPage() {
 
         const sessionData = data as Session
         setSession(sessionData)
-        await fetchItems(sessionData.id)
+        await fetchItems(sessionData.id, sessionData.framework)
       } catch (err) {
         console.error('Error fetching session:', err)
         setError('Failed to load session')
@@ -50,23 +100,8 @@ export default function SessionPage() {
       }
     }
 
-    const fetchItems = async (sessionId: string) => {
-      const { data, error: itemsError } = await supabase
-        .from('items')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('position', { ascending: true })
-
-      if (itemsError) {
-        console.error('Error fetching items:', itemsError)
-        return
-      }
-
-      setItems((data as Item[]) || [])
-    }
-
     fetchSession()
-  }, [slug, navigate])
+  }, [slug, navigate, fetchItems])
 
   const handleAddItem = async (newItem: {
     title: string
@@ -157,6 +192,106 @@ export default function SessionPage() {
     setSession({ ...session, framework })
   }
 
+  // Actual score save function
+  const saveScoreToDatabase = async (
+    itemId: string,
+    scores: { reach: number; impact: number; confidence: number; effort: number }
+  ) => {
+    if (!session) return
+
+    const calculatedScore = calculateRiceScore(scores)
+
+    // Check if score exists
+    const existingItem = items.find((item) => item.id === itemId)
+    const scoreData = {
+      item_id: itemId,
+      framework: session.framework,
+      criteria: scores,
+      calculated_score: calculatedScore,
+    }
+
+    if (existingItem?.score) {
+      // Update existing score
+      const { error: updateError } = await supabase
+        .from('scores')
+        .update({
+          criteria: scores,
+          calculated_score: calculatedScore,
+        } as never)
+        .eq('id', existingItem.score.id)
+
+      if (updateError) {
+        console.error('Error updating score:', updateError)
+        return
+      }
+    } else {
+      // Insert new score
+      const { error: insertError } = await supabase
+        .from('scores')
+        .insert([scoreData as never])
+
+      if (insertError) {
+        console.error('Error inserting score:', insertError)
+        return
+      }
+    }
+
+    // Refetch items to update scores and re-sort
+    if (session) {
+      await fetchItems(session.id, session.framework)
+    }
+
+    // Remove from updating state
+    setUpdatingScores((prev) => {
+      const next = new Set(prev)
+      next.delete(itemId)
+      return next
+    })
+  }
+
+  // Handle score updates with debouncing
+  const handleScoreUpdate = (
+    itemId: string,
+    scores: { reach: number; impact: number; confidence: number; effort: number }
+  ) => {
+    // Clear any existing timeout for this item
+    const existingTimeout = saveTimeouts.current.get(itemId)
+    if (existingTimeout) {
+      clearTimeout(existingTimeout)
+    }
+
+    // Mark item as updating
+    setUpdatingScores((prev) => new Set(prev).add(itemId))
+
+    // Update local score immediately for instant feedback
+    const calculatedScore = calculateRiceScore(scores)
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              score: {
+                id: item.score?.id || '',
+                item_id: itemId,
+                framework: session?.framework || 'rice',
+                criteria: scores,
+                calculated_score: calculatedScore,
+              },
+            }
+          : item
+      )
+    )
+
+    // Create new timeout for saving
+    const timeoutId = setTimeout(() => {
+      saveScoreToDatabase(itemId, scores)
+      saveTimeouts.current.delete(itemId)
+    }, 1500)
+
+    // Store timeout
+    saveTimeouts.current.set(itemId, timeoutId)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -242,8 +377,11 @@ export default function SessionPage() {
               </div>
               <ItemList
                 items={items}
+                framework={session.framework}
                 onEdit={setEditingItem}
                 onDelete={handleDeleteItem}
+                onScoreUpdate={handleScoreUpdate}
+                updatingScores={updatingScores}
               />
             </div>
           </div>

@@ -18,6 +18,10 @@ export interface Item {
   created_at: string
 }
 
+export interface ItemWithScore extends Item {
+  score?: Score
+}
+
 export interface Score {
   id: string
   item_id: string

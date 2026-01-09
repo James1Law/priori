@@ -1,12 +1,16 @@
-import type { Item } from '../types/database'
+import type { Item, ItemWithScore, Framework } from '../types/database'
+import RiceScoring from './RiceScoring'
 
 interface ItemListProps {
-  items: Item[]
+  items: ItemWithScore[]
+  framework: Framework
   onEdit: (item: Item) => void
   onDelete: (itemId: string) => void
+  onScoreUpdate?: (itemId: string, scores: { reach: number; impact: number; confidence: number; effort: number }) => void
+  updatingScores?: Set<string>
 }
 
-export default function ItemList({ items, onEdit, onDelete }: ItemListProps) {
+export default function ItemList({ items, framework, onEdit, onDelete, onScoreUpdate, updatingScores }: ItemListProps) {
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
@@ -17,6 +21,18 @@ export default function ItemList({ items, onEdit, onDelete }: ItemListProps) {
     )
   }
 
+  const getDefaultScores = (item: ItemWithScore) => {
+    if (item.score && item.score.criteria) {
+      return {
+        reach: (item.score.criteria.reach as number) || 0,
+        impact: (item.score.criteria.impact as number) || 1,
+        confidence: (item.score.criteria.confidence as number) || 0.8,
+        effort: (item.score.criteria.effort as number) || 1,
+      }
+    }
+    return { reach: 0, impact: 1, confidence: 0.8, effort: 1 }
+  }
+
   return (
     <div className="space-y-3">
       {items.map((item) => (
@@ -24,7 +40,7 @@ export default function ItemList({ items, onEdit, onDelete }: ItemListProps) {
           key={item.id}
           className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
         >
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 mb-3">
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 text-lg mb-1">
                 {item.title}
@@ -48,6 +64,15 @@ export default function ItemList({ items, onEdit, onDelete }: ItemListProps) {
               </button>
             </div>
           </div>
+
+          {/* RICE Scoring */}
+          {framework === 'rice' && onScoreUpdate && (
+            <RiceScoring
+              {...getDefaultScores(item)}
+              onChange={(scores) => onScoreUpdate(item.id, scores)}
+              isUpdating={updatingScores?.has(item.id)}
+            />
+          )}
         </article>
       ))}
     </div>

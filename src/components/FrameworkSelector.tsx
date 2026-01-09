@@ -17,7 +17,7 @@ export default function FrameworkSelector({ value, onChange }: FrameworkSelector
   return (
     <div className="mb-6">
       <label htmlFor="framework" className="block text-sm font-medium text-gray-700 mb-2">
-        Prioritization Framework
+        Prioritisation Framework
       </label>
       <select
         id="framework"
