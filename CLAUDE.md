@@ -135,8 +135,19 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 ## Current Status
-- [x] Project setup complete
-- [ ] Feature development started
+- [x] Phase 1 (MVP) - COMPLETE
+  - [x] 1.1 Project Setup
+  - [x] 1.2 Session Creation
+  - [x] 1.3 Add Items
+  - [x] 1.4 Edit & Delete Items
+- [x] Deployed to Production (Vercel)
+- [ ] Phase 2 (Scoring Frameworks) - Next
+
+## Production Details
+- **GitHub**: https://github.com/James1Law/priori
+- **Live Site**: Deployed on Vercel
+- **Tests**: 23/23 passing
+- **Database**: Supabase (configured with RLS)
 
 ---
-*Last updated: 2026-01-09 - Project setup completed*
+*Last updated: 2026-01-09 - Phase 1 MVP complete and deployed*

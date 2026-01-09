@@ -43,29 +43,29 @@ After deployment, test these scenarios:
 
 ### ✅ Critical Paths to Test
 1. **Landing Page**
-   - Visit your Vercel URL (e.g., `https://priori.vercel.app`)
-   - Should see the landing page with "Create New Session" button
+  - Visit your Vercel URL (e.g., `https://priori.vercel.app`)
+  - Should see the landing page with "Create New Session" button
 
 2. **Session Creation**
-   - Click "Create New Session"
-   - Should redirect to `/s/{slug}` (e.g., `/s/abc123`)
-   - URL should work when refreshed (thanks to `vercel.json`)
+  - Click "Create New Session"
+  - Should redirect to `/s/{slug}` (e.g., `/s/abc123`)
+  - URL should work when refreshed (thanks to `vercel.json`)
 
 3. **Item Management**
-   - Add a new item
-   - Edit the item
-   - Delete the item
-   - All should persist to Supabase
+  - Add a new item
+  - Edit the item
+  - Delete the item
+  - All should persist to Supabase
 
 4. **URL Sharing**
-   - Copy the session URL
-   - Open in incognito/private window
-   - Should load the same session with items
+  - Copy the session URL
+  - Open in incognito/private window
+  - Should load the same session with items
 
 5. **Refresh Test** (Most Important!)
-   - On a session page (e.g., `/s/abc123`)
-   - Refresh the browser
-   - Should load the page, not show 404
+  - On a session page (e.g., `/s/abc123`)
+  - Refresh the browser
+  - Should load the page, not show 404
 
 ## How vercel.json Works
 

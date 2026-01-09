@@ -1,5 +1,7 @@
 # Priori
 
+> **🚀 Live in Production**: [View on GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
+
 A lightweight, collaborative product prioritisation web app. No authentication required - just share a URL and start prioritising together.
 
 ## Features
@@ -77,16 +79,11 @@ npm run lint         # Lint code
 
 ## Deployment
 
+✅ **Currently deployed to Vercel in production**
+
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
-### Quick Deploy to Vercel
-
-1. Push to GitHub
-2. Import to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-The app is configured for Vercel with `vercel.json` for proper SPA routing.
+The app is configured for Vercel with `vercel.json` for proper SPA routing, ensuring all routes work correctly including direct access and page refreshes.
 
 ## Project Structure
 
