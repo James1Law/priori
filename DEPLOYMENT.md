@@ -28,10 +28,10 @@ In Vercel project settings, add these environment variables:
 
 ```
 VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 ```
 
-> ⚠️ **Security Note**: Get these values from your Supabase project settings → API. Never commit actual credentials to git!
+> ⚠️ **Security Note**: Use the new Supabase **publishable key** (not the legacy anon key). Get these from Supabase Dashboard → Settings → API Keys. Never commit actual credentials to git!
 
 ### 4. Deploy
 - Vercel will automatically build and deploy
@@ -89,7 +89,7 @@ The `vercel.json` configuration tells Vercel to:
 ### Supabase Connection Errors
 - Check browser console for errors
 - Verify RLS policies are enabled in Supabase
-- Confirm anon key has correct permissions
+- Confirm publishable key has correct permissions
 
 ## Build Configuration
 

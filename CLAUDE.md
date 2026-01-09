@@ -130,9 +130,11 @@ When I say:
 
 ## Environment Variables
 ```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 ```
+
+**Note:** Use the new Supabase publishable key (not the legacy anon key). Get these from Supabase Dashboard → Settings → API Keys.
 
 ## Current Status
 - [x] Phase 1 (MVP) - COMPLETE
