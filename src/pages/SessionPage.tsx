@@ -210,7 +210,7 @@ export default function SessionPage() {
       calculated_score: calculatedScore,
     }
 
-    if (existingItem?.score) {
+    if (existingItem?.score?.id) {
       // Update existing score
       const { error: updateError } = await supabase
         .from('scores')
@@ -270,13 +270,20 @@ export default function SessionPage() {
         item.id === itemId
           ? {
               ...item,
-              score: {
-                id: item.score?.id || '',
-                item_id: itemId,
-                framework: session?.framework || 'rice',
-                criteria: scores,
-                calculated_score: calculatedScore,
-              },
+              score: item.score?.id
+                ? {
+                    id: item.score.id,
+                    item_id: itemId,
+                    framework: session?.framework || 'rice',
+                    criteria: scores,
+                    calculated_score: calculatedScore,
+                  }
+                : {
+                    item_id: itemId,
+                    framework: session?.framework || 'rice',
+                    criteria: scores,
+                    calculated_score: calculatedScore,
+                  },
             }
           : item
       )
