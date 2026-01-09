@@ -143,13 +143,17 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 1.3 Add Items
   - [x] 1.4 Edit & Delete Items
 - [x] Deployed to Production (Vercel)
-- [ ] Phase 2 (Scoring Frameworks) - Next
+- [ ] Phase 2 (Scoring Frameworks) - IN PROGRESS
+  - [x] 2.1 Framework Selector
+  - [x] 2.2 RICE Scoring (with debounced sorting)
+  - [ ] 2.3 ICE Scoring - Next
 
 ## Production Details
 - **GitHub**: https://github.com/James1Law/priori
 - **Live Site**: Deployed on Vercel
-- **Tests**: 23/23 passing
+- **Tests**: 43/43 passing
 - **Database**: Supabase (configured with RLS)
+- **Language**: UK English spelling
 
 ---
-*Last updated: 2026-01-09 - Phase 1 MVP complete and deployed*
+*Last updated: 2026-01-09 - Phase 2.2 RICE scoring complete*

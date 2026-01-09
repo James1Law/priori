@@ -107,7 +107,7 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 2.2 RICE Scoring ⬜
+### 2.2 RICE Scoring ✅
 **As a** user  
 **I want** to score items using RICE  
 **So that** I get a quantitative ranking
@@ -124,6 +124,10 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - Formula calculates correctly
 - Sorting works
 - Edge cases (zero effort) handled
+
+**Bonus UX:**
+- [x] Debounced sorting (1.5s delay) prevents jarring movements
+- [x] "Updating..." indicator during pending saves
 
 ---
 
@@ -317,10 +321,22 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - Deployed to Vercel
 - GitHub: https://github.com/James1Law/priori
 - All core features working in production
-- 23/23 tests passing
 - Database: Supabase with RLS configured
+
+**Phase 2 (Scoring Frameworks) - IN PROGRESS**
+- [x] 2.1 Framework Selector (complete)
+- [x] 2.2 RICE Scoring (complete)
+- [ ] 2.3 ICE Scoring
+- [ ] 2.4 Value vs Effort Matrix
+- [ ] 2.5 MoSCoW Categorisation
+- [ ] 2.6 Weighted Scoring
+
+**Current Status:**
+- 43/43 tests passing
+- RICE scoring with debounced sorting live
+- UK English spelling throughout
 
 ---
 
-*Document version: 1.\*\*1*
-*Last updated: 2026-01-09 - Phase 1 complete and deployed to production*
+*Document version: 1.2*
+*Last updated: 2026-01-09 - Phase 2.2 RICE scoring complete*
