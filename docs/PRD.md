@@ -17,37 +17,37 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ## Phase 1: Foundation (MVP)
 
-### 1.1 Project Setup ⬜
-**As a** developer  
-**I want** the project scaffolded with all dependencies  
+### 1.1 Project Setup ✅
+**As a** developer
+**I want** the project scaffolded with all dependencies
 **So that** I can start building features
 
 **Acceptance Criteria:**
-- [ ] Vite + React + TypeScript initialised
-- [ ] Tailwind CSS configured
-- [ ] Vitest + React Testing Library configured
-- [ ] ESLint + Prettier configured
-- [ ] Folder structure matches CLAUDE.md spec
-- [ ] Dev server runs without errors
+- [x] Vite + React + TypeScript initialised
+- [x] Tailwind CSS configured
+- [x] Vitest + React Testing Library configured
+- [x] ESLint + Prettier configured
+- [x] Folder structure matches CLAUDE.md spec
+- [x] Dev server runs without errors
 
 ---
 
-### 1.2 Session Creation ⬜
-**As a** user  
-**I want** to create a new prioritisation session  
+### 1.2 Session Creation ✅
+**As a** user
+**I want** to create a new prioritisation session
 **So that** I get a unique URL to share
 
 **Acceptance Criteria:**
-- [ ] Landing page with "Create Session" button
-- [ ] Clicking creates a new session with unique slug (6 chars, alphanumeric)
-- [ ] Redirects to `/s/{slug}`
-- [ ] Session stored in Supabase
-- [ ] URL is copyable/shareable
+- [x] Landing page with "Create Session" button
+- [x] Clicking creates a new session with unique slug (6 chars, alphanumeric)
+- [x] Redirects to `/s/{slug}`
+- [x] Session stored in Supabase
+- [x] URL is copyable/shareable
 
 **Tests:**
-- Slug generation produces unique 6-char strings
-- Session is persisted to database
-- Navigation works correctly
+- [x] Slug generation produces unique 6-char strings
+- [x] Session is persisted to database
+- [x] Navigation works correctly
 
 ---
 
