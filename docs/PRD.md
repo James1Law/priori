@@ -322,5 +322,5 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-*Document version: 1.**1*
+*Document version: 1.\*\*1*
 *Last updated: 2026-01-09 - Phase 1 complete and deployed to production*

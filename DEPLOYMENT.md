@@ -27,9 +27,11 @@ git push origin main
 In Vercel project settings, add these environment variables:
 
 ```
-VITE_SUPABASE_URL=https://xqdfiyqeevvkcdurwhio.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxZGZpeXFlZXZ2a2NkdXJ3aGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NDMwNzYsImV4cCI6MjA4MzUxOTA3Nn0.5GiqvzuGz4Qz5njTqqKS_MbPnpiIXHwcF9EIlgf8-gg
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+> ⚠️ **Security Note**: Get these values from your Supabase project settings → API. Never commit actual credentials to git!
 
 ### 4. Deploy
 - Vercel will automatically build and deploy
