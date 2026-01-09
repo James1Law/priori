@@ -16,7 +16,7 @@ export default function LandingPage() {
       const { error } = await supabase
         .from('sessions')
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert([{ slug, name: null }] as any)
+        .insert([{ slug, name: null, framework: 'rice' }] as any)
 
       if (error) throw error
 

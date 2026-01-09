@@ -1,7 +1,10 @@
+export type Framework = 'rice' | 'ice' | 'value_effort' | 'moscow' | 'weighted'
+
 export interface Session {
   id: string
   slug: string
   name: string | null
+  framework: Framework
   created_at: string
   updated_at: string
 }

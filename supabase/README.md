@@ -5,11 +5,11 @@ This folder contains SQL migration scripts for setting up the Priori database in
 ## Setup Instructions
 
 1. **Go to your Supabase project dashboard**
-   - Navigate to: https://supabase.com/dashboard/project/xqdfiyqeevvkcdurwhio
+  - Navigate to: https://supabase.com/dashboard/project/xqdfiyqeevvkcdurwhio
 
 2. **Open the SQL Editor**
-   - Click on "SQL Editor" in the left sidebar
-   - Click "New Query"
+  - Click on "SQL Editor" in the left sidebar
+  - Click "New Query"
 
 3. **Run the migration scripts in order:**
 
@@ -43,7 +43,7 @@ After running both scripts, verify the setup:
 
 ### sessions
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | id | uuid | Primary key (auto-generated) |
 | slug | text | Unique 6-char URL identifier |
 | name | text | Optional session name |
@@ -52,7 +52,7 @@ After running both scripts, verify the setup:
 
 ### items
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | id | uuid | Primary key (auto-generated) |
 | session_id | uuid | Foreign key to sessions |
 | title | text | Item title (required) |
@@ -62,7 +62,7 @@ After running both scripts, verify the setup:
 
 ### scores
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | id | uuid | Primary key (auto-generated) |
 | item_id | uuid | Foreign key to items |
 | framework | text | Framework name (rice, ice, etc.) |

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session, Item } from '../types/database'
+import type { Session, Item, Framework } from '../types/database'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import ItemEditModal from '../components/ItemEditModal'
+import FrameworkSelector from '../components/FrameworkSelector'
 
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -75,17 +76,16 @@ export default function SessionPage() {
 
     const position = items.length
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const itemToInsert = {
+      session_id: session.id,
+      title: newItem.title,
+      description: newItem.description || null,
+      position,
+    }
+
     const { data, error: insertError } = await supabase
       .from('items')
-      .insert([
-        {
-          session_id: session.id,
-          title: newItem.title,
-          description: newItem.description || null,
-          position,
-        },
-      ] as any)
+      .insert([itemToInsert as never])
       .select()
       .single()
 
@@ -99,11 +99,14 @@ export default function SessionPage() {
   }
 
   const handleEditItem = async (updatedItem: Item) => {
-    const { error: updateError } = await (supabase.from('items') as any)
-      .update({
-        title: updatedItem.title,
-        description: updatedItem.description,
-      })
+    const updates = {
+      title: updatedItem.title,
+      description: updatedItem.description,
+    }
+
+    const { error: updateError } = await supabase
+      .from('items')
+      .update(updates as never)
       .eq('id', updatedItem.id)
 
     if (updateError) {
@@ -133,6 +136,25 @@ export default function SessionPage() {
     }
 
     setItems(items.filter((item) => item.id !== itemId))
+  }
+
+  const handleFrameworkChange = async (framework: Framework) => {
+    if (!session) return
+
+    const updates = { framework }
+
+    const { error: updateError } = await supabase
+      .from('sessions')
+      .update(updates as never)
+      .eq('id', session.id)
+
+    if (updateError) {
+      console.error('Error updating framework:', updateError)
+      alert('Failed to update framework. Please try again.')
+      return
+    }
+
+    setSession({ ...session, framework })
   }
 
   if (loading) {
@@ -199,6 +221,10 @@ export default function SessionPage() {
           {/* Add Item Form */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-6 sticky top-8">
+              <FrameworkSelector
+                value={session.framework}
+                onChange={handleFrameworkChange}
+              />
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Add New Item
               </h2>
