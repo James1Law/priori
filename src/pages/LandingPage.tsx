@@ -13,9 +13,10 @@ export default function LandingPage() {
     try {
       const slug = generateSlug()
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await supabase
         .from('sessions')
-        .insert({ slug, name: null } as never)
+        .insert([{ slug, name: null }] as any)
 
       if (error) throw error
 

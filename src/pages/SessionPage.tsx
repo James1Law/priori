@@ -73,14 +73,17 @@ export default function SessionPage() {
 
     const position = items.length
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: insertError } = await supabase
       .from('items')
-      .insert({
-        session_id: session.id,
-        title: newItem.title,
-        description: newItem.description || null,
-        position,
-      } as never)
+      .insert([
+        {
+          session_id: session.id,
+          title: newItem.title,
+          description: newItem.description || null,
+          position,
+        },
+      ] as any)
       .select()
       .single()
 

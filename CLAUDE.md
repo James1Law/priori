@@ -73,7 +73,7 @@ When I say:
 
 ### sessions
 | Column | Type | Notes |
-|--------|------|-------|
+| --- | --- | --- |
 | id | uuid | PK, auto-generated |
 | slug | text | Unique URL identifier (e.g., "abc123") |
 | name | text | Optional session name |
@@ -82,7 +82,7 @@ When I say:
 
 ### items
 | Column | Type | Notes |
-|--------|------|-------|
+| --- | --- | --- |
 | id | uuid | PK |
 | session_id | uuid | FK to sessions |
 | title | text | Required |
@@ -92,7 +92,7 @@ When I say:
 
 ### scores
 | Column | Type | Notes |
-|--------|------|-------|
+| --- | --- | --- |
 | id | uuid | PK |
 | item_id | uuid | FK to items |
 | framework | text | e.g., "rice", "ice", "moscow" |
