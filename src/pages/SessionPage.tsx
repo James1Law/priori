@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Session, Item } from '../types/database'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
+import ItemEditModal from '../components/ItemEditModal'
 
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -12,6 +13,7 @@ export default function SessionPage() {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingItem, setEditingItem] = useState<Item | null>(null)
 
   useEffect(() => {
     if (!slug) {
@@ -96,6 +98,43 @@ export default function SessionPage() {
     setItems([...items, data as Item])
   }
 
+  const handleEditItem = async (updatedItem: Item) => {
+    const { error: updateError } = await (supabase.from('items') as any)
+      .update({
+        title: updatedItem.title,
+        description: updatedItem.description,
+      })
+      .eq('id', updatedItem.id)
+
+    if (updateError) {
+      console.error('Error updating item:', updateError)
+      alert('Failed to update item. Please try again.')
+      return
+    }
+
+    setItems(items.map((item) => (item.id === updatedItem.id ? updatedItem : item)))
+    setEditingItem(null)
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    if (!confirm('Are you sure you want to delete this item?')) {
+      return
+    }
+
+    const { error: deleteError } = await supabase
+      .from('items')
+      .delete()
+      .eq('id', itemId)
+
+    if (deleteError) {
+      console.error('Error deleting item:', deleteError)
+      alert('Failed to delete item. Please try again.')
+      return
+    }
+
+    setItems(items.filter((item) => item.id !== itemId))
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -175,11 +214,23 @@ export default function SessionPage() {
                   Items ({items.length})
                 </h2>
               </div>
-              <ItemList items={items} />
+              <ItemList
+                items={items}
+                onEdit={setEditingItem}
+                onDelete={handleDeleteItem}
+              />
             </div>
           </div>
         </div>
       </main>
+
+      {editingItem && (
+        <ItemEditModal
+          item={editingItem}
+          onSave={handleEditItem}
+          onCancel={() => setEditingItem(null)}
+        />
+      )}
     </div>
   )
 }

@@ -71,20 +71,20 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 1.4 Edit & Delete Items ⬜
-**As a** user  
-**I want** to edit or remove items  
+### 1.4 Edit & Delete Items ✅
+**As a** user
+**I want** to edit or remove items
 **So that** I can manage my backlog
 
 **Acceptance Criteria:**
-- [ ] Click item to edit inline
-- [ ] Delete button removes item (with confirmation)
-- [ ] Changes persist to database
+- [x] Click item to edit inline
+- [x] Delete button removes item (with confirmation)
+- [x] Changes persist to database
 
 **Tests:**
-- Edit updates item in DB
-- Delete removes item from DB
-- Confirmation prevents accidental deletion
+- [x] Edit updates item in DB
+- [x] Delete removes item from DB
+- [x] Confirmation prevents accidental deletion
 
 ---
 
