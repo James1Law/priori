@@ -30,9 +30,9 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">
-        <div className="text-center mb-12">
+        <header className="text-center mb-12">
           <h1 className="text-6xl font-bold text-gray-900 mb-4">Priori</h1>
           <p className="text-xl text-gray-600 mb-2">
             Product Prioritisation Tool
@@ -40,10 +40,10 @@ export default function LandingPage() {
           <p className="text-gray-500">
             Collaborative prioritisation made simple. No login required.
           </p>
-        </div>
+        </header>
 
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+        <section className="bg-white rounded-lg shadow-xl p-8" aria-labelledby="get-started-heading">
+          <h2 id="get-started-heading" className="text-2xl font-semibold text-gray-800 mb-4">
             Get Started
           </h2>
           <p className="text-gray-600 mb-6">
@@ -76,8 +76,8 @@ export default function LandingPage() {
               </li>
             </ul>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   )
 }

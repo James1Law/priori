@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData } from '../types/database'
@@ -10,11 +10,13 @@ import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
-import ValueEffortMatrix from '../components/ValueEffortMatrix'
-import WeightedCriteriaEditor from '../components/WeightedCriteriaEditor'
 import NamePromptModal from '../components/NamePromptModal'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
+
+// Lazy load components that are only used for specific frameworks
+const ValueEffortMatrix = lazy(() => import('../components/ValueEffortMatrix'))
+const WeightedCriteriaEditor = lazy(() => import('../components/WeightedCriteriaEditor'))
 
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -791,10 +793,12 @@ export default function SessionPage() {
               />
               {/* Weighted Criteria Editor */}
               {session.framework === 'weighted' && (
-                <WeightedCriteriaEditor
-                  criteria={session.weighted_criteria || []}
-                  onChange={handleWeightedCriteriaChange}
-                />
+                <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-32 mb-4" />}>
+                  <WeightedCriteriaEditor
+                    criteria={session.weighted_criteria || []}
+                    onChange={handleWeightedCriteriaChange}
+                  />
+                </Suspense>
               )}
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Add New Item
@@ -807,11 +811,13 @@ export default function SessionPage() {
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Value vs Effort Matrix */}
             {session.framework === 'value_effort' && items.length > 0 && (
-              <ValueEffortMatrix
-                items={items}
-                onItemClick={handleMatrixItemClick}
-                selectedItemId={highlightedItemId || undefined}
-              />
+              <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
+                <ValueEffortMatrix
+                  items={items}
+                  onItemClick={handleMatrixItemClick}
+                  selectedItemId={highlightedItemId || undefined}
+                />
+              </Suspense>
             )}
 
             <div className="bg-white rounded-lg shadow p-4 sm:p-6">
