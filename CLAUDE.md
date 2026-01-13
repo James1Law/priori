@@ -143,17 +143,23 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 1.3 Add Items
   - [x] 1.4 Edit & Delete Items
 - [x] Deployed to Production (Vercel)
-- [ ] Phase 2 (Scoring Frameworks) - IN PROGRESS
+- [x] Phase 2 (Scoring Frameworks) - COMPLETE
   - [x] 2.1 Framework Selector
   - [x] 2.2 RICE Scoring (with debounced sorting)
-  - [ ] 2.3 ICE Scoring - Next
+  - [x] 2.3 ICE Scoring
+  - [x] 2.4 Value vs Effort Matrix
+  - [x] 2.5 MoSCoW Categorisation
+  - [x] 2.6 Weighted Scoring
+- [x] Phase 3 (Collaboration) - COMPLETE
+  - [x] 3.1 Real-time Sync (Supabase Realtime)
+  - [x] 3.2 Participant Names (localStorage + Presence)
 
 ## Production Details
 - **GitHub**: https://github.com/James1Law/priori
 - **Live Site**: Deployed on Vercel
-- **Tests**: 43/43 passing
-- **Database**: Supabase (configured with RLS)
+- **Tests**: 116/116 passing
+- **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
 
 ---
-*Last updated: 2026-01-09 - Phase 2.2 RICE scoring complete*
+*Last updated: 2026-01-13 - Phase 3 Collaboration complete*

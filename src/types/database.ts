@@ -5,8 +5,15 @@ export interface Session {
   slug: string
   name: string | null
   framework: Framework
+  weighted_criteria?: WeightedCriterionData[]
   created_at: string
   updated_at: string
+}
+
+export interface WeightedCriterionData {
+  id: string
+  name: string
+  weight: number
 }
 
 export interface Item {
@@ -15,6 +22,7 @@ export interface Item {
   title: string
   description: string | null
   position: number
+  created_by: string | null
   created_at: string
 }
 

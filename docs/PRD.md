@@ -90,7 +90,7 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ## Phase 2: Scoring Frameworks
 
-### 2.1 Framework Selector ⬜
+### 2.1 Framework Selector ✅
 **As a** user  
 **I want** to choose a prioritisation framework  
 **So that** I can score items appropriately
@@ -131,23 +131,23 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 2.3 ICE Scoring ⬜
-**As a** user  
-**I want** to score items using ICE  
+### 2.3 ICE Scoring ✅
+**As a** user
+**I want** to score items using ICE
 **So that** I can quickly rank with less complexity
 
 **Acceptance Criteria:**
-- [ ] Each item shows: Impact, Confidence, Ease sliders (1-10)
-- [ ] Score = average of three values
-- [ ] Items auto-sort by score
+- [x] Each item shows: Impact, Confidence, Ease sliders (1-10)
+- [x] Score = average of three values
+- [x] Items auto-sort by score
 
 **Tests:**
-- Formula calculates correctly
-- Sliders update score in real-time
+- [x] Formula calculates correctly
+- [x] Sliders update score in real-time
 
 ---
 
-### 2.4 Value vs Effort Matrix ⬜
+### 2.4 Value vs Effort Matrix ✅
 **As a** user  
 **I want** to plot items on a 2×2 matrix  
 **So that** I can visualise quick wins vs big bets
@@ -164,7 +164,7 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 2.5 MoSCoW Categorisation ⬜
+### 2.5 MoSCoW Categorisation ✅
 **As a** user  
 **I want** to categorise items as Must/Should/Could/Won't  
 **So that** I can scope releases
@@ -172,7 +172,7 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 **Acceptance Criteria:**
 - [ ] Each item has category dropdown
 - [ ] Items grouped by category in display
-- [ ] Drag-and-drop between categories (stretch)
+- [ ] Drag-and-drop between categories (stretch - deferred)
 
 **Tests:**
 - Category assignment persists
@@ -180,56 +180,56 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 2.6 Weighted Scoring ⬜
-**As a** user  
-**I want** to define custom criteria and weights  
+### 2.6 Weighted Scoring ✅
+**As a** user
+**I want** to define custom criteria and weights
 **So that** I can prioritise by my own factors
 
 **Acceptance Criteria:**
-- [ ] Add/remove custom criteria (name + weight 1-10)
-- [ ] Each item scored against each criterion (1-10)
-- [ ] Weighted average calculated
-- [ ] Items sorted by weighted score
+- [x] Add/remove custom criteria (name + weight 1-10)
+- [x] Each item scored against each criterion (1-10)
+- [x] Weighted average calculated
+- [x] Items sorted by weighted score
 
 **Tests:**
-- Custom criteria CRUD works
-- Weighted formula correct
-- Zero weights handled
+- [x] Custom criteria CRUD works
+- [x] Weighted formula correct
+- [x] Zero weights handled
 
 ---
 
 ## Phase 3: Collaboration
 
-### 3.1 Real-time Sync ⬜
-**As a** collaborator  
-**I want** to see changes from others in real-time  
+### 3.1 Real-time Sync ✅
+**As a** collaborator
+**I want** to see changes from others in real-time
 **So that** we can work together
 
 **Acceptance Criteria:**
-- [ ] Supabase Realtime subscribed to session changes
-- [ ] Item additions appear without refresh
-- [ ] Score changes appear without refresh
-- [ ] Optimistic updates for responsiveness
+- [x] Supabase Realtime subscribed to session changes
+- [x] Item additions appear without refresh
+- [x] Score changes appear without refresh
+- [x] Optimistic updates for responsiveness
 
 **Tests:**
-- Changes from one client appear on another
-- No data loss on concurrent edits
+- [x] Changes from one client appear on another
+- [x] No data loss on concurrent edits
 
 ---
 
-### 3.2 Participant Names ⬜
-**As a** collaborator  
-**I want** to set my name  
+### 3.2 Participant Names ✅
+**As a** collaborator
+**I want** to set my name
 **So that** others know who added/edited items
 
 **Acceptance Criteria:**
-- [ ] Prompt for name on first visit (stored in localStorage)
-- [ ] Name shown next to items/edits
-- [ ] "X participants" indicator
+- [x] Prompt for name on first visit (stored in localStorage)
+- [x] Name shown next to items/edits
+- [x] "X participants" indicator
 
 **Tests:**
-- Name persists in localStorage
-- Name displays correctly
+- [x] Name persists in localStorage
+- [x] Name displays correctly
 
 ---
 
@@ -323,20 +323,26 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - All core features working in production
 - Database: Supabase with RLS configured
 
-**Phase 2 (Scoring Frameworks) - IN PROGRESS**
+**Phase 2 (Scoring Frameworks) - COMPLETE**
 - [x] 2.1 Framework Selector (complete)
 - [x] 2.2 RICE Scoring (complete)
-- [ ] 2.3 ICE Scoring
-- [ ] 2.4 Value vs Effort Matrix
-- [ ] 2.5 MoSCoW Categorisation
-- [ ] 2.6 Weighted Scoring
+- [x] 2.3 ICE Scoring (complete)
+- [x] 2.4 Value vs Effort Matrix (complete)
+- [x] 2.5 MoSCoW Categorisation (complete)
+- [x] 2.6 Weighted Scoring (complete)
+
+**Phase 3 (Collaboration) - COMPLETE**
+- [x] 3.1 Real-time Sync (complete)
+- [x] 3.2 Participant Names (complete)
 
 **Current Status:**
-- 43/43 tests passing
-- RICE scoring with debounced sorting live
+- 116/116 tests passing
+- All 5 prioritisation frameworks complete
+- Real-time collaboration enabled via Supabase Realtime
+- Participant presence tracking with names
 - UK English spelling throughout
 
 ---
 
-*Document version: 1.2*
-*Last updated: 2026-01-09 - Phase 2.2 RICE scoring complete*
+*Document version: 1.7*
+*Last updated: 2026-01-13 - Phase 3 Collaboration complete*

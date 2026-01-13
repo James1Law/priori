@@ -1,12 +1,19 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session, Item, ItemWithScore, Framework, Score } from '../types/database'
+import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData } from '../types/database'
 import { calculateRiceScore } from '../lib/rice'
+import { calculateIceScore } from '../lib/ice'
+import { calculateWeightedScore, type WeightedCriterion, type WeightedItemScores } from '../lib/weighted'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
+import ValueEffortMatrix from '../components/ValueEffortMatrix'
+import WeightedCriteriaEditor from '../components/WeightedCriteriaEditor'
+import NamePromptModal from '../components/NamePromptModal'
+import { useParticipantName } from '../hooks/useParticipantName'
+import { usePresence } from '../hooks/usePresence'
 
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -17,7 +24,12 @@ export default function SessionPage() {
   const [error, setError] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [updatingScores, setUpdatingScores] = useState<Set<string>>(new Set())
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
   const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
+
+  // Participant name and presence
+  const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
+  const { participantCount } = usePresence(session?.id || null, participantName)
 
   // Helper function to fetch items with scores
   const fetchItems = useCallback(async (sessionId: string, framework?: Framework) => {
@@ -51,8 +63,8 @@ export default function SessionPage() {
         score: scores.find((s) => s.item_id === item.id),
       }))
 
-      // Sort by score if framework is rice
-      if (framework === 'rice') {
+      // Sort by score if framework is rice, ice, or weighted
+      if (framework === 'rice' || framework === 'ice' || framework === 'weighted') {
         itemsWithScores.sort((a, b) => {
           const scoreA = a.score?.calculated_score || 0
           const scoreB = b.score?.calculated_score || 0
@@ -103,6 +115,161 @@ export default function SessionPage() {
     fetchSession()
   }, [slug, navigate, fetchItems])
 
+  // Real-time subscriptions for collaborative editing
+  useEffect(() => {
+    if (!session) return
+
+    // Subscribe to items table changes for this session
+    const itemsChannel = supabase
+      .channel(`items:session_id=eq.${session.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'items',
+          filter: `session_id=eq.${session.id}`,
+        },
+        (payload) => {
+          const newItem = payload.new as Item
+          setItems((prevItems) => {
+            // Avoid duplicates (in case we added it ourselves)
+            if (prevItems.some((item) => item.id === newItem.id)) {
+              return prevItems
+            }
+            return [...prevItems, newItem]
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'items',
+          filter: `session_id=eq.${session.id}`,
+        },
+        (payload) => {
+          const updatedItem = payload.new as Item
+          setItems((prevItems) =>
+            prevItems.map((item) =>
+              item.id === updatedItem.id ? { ...item, ...updatedItem } : item
+            )
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'items',
+          filter: `session_id=eq.${session.id}`,
+        },
+        (payload) => {
+          const deletedItem = payload.old as Item
+          setItems((prevItems) =>
+            prevItems.filter((item) => item.id !== deletedItem.id)
+          )
+        }
+      )
+      .subscribe()
+
+    // Subscribe to scores table changes
+    const scoresChannel = supabase
+      .channel(`scores:session_${session.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'scores',
+        },
+        async (payload) => {
+          // For score changes, we need to check if the item belongs to this session
+          const scoreData = (payload.new || payload.old) as Score
+          if (!scoreData?.item_id) return
+
+          // Verify this score belongs to an item in our session
+          const itemBelongsToSession = items.some(
+            (item) => item.id === scoreData.item_id
+          )
+          if (!itemBelongsToSession && payload.eventType !== 'DELETE') {
+            // Check database if item exists in session (for new items we might not have locally)
+            const { data } = await supabase
+              .from('items')
+              .select('id')
+              .eq('id', scoreData.item_id)
+              .eq('session_id', session.id)
+              .single()
+            if (!data) return
+          }
+
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newScore = payload.new as Score
+            // Only update if framework matches
+            if (newScore.framework !== session.framework) return
+
+            setItems((prevItems) => {
+              const updatedItems = prevItems.map((item) =>
+                item.id === newScore.item_id
+                  ? { ...item, score: newScore }
+                  : item
+              )
+              // Re-sort if using a scored framework
+              if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted') {
+                updatedItems.sort((a, b) => {
+                  const scoreA = a.score?.calculated_score || 0
+                  const scoreB = b.score?.calculated_score || 0
+                  return scoreB - scoreA
+                })
+              }
+              return updatedItems
+            })
+          } else if (payload.eventType === 'DELETE') {
+            const deletedScore = payload.old as Score
+            setItems((prevItems) =>
+              prevItems.map((item) =>
+                item.id === deletedScore.item_id
+                  ? { ...item, score: undefined }
+                  : item
+              )
+            )
+          }
+        }
+      )
+      .subscribe()
+
+    // Subscribe to session changes (framework, weighted_criteria)
+    const sessionChannel = supabase
+      .channel(`session:${session.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'sessions',
+          filter: `id=eq.${session.id}`,
+        },
+        (payload) => {
+          const updatedSession = payload.new as Session
+          setSession(updatedSession)
+          // Refetch items if framework changed
+          if (updatedSession.framework !== session.framework) {
+            fetchItems(session.id, updatedSession.framework)
+          }
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(itemsChannel)
+      supabase.removeChannel(scoresChannel)
+      supabase.removeChannel(sessionChannel)
+    }
+  }, [session?.id, session?.framework, fetchItems])
+
   const handleAddItem = async (newItem: {
     title: string
     description: string
@@ -116,6 +283,7 @@ export default function SessionPage() {
       title: newItem.title,
       description: newItem.description || null,
       position,
+      created_by: participantName,
     }
 
     const { data, error: insertError } = await supabase
@@ -192,14 +360,47 @@ export default function SessionPage() {
     setSession({ ...session, framework })
   }
 
+  // Helper to calculate score based on framework
+  const calculateScore = (scores: Record<string, number | string | WeightedItemScores>, framework: Framework, criteria?: WeightedCriterionData[]): number => {
+    if (framework === 'rice') {
+      return calculateRiceScore(scores as { reach: number; impact: number; confidence: number; effort: number })
+    } else if (framework === 'ice') {
+      return calculateIceScore(scores as { impact: number; confidence: number; ease: number })
+    } else if (framework === 'value_effort') {
+      // Value vs Effort doesn't use a single score - quadrant is determined by position
+      return 0
+    } else if (framework === 'moscow') {
+      // MoSCoW doesn't use numeric scoring - it's categorical
+      return 0
+    } else if (framework === 'weighted') {
+      // Weighted uses custom criteria and item scores
+      if (!criteria || criteria.length === 0) return 0
+      const itemScores = (scores as { scores: WeightedItemScores }).scores || {}
+      return calculateWeightedScore(criteria as WeightedCriterion[], itemScores)
+    }
+    return 0
+  }
+
+  // Handle matrix item click - highlight and scroll to item
+  const handleMatrixItemClick = (itemId: string) => {
+    setHighlightedItemId(itemId)
+    // Scroll to the item in the list
+    const element = document.getElementById(`item-${itemId}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+    // Clear highlight after 3 seconds
+    setTimeout(() => setHighlightedItemId(null), 3000)
+  }
+
   // Actual score save function
   const saveScoreToDatabase = async (
     itemId: string,
-    scores: { reach: number; impact: number; confidence: number; effort: number }
+    scores: Record<string, number | string | WeightedItemScores>
   ) => {
     if (!session) return
 
-    const calculatedScore = calculateRiceScore(scores)
+    const calculatedScore = calculateScore(scores, session.framework, session.weighted_criteria)
 
     // Check if score exists
     const existingItem = items.find((item) => item.id === itemId)
@@ -252,8 +453,10 @@ export default function SessionPage() {
   // Handle score updates with debouncing
   const handleScoreUpdate = (
     itemId: string,
-    scores: { reach: number; impact: number; confidence: number; effort: number }
+    scores: Record<string, number | string | WeightedItemScores>
   ) => {
+    if (!session) return
+
     // Clear any existing timeout for this item
     const existingTimeout = saveTimeouts.current.get(itemId)
     if (existingTimeout) {
@@ -264,26 +467,19 @@ export default function SessionPage() {
     setUpdatingScores((prev) => new Set(prev).add(itemId))
 
     // Update local score immediately for instant feedback
-    const calculatedScore = calculateRiceScore(scores)
+    const calculatedScore = calculateScore(scores, session.framework, session.weighted_criteria)
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.id === itemId
           ? {
               ...item,
-              score: item.score?.id
-                ? {
-                    id: item.score.id,
-                    item_id: itemId,
-                    framework: session?.framework || 'rice',
-                    criteria: scores,
-                    calculated_score: calculatedScore,
-                  }
-                : {
-                    item_id: itemId,
-                    framework: session?.framework || 'rice',
-                    criteria: scores,
-                    calculated_score: calculatedScore,
-                  },
+              score: {
+                id: item.score?.id || '',
+                item_id: itemId,
+                framework: session.framework,
+                criteria: scores,
+                calculated_score: calculatedScore,
+              },
             }
           : item
       )
@@ -297,6 +493,46 @@ export default function SessionPage() {
 
     // Store timeout
     saveTimeouts.current.set(itemId, timeoutId)
+  }
+
+  // Handle weighted criteria updates
+  const handleWeightedCriteriaChange = async (criteria: WeightedCriterionData[]) => {
+    if (!session) return
+
+    const updates = { weighted_criteria: criteria }
+
+    const { error: updateError } = await supabase
+      .from('sessions')
+      .update(updates as never)
+      .eq('id', session.id)
+
+    if (updateError) {
+      console.error('Error updating weighted criteria:', updateError)
+      alert('Failed to update criteria. Please try again.')
+      return
+    }
+
+    setSession({ ...session, weighted_criteria: criteria })
+
+    // Recalculate scores for all items with the new criteria
+    if (session.framework === 'weighted') {
+      setItems((prevItems) =>
+        prevItems.map((item) => {
+          if (item.score?.criteria) {
+            const itemScores = (item.score.criteria as { scores: WeightedItemScores }).scores || {}
+            const newCalculatedScore = calculateWeightedScore(criteria as WeightedCriterion[], itemScores)
+            return {
+              ...item,
+              score: {
+                ...item.score,
+                calculated_score: newCalculatedScore,
+              },
+            }
+          }
+          return item
+        })
+      )
+    }
   }
 
   if (loading) {
@@ -345,15 +581,24 @@ export default function SessionPage() {
                 Session: {session.slug}
               </p>
             </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href)
-                alert('Session URL copied to clipboard!')
-              }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
-            >
-              Copy URL
-            </button>
+            <div className="flex items-center gap-4">
+              {/* Participant count */}
+              {participantCount > 0 && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                  {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href)
+                  alert('Session URL copied to clipboard!')
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+              >
+                Copy URL
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -367,6 +612,13 @@ export default function SessionPage() {
                 value={session.framework}
                 onChange={handleFrameworkChange}
               />
+              {/* Weighted Criteria Editor */}
+              {session.framework === 'weighted' && (
+                <WeightedCriteriaEditor
+                  criteria={session.weighted_criteria || []}
+                  onChange={handleWeightedCriteriaChange}
+                />
+              )}
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Add New Item
               </h2>
@@ -375,7 +627,16 @@ export default function SessionPage() {
           </div>
 
           {/* Items List */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Value vs Effort Matrix */}
+            {session.framework === 'value_effort' && items.length > 0 && (
+              <ValueEffortMatrix
+                items={items}
+                onItemClick={handleMatrixItemClick}
+                selectedItemId={highlightedItemId || undefined}
+              />
+            )}
+
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -389,6 +650,8 @@ export default function SessionPage() {
                 onDelete={handleDeleteItem}
                 onScoreUpdate={handleScoreUpdate}
                 updatingScores={updatingScores}
+                highlightedItemId={highlightedItemId || undefined}
+                weightedCriteria={session.weighted_criteria}
               />
             </div>
           </div>
@@ -401,6 +664,11 @@ export default function SessionPage() {
           onSave={handleEditItem}
           onCancel={() => setEditingItem(null)}
         />
+      )}
+
+      {/* Name prompt modal */}
+      {needsName && (
+        <NamePromptModal onSubmit={setParticipantName} />
       )}
     </div>
   )
