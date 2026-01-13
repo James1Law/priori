@@ -91,39 +91,39 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 ## Phase 2: Scoring Frameworks
 
 ### 2.1 Framework Selector ✅
-**As a** user  
-**I want** to choose a prioritisation framework  
+**As a** user
+**I want** to choose a prioritisation framework
 **So that** I can score items appropriately
 
 **Acceptance Criteria:**
-- [ ] Dropdown/tabs to select framework
-- [ ] Options: RICE, ICE, Value vs Effort, MoSCoW, Weighted Scoring
-- [ ] Selected framework persists to session
-- [ ] UI updates to show relevant scoring inputs
+- [x] Dropdown/tabs to select framework
+- [x] Options: RICE, ICE, Value vs Effort, MoSCoW, Weighted Scoring
+- [x] Selected framework persists to session
+- [x] UI updates to show relevant scoring inputs
 
 **Tests:**
-- Framework selection persists
-- Correct inputs render for each framework
+- [x] Framework selection persists
+- [x] Correct inputs render for each framework
 
 ---
 
 ### 2.2 RICE Scoring ✅
-**As a** user  
-**I want** to score items using RICE  
+**As a** user
+**I want** to score items using RICE
 **So that** I get a quantitative ranking
 
 **Acceptance Criteria:**
-- [ ] Each item shows: Reach, Impact, Confidence, Effort inputs
-- [ ] Impact dropdown: Minimal (0.25), Low (0.5), Medium (1), High (2), Massive (3)
-- [ ] Confidence dropdown: Low (50%), Medium (80%), High (100%)
-- [ ] Reach and Effort are numeric inputs
-- [ ] Score auto-calculates: (R × I × C) / E
-- [ ] Items auto-sort by score (highest first)
+- [x] Each item shows: Reach, Impact, Confidence, Effort inputs
+- [x] Impact dropdown: Minimal (0.25), Low (0.5), Medium (1), High (2), Massive (3)
+- [x] Confidence dropdown: Low (50%), Medium (80%), High (100%)
+- [x] Reach and Effort are numeric inputs
+- [x] Score auto-calculates: (R × I × C) / E
+- [x] Items auto-sort by score (highest first)
 
 **Tests:**
-- Formula calculates correctly
-- Sorting works
-- Edge cases (zero effort) handled
+- [x] Formula calculates correctly
+- [x] Sorting works
+- [x] Edge cases (zero effort) handled
 
 **Bonus UX:**
 - [x] Debounced sorting (1.5s delay) prevents jarring movements
@@ -148,35 +148,35 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 ---
 
 ### 2.4 Value vs Effort Matrix ✅
-**As a** user  
-**I want** to plot items on a 2×2 matrix  
+**As a** user
+**I want** to plot items on a 2×2 matrix
 **So that** I can visualise quick wins vs big bets
 
 **Acceptance Criteria:**
-- [ ] Each item has Value (1-10) and Effort (1-10) inputs
-- [ ] 2×2 grid visualisation shows items as dots/cards
-- [ ] Quadrants labelled: Quick Wins (high value, low effort), Big Bets (high value, high effort), Fill-ins (low value, low effort), Avoid (low value, high effort)
-- [ ] Clicking item in matrix highlights it in list
+- [x] Each item has Value (1-10) and Effort (1-10) inputs
+- [x] 2×2 grid visualisation shows items as dots/cards
+- [x] Quadrants labelled: Quick Wins (high value, low effort), Big Bets (high value, high effort), Fill-ins (low value, low effort), Avoid (low value, high effort)
+- [x] Clicking item in matrix highlights it in list
 
 **Tests:**
-- Items plot in correct quadrant
-- Interaction between matrix and list works
+- [x] Items plot in correct quadrant
+- [x] Interaction between matrix and list works
 
 ---
 
 ### 2.5 MoSCoW Categorisation ✅
-**As a** user  
-**I want** to categorise items as Must/Should/Could/Won't  
+**As a** user
+**I want** to categorise items as Must/Should/Could/Won't
 **So that** I can scope releases
 
 **Acceptance Criteria:**
-- [ ] Each item has category dropdown
-- [ ] Items grouped by category in display
+- [x] Each item has category dropdown
+- [x] Items grouped by category in display
 - [ ] Drag-and-drop between categories (stretch - deferred)
 
 **Tests:**
-- Category assignment persists
-- Grouping displays correctly
+- [x] Category assignment persists
+- [x] Grouping displays correctly
 
 ---
 
@@ -235,18 +235,18 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ## Phase 4: Polish & Export
 
-### 4.1 Export to CSV ⬜
-**As a** user  
-**I want** to export my prioritised list  
+### 4.1 Export to CSV ✅
+**As a** user
+**I want** to export my prioritised list
 **So that** I can use it elsewhere
 
 **Acceptance Criteria:**
-- [ ] Export button downloads CSV
-- [ ] Includes: title, description, scores, rank
+- [x] Export button downloads CSV
+- [x] Includes: title, description, scores, rank
 
 **Tests:**
-- CSV format is valid
-- All data included
+- [x] CSV format is valid
+- [x] All data included
 
 ---
 

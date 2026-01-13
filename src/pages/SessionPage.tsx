@@ -5,6 +5,7 @@ import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionD
 import { calculateRiceScore } from '../lib/rice'
 import { calculateIceScore } from '../lib/ice'
 import { calculateWeightedScore, type WeightedCriterion, type WeightedItemScores } from '../lib/weighted'
+import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import ItemEditModal from '../components/ItemEditModal'
@@ -589,6 +590,17 @@ export default function SessionPage() {
                   {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
                 </div>
               )}
+              <button
+                onClick={() => exportToCsv({
+                  items,
+                  framework: session.framework,
+                  sessionName: session.name || session.slug,
+                })}
+                disabled={items.length === 0}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Export CSV
+              </button>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href)
