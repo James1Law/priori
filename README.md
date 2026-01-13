@@ -1,38 +1,60 @@
 # Priori
 
-> **🚀 Live in Production**: [View on GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
+> **Live in Production** | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
 
 A lightweight, collaborative product prioritisation web app. No authentication required - just share a URL and start prioritising together.
 
 ## Features
 
+### Core Functionality
 - **Session-based**: Create a session, get a unique URL to share
 - **No Login Required**: Anyone with the URL can view and edit
-- **Item Management**: Add, edit, and delete backlog items
-- **Real-time Sync**: All changes persist to Supabase
-- **Beautiful UI**: Clean, responsive design with Tailwind CSS
+- **Real-time Collaboration**: Changes sync instantly across all participants
+- **Participant Presence**: See who's viewing the session
+
+### Prioritisation Frameworks
+- **RICE**: Reach, Impact, Confidence, Effort scoring
+- **ICE**: Impact, Confidence, Ease scoring
+- **Value vs Effort**: Visual 2x2 matrix with quadrants
+- **MoSCoW**: Must, Should, Could, Won't categorisation
+- **Weighted Scoring**: Custom criteria with configurable weights
+
+### Export & Sharing
+- **CSV Export**: Download prioritised items as spreadsheet
+- **Copy URL**: Quick sharing with one click
+- **Session Naming**: Give sessions meaningful names
+
+### Mobile Experience
+- **Responsive Design**: Works on all screen sizes
+- **Bottom Input Bar**: Quick item entry on mobile
+- **Swipe-to-Delete**: Native gesture support on touch devices
+
+### Polish
+- **Custom Brand**: Indigo colour scheme, Poppins/Inter typography
+- **Branded Modals**: Custom confirmation dialogs (no browser alerts)
+- **Error Handling**: Graceful error states throughout
 
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Testing**: Vitest + React Testing Library
-- **Hosting**: Vercel
+- **Testing**: Vitest + React Testing Library (172 tests)
+- **Hosting**: Vercel (auto-deploys from main)
 
 ## Development
 
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
+- npm
 - Supabase account
 
 ### Setup
 
 1. Clone the repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/James1Law/priori.git
 cd priori
 ```
 
@@ -77,14 +99,6 @@ npm run test:run     # Run tests once
 npm run lint         # Lint code
 ```
 
-## Deployment
-
-✅ **Currently deployed to Vercel in production**
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
-
-The app is configured for Vercel with `vercel.json` for proper SPA routing, ensuring all routes work correctly including direct access and page refreshes.
-
 ## Project Structure
 
 ```
@@ -94,27 +108,18 @@ priori/
 │   ├── hooks/          # Custom React hooks
 │   ├── lib/            # Supabase client, utilities
 │   ├── types/          # TypeScript types
-│   ├── frameworks/     # Prioritisation frameworks (future)
 │   └── pages/          # Route components
-├── tests/              # Test files
+├── tests/              # Test files (mirror src structure)
+├── plans/              # Design mockups (.mockup.html files)
 ├── docs/               # PRD and documentation
 └── supabase/           # Database migrations
 ```
 
-## Current Status
+## Deployment
 
-**Phase 1 (MVP) - Complete ✅**
-- Project setup
-- Session creation with unique URLs
-- Add items to sessions
-- Edit and delete items
+The app is deployed to Vercel with automatic deploys from the `main` branch.
 
-**Phase 2 (Scoring Frameworks) - Coming Soon**
-- RICE scoring
-- ICE scoring
-- MoSCoW categorisation
-- Value vs Effort matrix
-- Weighted scoring
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 ## Contributing
 
