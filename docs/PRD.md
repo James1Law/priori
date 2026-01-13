@@ -289,10 +289,10 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ## Phase 5: Production Readiness
 
-### 5.1 Error Handling ⬜
-- [ ] Graceful handling of network errors
-- [ ] Invalid session slugs show 404
-- [ ] Loading states throughout
+### 5.1 Error Handling ✅
+- [x] Graceful handling of network errors
+- [x] Invalid session slugs show 404
+- [x] Loading states throughout
 
 ### 5.2 Performance ⬜
 - [ ] Lazy load frameworks not in use
@@ -341,16 +341,20 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - [x] 4.3 Session Naming (complete)
 - [x] 4.4 Mobile Responsive (complete)
 
+**Phase 5 (Production Readiness) - IN PROGRESS**
+- [x] 5.1 Error Handling (complete)
+
 **Current Status:**
-- 125/125 tests passing
+- 134/134 tests passing
 - All 5 prioritisation frameworks complete
 - Real-time collaboration enabled via Supabase Realtime
 - Participant presence tracking with names
 - Mobile responsive UI with touch-friendly inputs
 - CSV export with session naming
+- Error boundary and 404 page
 - UK English spelling throughout
 
 ---
 
-*Document version: 1.8*
-*Last updated: 2026-01-13 - Phase 4 Polish & Export complete*
+*Document version: 1.9*
+*Last updated: 2026-01-13 - Phase 5.1 Error Handling complete*

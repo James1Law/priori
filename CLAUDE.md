@@ -158,13 +158,15 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 4.2 New Session / Clear Items
   - [x] 4.3 Session Naming
   - [x] 4.4 Mobile Responsive
+- [ ] Phase 5 (Production Readiness) - IN PROGRESS
+  - [x] 5.1 Error Handling
 
 ## Production Details
 - **GitHub**: https://github.com/James1Law/priori
 - **Live Site**: Deployed on Vercel
-- **Tests**: 125/125 passing
+- **Tests**: 134/134 passing
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
 
 ---
-*Last updated: 2026-01-13 - Phase 4 Polish & Export complete*
+*Last updated: 2026-01-13 - Phase 5.1 Error Handling complete*
