@@ -8,7 +8,7 @@ Priori is a lightweight, collaborative product prioritisation web app. It uses a
 - **Styling:** Tailwind CSS
 - **Backend/DB:** Supabase (PostgreSQL + Realtime)
 - **Testing:** Vitest + React Testing Library
-- **Hosting:** Vercel (when ready for production)
+- **Hosting:** Vercel (live in production)
 
 ## Project Structure
 ```
@@ -48,10 +48,10 @@ When I say:
 - Each feature must have tests covering happy path and edge cases
 - Do not mark a feature complete until tests pass
 
-### 2. No Production Deployment
-- Do NOT deploy to Vercel or any production environment
-- Only run locally with `npm run dev`
-- I will explicitly say "deploy to production" when ready
+### 2. Production Deployment
+- App is live on Vercel (auto-deploys from `main` branch)
+- Test locally with `npm run dev` before pushing
+- Run `npm run test:run && npm run build` to verify before pushing
 
 ### 3. Incremental Development
 - Build one feature at a time from the PRD
@@ -161,13 +161,68 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - [x] Phase 5 (Production Readiness) - COMPLETE
   - [x] 5.1 Error Handling
   - [x] 5.2 Performance
+- [x] Phase 6 (Branding & UX Polish) - COMPLETE
+  - [x] 6.1 Brand Identity (logo, Poppins/Inter typography, indigo colour scheme)
+  - [x] 6.2 Mobile UX Improvements (bottom input bar, swipe-to-delete)
+  - [x] 6.3 Custom Confirmation Modals (replaced browser confirm() dialogs)
+
+## Recent Changes (Phase 6)
+
+### Brand Identity
+- **Logo**: Triangle/arrow icon representing priorities rising to the top
+- **Typography**: Poppins for headings (font-display), Inter for body text (font-body)
+- **Colours**: Indigo-based palette (#4f46e5 primary) with full Tailwind scale
+- **Design mockups**: Located in `plans/` folder (`.mockup.html` files)
+
+### Mobile UX Improvements
+- **Bottom Input Bar**: On mobile, the sidebar is hidden and replaced with a fixed bottom bar containing a compact framework selector and quick-add input
+- **Swipe-to-Delete**: Items can be swiped left to reveal a delete button (touch devices only)
+- **Safe Area Support**: Proper padding for notched devices (iPhone etc.)
+- Desktop layout remains unchanged - these are mobile-only enhancements
+
+### Custom Confirmation Modals
+- **ConfirmModal component**: Branded modal replacing native browser `confirm()` dialogs
+- **Variants**: danger (red), warning (amber), default (indigo) with appropriate icons
+- **Features**: Keyboard support (Escape to close), backdrop click to dismiss, responsive layout
+- Used for: Delete item, Clear all items
+
+### Key New Components
+- `src/components/MobileBottomBar.tsx` - Fixed bottom input bar for mobile
+- `src/components/SwipeableItem.tsx` - Swipe gesture wrapper for items
+- `src/components/ConfirmModal.tsx` - Branded confirmation modal
+- `src/hooks/useSwipeToDelete.ts` - Touch gesture handling hook
 
 ## Production Details
 - **GitHub**: https://github.com/James1Law/priori
-- **Live Site**: Deployed on Vercel
-- **Tests**: 134/134 passing
+- **Live Site**: Deployed on Vercel (auto-deploys from main)
+- **Tests**: 172 passing
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
 
+## Future Feature Ideas
+
+### High Priority (Based on User Feedback)
+- Further mobile UX refinements based on user testing feedback
+- Weighted criteria editor for mobile (currently desktop-only)
+
+### Potential Enhancements
+- **Import from CSV**: Allow bulk importing items from spreadsheets
+- **Session Templates**: Pre-configured sessions with common item sets
+- **Voting/Polling Mode**: Multiple participants vote independently before revealing scores
+- **History/Undo**: Track changes and allow reverting to previous states
+- **Comments on Items**: Allow participants to add notes/discussion to items
+- **Sorting Options**: Manual drag-and-drop reordering, sort by different criteria
+- **Session Expiry**: Auto-delete old sessions after configurable period
+- **Embed Mode**: Embeddable widget version for use in other tools
+- **Keyboard Shortcuts**: Power-user shortcuts for common actions
+- **Dark Mode**: System-preference-aware dark theme
+- **PDF Export**: Export prioritised list as formatted PDF report
+- **Comparison View**: Side-by-side comparison of two items
+
+### Technical Improvements
+- **PWA Support**: Offline capability with service workers
+- **Performance Monitoring**: Add analytics for load times and interactions
+- **E2E Tests**: Add Playwright tests for critical user journeys
+
 ---
-*Last updated: 2026-01-13 - Phase 5 Production Readiness complete*
+*Last updated: 2026-01-13 - Phase 6 Branding & UX Polish complete*
