@@ -4,8 +4,12 @@ import IceScoring from './IceScoring'
 import ValueEffortScoring from './ValueEffortScoring'
 import MoscowScoring from './MoscowScoring'
 import WeightedScoring from './WeightedScoring'
+import SwipeableItem from './SwipeableItem'
 import { MoscowCategory, MOSCOW_LABELS, MOSCOW_COLOURS, MOSCOW_ORDER } from '../lib/moscow'
 import { type WeightedItemScores } from '../lib/weighted'
+
+// Check for touch device support
+const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window
 
 type RiceScores = { reach: number; impact: number; confidence: number; effort: number }
 type IceScores = { impact: number; confidence: number; ease: number }
@@ -93,46 +97,53 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
 
   // Render a single item card
   const renderItemCard = (item: ItemWithScore) => (
-    <article
+    <SwipeableItem
       key={item.id}
-      id={`item-${item.id}`}
-      className={`bg-white border rounded-lg p-3 sm:p-4 hover:shadow-md transition-all ${
-        highlightedItemId === item.id
-          ? 'border-indigo-500 ring-2 ring-indigo-200'
-          : 'border-gray-200'
-      }`}
+      onDelete={() => onDelete(item.id)}
+      enabled={isTouchDevice}
     >
-      <div className="flex items-start justify-between gap-2 sm:gap-4 mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
-              {item.title}
-            </h3>
-            {item.created_by && (
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
-                by {item.created_by}
-              </span>
+      <article
+        id={`item-${item.id}`}
+        className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition-all ${
+          highlightedItemId === item.id
+            ? 'border-indigo-500 ring-2 ring-indigo-200'
+            : 'border-gray-200'
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2 sm:gap-4 mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+                {item.title}
+              </h3>
+              {item.created_by && (
+                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                  by {item.created_by}
+                </span>
+              )}
+            </div>
+            {item.description && (
+              <p className="text-gray-600 text-sm">{item.description}</p>
             )}
           </div>
-          {item.description && (
-            <p className="text-gray-600 text-sm">{item.description}</p>
-          )}
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => onEdit(item)}
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2 -my-1 -mx-2"
+            >
+              Edit
+            </button>
+            {/* Hide delete button on touch devices where swipe-to-delete is available */}
+            <button
+              onClick={() => onDelete(item.id)}
+              className={`text-sm text-red-600 hover:text-red-800 font-medium py-1 px-2 -my-1 -mx-2 ${
+                isTouchDevice ? 'hidden sm:inline-block' : ''
+              }`}
+            >
+              Delete
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={() => onEdit(item)}
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2 -my-1 -mx-2"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => onDelete(item.id)}
-            className="text-sm text-red-600 hover:text-red-800 font-medium py-1 px-2 -my-1 -mx-2"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
 
       {/* RICE Scoring */}
       {framework === 'rice' && onScoreUpdate && (
@@ -179,7 +190,8 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
           isUpdating={updatingScores?.has(item.id)}
         />
       )}
-    </article>
+      </article>
+    </SwipeableItem>
   )
 
   // For MoSCoW, render grouped by category

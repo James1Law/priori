@@ -11,6 +11,7 @@ import ItemList from '../components/ItemList'
 import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
 import NamePromptModal from '../components/NamePromptModal'
+import MobileBottomBar from '../components/MobileBottomBar'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 
@@ -809,8 +810,8 @@ export default function SessionPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
-          {/* Add Item Form */}
-          <div className="lg:col-span-1 order-first lg:order-none">
+          {/* Add Item Form - hidden on mobile, shown in sidebar on desktop */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-lg shadow p-4 sm:p-6 lg:sticky lg:top-8">
               <FrameworkSelector
                 value={session.framework}
@@ -832,8 +833,8 @@ export default function SessionPage() {
             </div>
           </div>
 
-          {/* Items List */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+          {/* Items List - add bottom padding on mobile for the bottom bar */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 pb-24 lg:pb-0">
             {/* Value vs Effort Matrix */}
             {session.framework === 'value_effort' && items.length > 0 && (
               <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
@@ -865,6 +866,13 @@ export default function SessionPage() {
           </div>
         </div>
       </main>
+
+      {/* Mobile bottom bar - only visible below lg breakpoint */}
+      <MobileBottomBar
+        framework={session.framework}
+        onFrameworkChange={handleFrameworkChange}
+        onAddItem={handleAddItem}
+      />
 
       {editingItem && (
         <ItemEditModal
