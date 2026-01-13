@@ -12,6 +12,7 @@ import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
+import ConfirmModal from '../components/ConfirmModal'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 
@@ -51,6 +52,13 @@ export default function SessionPage() {
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
   const [editingSessionName, setEditingSessionName] = useState(false)
   const [sessionNameInput, setSessionNameInput] = useState('')
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string
+    message: string
+    confirmLabel: string
+    variant: 'danger' | 'warning' | 'default'
+    onConfirm: () => void
+  } | null>(null)
   const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   // Participant name and presence
@@ -360,43 +368,56 @@ export default function SessionPage() {
     setEditingItem(null)
   }
 
-  const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) {
-      return
-    }
+  const handleDeleteItem = (itemId: string) => {
+    setConfirmModal({
+      title: 'Delete Item',
+      message: 'Are you sure you want to delete this item?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null)
 
-    const { error: deleteError } = await supabase
-      .from('items')
-      .delete()
-      .eq('id', itemId)
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', itemId)
 
-    if (deleteError) {
-      console.error('Error deleting item:', deleteError)
-      alert('Failed to delete item. Please try again.')
-      return
-    }
+        if (deleteError) {
+          console.error('Error deleting item:', deleteError)
+          alert('Failed to delete item. Please try again.')
+          return
+        }
 
-    setItems(items.filter((item) => item.id !== itemId))
+        setItems(items.filter((item) => item.id !== itemId))
+      },
+    })
   }
 
-  const handleClearItems = async () => {
+  const handleClearItems = () => {
     if (!session) return
-    if (!confirm('Are you sure you want to delete all items? This cannot be undone.')) {
-      return
-    }
 
-    const { error: deleteError } = await supabase
-      .from('items')
-      .delete()
-      .eq('session_id', session.id)
+    setConfirmModal({
+      title: 'Clear All Items',
+      message: 'Are you sure you want to delete all items? This cannot be undone.',
+      confirmLabel: 'Clear All',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null)
 
-    if (deleteError) {
-      console.error('Error clearing items:', deleteError)
-      alert('Failed to clear items. Please try again.')
-      return
-    }
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .eq('session_id', session.id)
 
-    setItems([])
+        if (deleteError) {
+          console.error('Error clearing items:', deleteError)
+          alert('Failed to clear items. Please try again.')
+          return
+        }
+
+        setItems([])
+      },
+    })
   }
 
   const handleNewSession = async () => {
@@ -885,6 +906,18 @@ export default function SessionPage() {
       {/* Name prompt modal */}
       {needsName && (
         <NamePromptModal onSubmit={setParticipantName} />
+      )}
+
+      {/* Confirm modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmLabel={confirmModal.confirmLabel}
+          variant={confirmModal.variant}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
       )}
     </div>
   )

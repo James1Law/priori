@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori Mobile UX Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8fafc;
+      padding: 40px;
+      color: #1e293b;
+    }
+    h1 { font-family: 'Poppins', sans-serif; font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: 'Poppins', sans-serif; font-size: 20px; margin-bottom: 24px; color: #475569; }
+    h3 { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .section { margin-bottom: 56px; }
+
+    /* Current vs Proposed Layout */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .comparison-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .comparison-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-current { color: #dc2626; }
+    .status-proposed { color: #16a34a; }
+
+    /* Phone Frame */
+    .phone-frame {
+      background: #1e293b;
+      border-radius: 32px;
+      padding: 12px;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .phone-screen {
+      background: #f8fafc;
+      border-radius: 24px;
+      overflow: hidden;
+      height: 500px;
+      position: relative;
+    }
+
+    .phone-header {
+      background: white;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .phone-logo {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-logo::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid white;
+    }
+
+    .phone-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: #4f46e5;
+    }
+
+    .phone-content {
+      padding: 16px;
+      height: calc(100% - 52px);
+      overflow-y: auto;
+    }
+
+    /* Current Layout Phone */
+    .current-phone .config-section {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .mini-label {
+      font-size: 10px;
+      color: #64748b;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .mini-select {
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      color: #334155;
+    }
+
+    .mini-input {
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .mini-button {
+      background: #4f46e5;
+      color: white;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .mini-item {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .mini-item-title {
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .mini-score-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .mini-score-label {
+      font-size: 9px;
+      color: #64748b;
+      width: 40px;
+    }
+
+    .mini-score-input {
+      flex: 1;
+      background: #f1f5f9;
+      border-radius: 4px;
+      height: 20px;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 10px;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    /* Problem annotations */
+    .problem-annotation {
+      position: absolute;
+      background: #fef2f2;
+      border: 2px solid #dc2626;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #dc2626;
+      font-weight: 500;
+      z-index: 10;
+    }
+
+    .arrow-down {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+    }
+
+    /* Option Cards */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .option-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .option-card.recommended {
+      border: 2px solid #4f46e5;
+      position: relative;
+    }
+
+    .recommended-badge {
+      position: absolute;
+      top: -10px;
+      right: 16px;
+      background: #4f46e5;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    .option-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .option-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Option Mini Phones */
+    .option-phone {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 8px;
+      max-width: 200px;
+      margin: 0 auto 16px;
+    }
+
+    .option-screen {
+      background: #f8fafc;
+      border-radius: 14px;
+      overflow: hidden;
+      height: 280px;
+      position: relative;
+    }
+
+    .option-header {
+      background: white;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .option-logo {
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 4px;
+    }
+
+    .option-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      color: #4f46e5;
+    }
+
+    /* Tabs pattern */
+    .tabs-bar {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px 4px;
+      font-size: 9px;
+      text-align: center;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab.active {
+      color: #4f46e5;
+      border-bottom-color: #4f46e5;
+      font-weight: 600;
+    }
+
+    /* Bottom bar pattern */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    .bottom-input {
+      flex: 1;
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 9px;
+      color: #94a3b8;
+    }
+
+    .bottom-add-btn {
+      background: #4f46e5;
+      color: white;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 9px;
+      font-weight: 500;
+    }
+
+    /* FAB pattern */
+    .fab {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      background: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Pros/Cons */
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .pros, .cons {
+      font-size: 12px;
+    }
+
+    .pros-title, .cons-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 11px;
+    }
+
+    .pros-title { color: #16a34a; }
+    .cons-title { color: #dc2626; }
+
+    .pros li, .cons li {
+      margin-bottom: 4px;
+      color: #475569;
+      margin-left: 16px;
+    }
+
+    /* Collapsible sidebar */
+    .collapsed-config {
+      background: white;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .collapsed-config-text {
+      font-size: 10px;
+      color: #475569;
+    }
+
+    .expand-icon {
+      font-size: 12px;
+      color: #4f46e5;
+    }
+
+    /* Summary section */
+    .summary-card {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    .summary-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card p {
+      color: #475569;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .summary-points {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .summary-point {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .summary-point h5 {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .summary-point p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Priori Mobile UX Analysis</h1>
+  <h2>Exploring alternatives to the stacked layout</h2>
+
+  <!-- Current Problem Section -->
+  <div class="section">
+    <h3>The Current Mobile Experience</h3>
+    <div class="comparison-grid">
+      <div class="comparison-card">
+        <h4><span class="status-current">Current Layout</span></h4>
+        <div class="phone-frame">
+          <div class="phone-screen current-phone">
+            <div class="phone-header">
+              <div class="phone-logo"></div>
+              <span class="phone-title">Priori</span>
+            </div>
+            <div class="phone-content">
+              <div class="config-section">
+                <div class="mini-label">Framework</div>
+                <div class="mini-select">RICE Scoring</div>
+              </div>
+              <div class="config-section">
+                <div class="mini-label">Add Item</div>
+                <div class="mini-input">Title</div>
+                <div class="mini-input">Description (optional)</div>
+                <div class="mini-button">Add Item</div>
+              </div>
+              <div class="mini-item">
+                <div class="mini-item-title">Feature A</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Impact</span>
+                  <div class="mini-score-input"></div>
+                </div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Confidence</span>
+                  <div class="mini-score-input"></div>
+                </div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Effort</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item">
+                <div class="mini-item-title">Feature B</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+            </div>
+            <div class="scroll-indicator">Scroll for more items</div>
+          </div>
+        </div>
+        <div style="margin-top: 16px;">
+          <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+            <strong>Issues:</strong><br>
+            1. Config takes prime screen real estate at top<br>
+            2. Must scroll past form to see items<br>
+            3. Adding new item requires scrolling back up<br>
+            4. No visual separation of "setup" vs "work" phases
+          </p>
+        </div>
+      </div>
+
+      <div class="comparison-card">
+        <h4><span class="status-proposed">What Users Actually Do</span></h4>
+        <div style="padding: 24px; background: #f8fafc; border-radius: 12px;">
+          <p style="font-size: 14px; color: #475569; line-height: 1.8; margin-bottom: 16px;">
+            The typical user workflow is:
+          </p>
+          <ol style="font-size: 14px; color: #475569; line-height: 2; margin-left: 20px;">
+            <li><strong>Setup (once):</strong> Choose framework</li>
+            <li><strong>Add items (few times):</strong> Enter titles</li>
+            <li><strong>Score items (many times):</strong> Adjust scores, compare</li>
+            <li><strong>Iterate:</strong> Add more items, adjust scores</li>
+          </ol>
+          <p style="font-size: 14px; color: #475569; line-height: 1.8; margin-top: 16px;">
+            The <strong>scoring phase is 80% of the interaction</strong> but currently gets pushed below the fold on mobile.
+          </p>
+          <div style="margin-top: 20px; padding: 16px; background: #fef3c7; border-radius: 8px;">
+            <p style="font-size: 13px; color: #92400e;">
+              <strong>Key insight:</strong> The framework selector and add form are "setup" tasks that don't need constant visibility during the scoring phase.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Options Section -->
+  <div class="section">
+    <h3>Mobile UX Options</h3>
+    <div class="options-grid">
+
+      <!-- Option 1: Bottom Input Bar -->
+      <div class="option-card recommended">
+        <span class="recommended-badge">Recommended</span>
+        <h4>Option A: Bottom Input Bar</h4>
+        <p class="option-desc">Move "Add Item" input to a persistent bottom bar. Framework selector in collapsible header.</p>
+
+        <div class="option-phone">
+          <div class="option-screen">
+            <div class="option-header">
+              <div class="option-logo"></div>
+              <span class="option-title">Priori</span>
+              <span style="margin-left: auto; font-size: 9px; color: #64748b;">RICE</span>
+              <span style="font-size: 10px;">v</span>
+            </div>
+            <div style="padding: 8px; height: calc(100% - 76px); overflow: hidden;">
+              <div class="mini-item" style="margin-bottom: 6px;">
+                <div class="mini-item-title">Feature A</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item" style="margin-bottom: 6px;">
+                <div class="mini-item-title">Feature B</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item">
+                <div class="mini-item-title">Feature C</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+            </div>
+            <div class="bottom-bar">
+              <div class="bottom-input">Add new item...</div>
+              <div class="bottom-add-btn">Add</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Items visible immediately</li>
+              <li>Quick item adding</li>
+              <li>Familiar pattern (chat apps)</li>
+              <li>Minimal code changes</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>Less space for description</li>
+              <li>Keyboard may overlap items</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option 2: Tab Navigation -->
+      <div class="option-card">
+        <h4>Option B: Tab Navigation</h4>
+        <p class="option-desc">Separate "Setup" and "Items" into distinct tabs. Clear mental model.</p>
+
+        <div class="option-phone">
+          <div class="option-screen">
+            <div class="option-header">
+              <div class="option-logo"></div>
+              <span class="option-title">Priori</span>
+            </div>
+            <div class="tabs-bar">
+              <div class="tab">Setup</div>
+              <div class="tab active">Items</div>
+              <div class="tab">Matrix</div>
+            </div>
+            <div style="padding: 8px; height: calc(100% - 76px); overflow: hidden;">
+              <div class="mini-item" style="margin-bottom: 6px;">
+                <div class="mini-item-title">Feature A</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item" style="margin-bottom: 6px;">
+                <div class="mini-item-title">Feature B</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item">
+                <div class="mini-item-title">Feature C</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+            </div>
+            <div class="fab">+</div>
+          </div>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Clear separation of concerns</li>
+              <li>Full screen for each view</li>
+              <li>Matrix gets own tab</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>More taps to switch</li>
+              <li>May feel disconnected</li>
+              <li>More complex to build</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Option 3: Collapsible Config -->
+      <div class="option-card">
+        <h4>Option C: Collapsible Config</h4>
+        <p class="option-desc">Keep stacked layout but make config section collapsible. Simple enhancement.</p>
+
+        <div class="option-phone">
+          <div class="option-screen">
+            <div class="option-header">
+              <div class="option-logo"></div>
+              <span class="option-title">Priori</span>
+            </div>
+            <div class="collapsed-config">
+              <span class="collapsed-config-text">RICE Scoring | Add item</span>
+              <span class="expand-icon">+</span>
+            </div>
+            <div style="padding: 8px; height: calc(100% - 76px); overflow: hidden;">
+              <div class="mini-item" style="margin-bottom: 6px;">
+                <div class="mini-item-title">Feature A</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Impact</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item" style="margin-bottom: 6px;">
+                <div class="mini-item-title">Feature B</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+              <div class="mini-item">
+                <div class="mini-item-title">Feature C</div>
+                <div class="mini-score-row">
+                  <span class="mini-score-label">Reach</span>
+                  <div class="mini-score-input"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">Pros</div>
+            <ul>
+              <li>Minimal code changes</li>
+              <li>Users control visibility</li>
+              <li>Progressive disclosure</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <div class="cons-title">Cons</div>
+            <ul>
+              <li>Still requires expanding to add</li>
+              <li>Collapsed state may confuse</li>
+              <li>Extra tap for common action</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="section">
+    <h3>My Recommendation</h3>
+    <div class="summary-card">
+      <h4>Option A: Bottom Input Bar</h4>
+      <p>
+        Your instinct is correct: the current stacked layout prioritises setup over the actual work. On mobile, screen real estate is precious, and the most frequent action (scoring items) should get prime position.
+      </p>
+      <p>
+        The <strong>bottom input bar pattern</strong> (like iOS Messages, Slack, etc.) is the best fit because:
+      </p>
+      <div class="summary-points">
+        <div class="summary-point">
+          <h5>Items First</h5>
+          <p>Users see their items immediately without scrolling. The scoring interface gets full attention.</p>
+        </div>
+        <div class="summary-point">
+          <h5>Quick Adding</h5>
+          <p>The persistent bottom bar means adding a new item is always one tap away, no scrolling required.</p>
+        </div>
+        <div class="summary-point">
+          <h5>Familiar Pattern</h5>
+          <p>Users already know this pattern from messaging apps. Zero learning curve.</p>
+        </div>
+        <div class="summary-point">
+          <h5>Low Complexity</h5>
+          <p>Can be implemented with minimal changes to existing code. Just repositioning, not restructuring.</p>
+        </div>
+      </div>
+      <p style="margin-top: 24px;">
+        <strong>Implementation approach:</strong> Move the framework selector into the header (as a compact dropdown showing current selection). Move the item input to a sticky bottom bar on mobile only. Desktop layout remains unchanged.
+      </p>
+    </div>
+  </div>
+
+  <!-- Optional Enhancements -->
+  <div class="section">
+    <h3>Optional Enhancements (Future)</h3>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="font-size: 14px; margin-bottom: 8px;">Swipe to Delete</h4>
+        <p style="font-size: 13px; color: #64748b;">Add swipe gestures for quick item deletion on mobile.</p>
+      </div>
+      <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="font-size: 14px; margin-bottom: 8px;">Pull to Refresh</h4>
+        <p style="font-size: 13px; color: #64748b;">Native pull-to-refresh for syncing changes.</p>
+      </div>
+      <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h4 style="font-size: 14px; margin-bottom: 8px;">Bottom Sheet Details</h4>
+        <p style="font-size: 13px; color: #64748b;">Tap item to open full scoring in a bottom sheet modal.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

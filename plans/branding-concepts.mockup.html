@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori Branding Concepts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8fafc;
+      padding: 40px;
+      color: #1e293b;
+    }
+    h1 { font-family: 'Poppins', sans-serif; font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: 'Poppins', sans-serif; font-size: 20px; margin-bottom: 16px; color: #475569; }
+    h3 { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .section { margin-bottom: 48px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    /* Logo Concepts */
+    .logo-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .logo-card .concept-name {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; }
+
+    /* Concept A - Triangle Arrow */
+    .concept-a .icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .concept-a .icon::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 20px solid white;
+    }
+    .concept-a .logo-text { color: #4f46e5; }
+
+    /* Concept B - Stacked Bars */
+    .concept-b .icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 4px;
+      padding-left: 4px;
+    }
+    .concept-b .bar { height: 8px; border-radius: 4px; }
+    .concept-b .bar-1 { width: 40px; background: #4f46e5; }
+    .concept-b .bar-2 { width: 32px; background: #818cf8; }
+    .concept-b .bar-3 { width: 24px; background: #c7d2fe; }
+    .concept-b .logo-text {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Concept C - Abstract P with priority dots */
+    .concept-c .icon {
+      width: 48px;
+      height: 48px;
+      position: relative;
+    }
+    .concept-c .p-letter {
+      font-family: 'Poppins', sans-serif;
+      font-size: 40px;
+      font-weight: 700;
+      color: #4f46e5;
+      line-height: 1;
+    }
+    .concept-c .dots {
+      position: absolute;
+      right: -4px;
+      top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .concept-c .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .concept-c .dot-1 { background: #4f46e5; }
+    .concept-c .dot-2 { background: #818cf8; }
+    .concept-c .dot-3 { background: #c7d2fe; }
+    .concept-c .logo-text { color: #1e293b; }
+
+    /* Color Palette Section */
+    .palette-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .palette-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .palette-name { font-weight: 600; margin-bottom: 16px; }
+    .colors { display: flex; gap: 8px; margin-bottom: 16px; }
+    .color-swatch {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 4px;
+      font-size: 9px;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .palette-desc { font-size: 14px; color: #64748b; line-height: 1.5; }
+
+    /* Palette A - Current with refinement */
+    .palette-a .c1 { background: #4f46e5; }
+    .palette-a .c2 { background: #6366f1; }
+    .palette-a .c3 { background: #818cf8; }
+    .palette-a .c4 { background: #0ea5e9; }
+    .palette-a .c5 { background: #1e293b; }
+
+    /* Palette B - Warm Purple */
+    .palette-b .c1 { background: #7c3aed; }
+    .palette-b .c2 { background: #8b5cf6; }
+    .palette-b .c3 { background: #a78bfa; }
+    .palette-b .c4 { background: #f472b6; }
+    .palette-b .c5 { background: #1e1b4b; }
+
+    /* Palette C - Professional Teal */
+    .palette-c .c1 { background: #0d9488; }
+    .palette-c .c2 { background: #14b8a6; }
+    .palette-c .c3 { background: #5eead4; }
+    .palette-c .c4 { background: #3b82f6; }
+    .palette-c .c5 { background: #134e4a; }
+
+    /* Palette D - Bold Orange */
+    .palette-d .c1 { background: #ea580c; }
+    .palette-d .c2 { background: #f97316; }
+    .palette-d .c3 { background: #fdba74; }
+    .palette-d .c4 { background: #1e293b; }
+    .palette-d .c5 { background: #431407; }
+
+    /* Landing Page Mockup */
+    .landing-mockup {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      border-radius: 16px;
+      padding: 48px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .landing-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .landing-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .landing-icon::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-bottom: 26px solid white;
+    }
+    .landing-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 56px;
+      font-weight: 700;
+      color: #4f46e5;
+    }
+    .landing-tagline {
+      font-size: 20px;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+    .landing-subtitle {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+    .landing-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 480px;
+      margin: 0 auto;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .landing-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .landing-card p {
+      color: #64748b;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .cta-button {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      width: 100%;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+    .features {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .features h5 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #475569;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #64748b;
+    }
+    .feature-check {
+      color: #4f46e5;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Priori Branding Concepts</h1>
+  <h2>Visual identity options for your prioritisation tool</h2>
+
+  <div class="section">
+    <h3>Logo Concepts</h3>
+    <div class="grid">
+      <div class="logo-card concept-a">
+        <div class="concept-name">Concept A: Priority Arrow</div>
+        <div class="logo">
+          <div class="icon"></div>
+          <span class="logo-text">Priori</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Upward triangle symbolises rising priorities. Clean, modern, and instantly recognisable at small sizes.</p>
+      </div>
+
+      <div class="logo-card concept-b">
+        <div class="concept-name">Concept B: Stack Rank</div>
+        <div class="logo">
+          <div class="icon">
+            <div class="bar bar-1"></div>
+            <div class="bar bar-2"></div>
+            <div class="bar bar-3"></div>
+          </div>
+          <span class="logo-text">Priori</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Descending bars represent a ranked list. Gradient text adds energy. Very "product tool" aesthetic.</p>
+      </div>
+
+      <div class="logo-card concept-c">
+        <div class="concept-name">Concept C: P + Priorities</div>
+        <div class="logo">
+          <div class="icon">
+            <span class="p-letter">P</span>
+            <div class="dots">
+              <div class="dot dot-1"></div>
+              <div class="dot dot-2"></div>
+              <div class="dot dot-3"></div>
+            </div>
+          </div>
+          <span class="logo-text">riori</span>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Bold P with priority dots. Simple, memorable, works great as a favicon.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Colour Palette Options</h3>
+    <div class="palette-grid">
+      <div class="palette-card palette-a">
+        <div class="palette-name">A. Refined Indigo (Recommended)</div>
+        <div class="colors">
+          <div class="color-swatch c1">Primary</div>
+          <div class="color-swatch c2">Hover</div>
+          <div class="color-swatch c3">Light</div>
+          <div class="color-swatch c4">Accent</div>
+          <div class="color-swatch c5">Text</div>
+        </div>
+        <p class="palette-desc">Keeps your current indigo but adds a sky blue accent for variety. Professional, trustworthy, familiar.</p>
+      </div>
+
+      <div class="palette-card palette-b">
+        <div class="palette-name">B. Vibrant Purple</div>
+        <div class="colors">
+          <div class="color-swatch c1">Primary</div>
+          <div class="color-swatch c2">Hover</div>
+          <div class="color-swatch c3">Light</div>
+          <div class="color-swatch c4">Accent</div>
+          <div class="color-swatch c5">Text</div>
+        </div>
+        <p class="palette-desc">Warmer, more creative feel. Pink accent adds personality. Good for standing out.</p>
+      </div>
+
+      <div class="palette-card palette-c">
+        <div class="palette-name">C. Professional Teal</div>
+        <div class="colors">
+          <div class="color-swatch c1">Primary</div>
+          <div class="color-swatch c2">Hover</div>
+          <div class="color-swatch c3">Light</div>
+          <div class="color-swatch c4">Accent</div>
+          <div class="color-swatch c5">Text</div>
+        </div>
+        <p class="palette-desc">Distinctive, professional, calming. Less common in product tools, which helps differentiation.</p>
+      </div>
+
+      <div class="palette-card palette-d">
+        <div class="palette-name">D. Bold Orange</div>
+        <div class="colors">
+          <div class="color-swatch c1">Primary</div>
+          <div class="color-swatch c2">Hover</div>
+          <div class="color-swatch c3">Light</div>
+          <div class="color-swatch c4">Accent</div>
+          <div class="color-swatch c5">Text</div>
+        </div>
+        <p class="palette-desc">Energetic and action-oriented. High contrast, very memorable. Bold choice.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Landing Page Mockup (Concept A + Refined Indigo)</h3>
+    <div class="landing-mockup">
+      <div class="landing-logo">
+        <div class="landing-icon"></div>
+        <span class="landing-title">Priori</span>
+      </div>
+      <p class="landing-tagline">Product Prioritisation Tool</p>
+      <p class="landing-subtitle">Collaborative prioritisation made simple. No login required.</p>
+
+      <div class="landing-card">
+        <h4>Get Started</h4>
+        <p>Create a new session and share the URL with your team to start prioritising together.</p>
+        <button class="cta-button">Create New Session</button>
+
+        <div class="features">
+          <h5>Features</h5>
+          <div class="feature-item"><span class="feature-check">✓</span> Multiple prioritisation frameworks (RICE, ICE, MoSCoW, and more)</div>
+          <div class="feature-item"><span class="feature-check">✓</span> Real-time collaboration with your team</div>
+          <div class="feature-item"><span class="feature-check">✓</span> No authentication required - just share the URL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
