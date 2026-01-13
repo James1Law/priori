@@ -21,8 +21,8 @@ export default function IceScoring({ impact, confidence, ease, onChange, isUpdat
   }
 
   return (
-    <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-      <div className="space-y-4">
+    <div className="space-y-3 p-3 sm:p-4 bg-gray-50 rounded-lg">
+      <div className="space-y-4 sm:space-y-3">
         {/* Impact */}
         <div>
           <div className="flex items-center justify-between mb-1">

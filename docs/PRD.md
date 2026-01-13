@@ -91,39 +91,39 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 ## Phase 2: Scoring Frameworks
 
 ### 2.1 Framework Selector ✅
-**As a** user
-**I want** to choose a prioritisation framework
+**As a** user  
+**I want** to choose a prioritisation framework  
 **So that** I can score items appropriately
 
 **Acceptance Criteria:**
-- [x] Dropdown/tabs to select framework
-- [x] Options: RICE, ICE, Value vs Effort, MoSCoW, Weighted Scoring
-- [x] Selected framework persists to session
-- [x] UI updates to show relevant scoring inputs
+- [ ] Dropdown/tabs to select framework
+- [ ] Options: RICE, ICE, Value vs Effort, MoSCoW, Weighted Scoring
+- [ ] Selected framework persists to session
+- [ ] UI updates to show relevant scoring inputs
 
 **Tests:**
-- [x] Framework selection persists
-- [x] Correct inputs render for each framework
+- Framework selection persists
+- Correct inputs render for each framework
 
 ---
 
 ### 2.2 RICE Scoring ✅
-**As a** user
-**I want** to score items using RICE
+**As a** user  
+**I want** to score items using RICE  
 **So that** I get a quantitative ranking
 
 **Acceptance Criteria:**
-- [x] Each item shows: Reach, Impact, Confidence, Effort inputs
-- [x] Impact dropdown: Minimal (0.25), Low (0.5), Medium (1), High (2), Massive (3)
-- [x] Confidence dropdown: Low (50%), Medium (80%), High (100%)
-- [x] Reach and Effort are numeric inputs
-- [x] Score auto-calculates: (R × I × C) / E
-- [x] Items auto-sort by score (highest first)
+- [ ] Each item shows: Reach, Impact, Confidence, Effort inputs
+- [ ] Impact dropdown: Minimal (0.25), Low (0.5), Medium (1), High (2), Massive (3)
+- [ ] Confidence dropdown: Low (50%), Medium (80%), High (100%)
+- [ ] Reach and Effort are numeric inputs
+- [ ] Score auto-calculates: (R × I × C) / E
+- [ ] Items auto-sort by score (highest first)
 
 **Tests:**
-- [x] Formula calculates correctly
-- [x] Sorting works
-- [x] Edge cases (zero effort) handled
+- Formula calculates correctly
+- Sorting works
+- Edge cases (zero effort) handled
 
 **Bonus UX:**
 - [x] Debounced sorting (1.5s delay) prevents jarring movements
@@ -148,35 +148,35 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 ---
 
 ### 2.4 Value vs Effort Matrix ✅
-**As a** user
-**I want** to plot items on a 2×2 matrix
+**As a** user  
+**I want** to plot items on a 2×2 matrix  
 **So that** I can visualise quick wins vs big bets
 
 **Acceptance Criteria:**
-- [x] Each item has Value (1-10) and Effort (1-10) inputs
-- [x] 2×2 grid visualisation shows items as dots/cards
-- [x] Quadrants labelled: Quick Wins (high value, low effort), Big Bets (high value, high effort), Fill-ins (low value, low effort), Avoid (low value, high effort)
-- [x] Clicking item in matrix highlights it in list
+- [ ] Each item has Value (1-10) and Effort (1-10) inputs
+- [ ] 2×2 grid visualisation shows items as dots/cards
+- [ ] Quadrants labelled: Quick Wins (high value, low effort), Big Bets (high value, high effort), Fill-ins (low value, low effort), Avoid (low value, high effort)
+- [ ] Clicking item in matrix highlights it in list
 
 **Tests:**
-- [x] Items plot in correct quadrant
-- [x] Interaction between matrix and list works
+- Items plot in correct quadrant
+- Interaction between matrix and list works
 
 ---
 
 ### 2.5 MoSCoW Categorisation ✅
-**As a** user
-**I want** to categorise items as Must/Should/Could/Won't
+**As a** user  
+**I want** to categorise items as Must/Should/Could/Won't  
 **So that** I can scope releases
 
 **Acceptance Criteria:**
-- [x] Each item has category dropdown
-- [x] Items grouped by category in display
+- [ ] Each item has category dropdown
+- [ ] Items grouped by category in display
 - [ ] Drag-and-drop between categories (stretch - deferred)
 
 **Tests:**
-- [x] Category assignment persists
-- [x] Grouping displays correctly
+- Category assignment persists
+- Grouping displays correctly
 
 ---
 
@@ -236,8 +236,8 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 ## Phase 4: Polish & Export
 
 ### 4.1 Export to CSV ✅
-**As a** user
-**I want** to export my prioritised list
+**As a** user  
+**I want** to export my prioritised list  
 **So that** I can use it elsewhere
 
 **Acceptance Criteria:**
@@ -245,12 +245,12 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - [x] Includes: title, description, scores, rank
 
 **Tests:**
-- [x] CSV format is valid
-- [x] All data included
+- CSV format is valid
+- All data included
 
 ---
 
-### 4.2 New Session / Clear ⬜
+### 4.2 New Session / Clear ✅
 **As a** user  
 **I want** to start fresh  
 **So that** I can run a new prioritisation
@@ -265,25 +265,25 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 ---
 
-### 4.3 Session Naming ⬜
-**As a** user  
-**I want** to name my session  
+### 4.3 Session Naming ✅
+**As a** user
+**I want** to name my session
 **So that** I can identify it later
 
 **Acceptance Criteria:**
-- [ ] Editable session title
-- [ ] Shows in browser tab
+- [x] Editable session title
+- [x] Shows in browser tab
 
 ---
 
-### 4.4 Mobile Responsive ⬜
-**As a** user  
-**I want** to use Priori on mobile  
+### 4.4 Mobile Responsive ✅
+**As a** user
+**I want** to use Priori on mobile
 **So that** I can participate from anywhere
 
 **Acceptance Criteria:**
-- [ ] All features work on mobile viewport
-- [ ] Touch-friendly inputs
+- [x] All features work on mobile viewport
+- [x] Touch-friendly inputs
 
 ---
 
@@ -319,7 +319,7 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 
 **Phase 1 (MVP) - COMPLETE**
 - Deployed to Vercel
-- GitHub: https://github.com/James1Law/priori
+- https://github.com/James1Law/prioriGitHub: https://github.com/James1Law/priori
 - All core features working in production
 - Database: Supabase with RLS configured
 
@@ -335,14 +335,22 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - [x] 3.1 Real-time Sync (complete)
 - [x] 3.2 Participant Names (complete)
 
+**Phase 4 (Polish & Export) - COMPLETE**
+- [x] 4.1 Export to CSV (complete)
+- [x] 4.2 New Session / Clear (complete)
+- [x] 4.3 Session Naming (complete)
+- [x] 4.4 Mobile Responsive (complete)
+
 **Current Status:**
-- 116/116 tests passing
+- 125/125 tests passing
 - All 5 prioritisation frameworks complete
 - Real-time collaboration enabled via Supabase Realtime
 - Participant presence tracking with names
+- Mobile responsive UI with touch-friendly inputs
+- CSV export with session naming
 - UK English spelling throughout
 
 ---
 
-*Document version: 1.7*
-*Last updated: 2026-01-13 - Phase 3 Collaboration complete*
+*Document version: 1.8*
+*Last updated: 2026-01-13 - Phase 4 Polish & Export complete*

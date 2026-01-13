@@ -37,8 +37,8 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
   }
 
   return (
-    <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-3 p-3 sm:p-4 bg-gray-50 rounded-lg">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {/* Reach */}
         <div>
           <label htmlFor="reach" className="block text-xs font-medium text-gray-700 mb-1">
@@ -50,7 +50,7 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             min="0"
             value={reach}
             onChange={(e) => handleChange('reach', Number(e.target.value))}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Users/quarter"
           />
         </div>
@@ -67,7 +67,7 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             step="0.5"
             value={effort}
             onChange={(e) => handleChange('effort', Number(e.target.value))}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Person-months"
           />
         </div>
@@ -81,7 +81,7 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             id="impact"
             value={impact}
             onChange={(e) => handleChange('impact', Number(e.target.value))}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+            className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
           >
             {IMPACT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -100,7 +100,7 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             id="confidence"
             value={confidence}
             onChange={(e) => handleChange('confidence', Number(e.target.value))}
-            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+            className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
           >
             {CONFIDENCE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

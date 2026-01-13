@@ -96,16 +96,16 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
     <article
       key={item.id}
       id={`item-${item.id}`}
-      className={`bg-white border rounded-lg p-4 hover:shadow-md transition-all ${
+      className={`bg-white border rounded-lg p-3 sm:p-4 hover:shadow-md transition-all ${
         highlightedItemId === item.id
           ? 'border-indigo-500 ring-2 ring-indigo-200'
           : 'border-gray-200'
       }`}
     >
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-gray-900 text-lg">
+      <div className="flex items-start justify-between gap-2 sm:gap-4 mb-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
               {item.title}
             </h3>
             {item.created_by && (
@@ -118,16 +118,16 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
             <p className="text-gray-600 text-sm">{item.description}</p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <button
             onClick={() => onEdit(item)}
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2 -my-1 -mx-2"
           >
             Edit
           </button>
           <button
             onClick={() => onDelete(item.id)}
-            className="text-sm text-red-600 hover:text-red-800 font-medium"
+            className="text-sm text-red-600 hover:text-red-800 font-medium py-1 px-2 -my-1 -mx-2"
           >
             Delete
           </button>

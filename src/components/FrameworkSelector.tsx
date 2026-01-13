@@ -15,7 +15,7 @@ const FRAMEWORKS = [
 
 export default function FrameworkSelector({ value, onChange }: FrameworkSelectorProps) {
   return (
-    <div className="mb-6">
+    <div className="mb-4 sm:mb-6">
       <label htmlFor="framework" className="block text-sm font-medium text-gray-700 mb-2">
         Prioritisation Framework
       </label>
@@ -23,7 +23,7 @@ export default function FrameworkSelector({ value, onChange }: FrameworkSelector
         id="framework"
         value={value}
         onChange={(e) => onChange(e.target.value as Framework)}
-        className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+        className="block w-full px-4 py-3 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-base sm:text-sm"
       >
         {FRAMEWORKS.map((framework) => (
           <option key={framework.value} value={framework.value}>

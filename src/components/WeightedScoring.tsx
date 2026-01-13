@@ -22,7 +22,7 @@ export default function WeightedScoring({
 
   if (criteria.length === 0) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg">
+      <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-500 italic">
           No criteria defined. Add criteria in the sidebar to start scoring.
         </p>
@@ -31,7 +31,7 @@ export default function WeightedScoring({
   }
 
   return (
-    <div className="p-4 bg-gray-50 rounded-lg">
+    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-semibold text-gray-700">
           Weighted Score: {calculatedScore.toFixed(2)}
@@ -43,7 +43,7 @@ export default function WeightedScoring({
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4 sm:space-y-3">
         {criteria.map((criterion) => {
           const score = scores[criterion.id] ?? 5
           return (

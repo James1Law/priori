@@ -49,53 +49,56 @@ export default function WeightedCriteriaEditor({
           {criteria.map((criterion) => (
             <div
               key={criterion.id}
-              className="flex items-center gap-2 bg-white p-2 rounded border border-gray-200"
+              className="bg-white p-2 rounded border border-gray-200"
             >
-              <input
-                type="text"
-                value={criterion.name}
-                onChange={(e) =>
-                  handleUpdateCriterion(criterion.id, { name: e.target.value })
-                }
-                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Criterion name"
-                aria-label={`Criterion name for ${criterion.name || 'unnamed criterion'}`}
-              />
-              <div className="flex items-center gap-1">
-                <label className="text-xs text-gray-500">Weight:</label>
+              <div className="flex items-center gap-2">
                 <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={criterion.weight}
+                  type="text"
+                  value={criterion.name}
                   onChange={(e) =>
-                    handleUpdateCriterion(criterion.id, {
-                      weight: Math.min(10, Math.max(1, parseInt(e.target.value) || 1)),
-                    })
+                    handleUpdateCriterion(criterion.id, { name: e.target.value })
                   }
-                  className="w-14 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  aria-label={`Weight for ${criterion.name || 'criterion'}`}
+                  className="flex-1 min-w-0 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Criterion name"
+                  aria-label={`Criterion name for ${criterion.name || 'unnamed criterion'}`}
                 />
-              </div>
-              <button
-                onClick={() => handleRemoveCriterion(criterion.id)}
-                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
-                aria-label={`Remove ${criterion.name || 'criterion'}`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+                <div className="flex items-center gap-1 shrink-0">
+                  <label className="text-xs text-gray-500 hidden sm:inline">Weight:</label>
+                  <label className="text-xs text-gray-500 sm:hidden">W:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={criterion.weight}
+                    onChange={(e) =>
+                      handleUpdateCriterion(criterion.id, {
+                        weight: Math.min(10, Math.max(1, parseInt(e.target.value) || 1)),
+                      })
+                    }
+                    className="w-12 px-1.5 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center"
+                    aria-label={`Weight for ${criterion.name || 'criterion'}`}
                   />
-                </svg>
-              </button>
+                </div>
+                <button
+                  onClick={() => handleRemoveCriterion(criterion.id)}
+                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded shrink-0"
+                  aria-label={`Remove ${criterion.name || 'criterion'}`}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>

@@ -26,6 +26,8 @@ export default function SessionPage() {
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [updatingScores, setUpdatingScores] = useState<Set<string>>(new Set())
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
+  const [editingSessionName, setEditingSessionName] = useState(false)
+  const [sessionNameInput, setSessionNameInput] = useState('')
   const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   // Participant name and presence
@@ -115,6 +117,18 @@ export default function SessionPage() {
 
     fetchSession()
   }, [slug, navigate, fetchItems])
+
+  // Update browser tab title when session name changes
+  useEffect(() => {
+    if (session) {
+      document.title = session.name
+        ? `${session.name} - Priori`
+        : `Session ${session.slug} - Priori`
+    }
+    return () => {
+      document.title = 'Priori'
+    }
+  }, [session?.name, session?.slug])
 
   // Real-time subscriptions for collaborative editing
   useEffect(() => {
@@ -342,6 +356,43 @@ export default function SessionPage() {
     setItems(items.filter((item) => item.id !== itemId))
   }
 
+  const handleClearItems = async () => {
+    if (!session) return
+    if (!confirm('Are you sure you want to delete all items? This cannot be undone.')) {
+      return
+    }
+
+    const { error: deleteError } = await supabase
+      .from('items')
+      .delete()
+      .eq('session_id', session.id)
+
+    if (deleteError) {
+      console.error('Error clearing items:', deleteError)
+      alert('Failed to clear items. Please try again.')
+      return
+    }
+
+    setItems([])
+  }
+
+  const handleNewSession = async () => {
+    const { generateSlug } = await import('../lib/slug')
+    const slug = generateSlug()
+
+    const { error: insertError } = await supabase
+      .from('sessions')
+      .insert([{ slug, framework: 'rice' } as never])
+
+    if (insertError) {
+      console.error('Error creating session:', insertError)
+      alert('Failed to create new session. Please try again.')
+      return
+    }
+
+    navigate(`/s/${slug}`)
+  }
+
   const handleFrameworkChange = async (framework: Framework) => {
     if (!session) return
 
@@ -359,6 +410,31 @@ export default function SessionPage() {
     }
 
     setSession({ ...session, framework })
+  }
+
+  const handleSessionNameSave = async () => {
+    if (!session) return
+
+    const newName = sessionNameInput.trim() || null
+
+    const { error: updateError } = await supabase
+      .from('sessions')
+      .update({ name: newName } as never)
+      .eq('id', session.id)
+
+    if (updateError) {
+      console.error('Error updating session name:', updateError)
+      alert('Failed to update session name. Please try again.')
+      return
+    }
+
+    setSession({ ...session, name: newName })
+    setEditingSessionName(false)
+  }
+
+  const startEditingSessionName = () => {
+    setSessionNameInput(session?.name || '')
+    setEditingSessionName(true)
   }
 
   // Helper to calculate score based on framework
@@ -573,21 +649,57 @@ export default function SessionPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {session.name || 'Untitled Session'}
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Session: {session.slug}
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {editingSessionName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={sessionNameInput}
+                    onChange={(e) => setSessionNameInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSessionNameSave()
+                      if (e.key === 'Escape') setEditingSessionName(false)
+                    }}
+                    placeholder="Session name"
+                    className="text-xl sm:text-2xl font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none w-full"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSessionNameSave}
+                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingSessionName(false)}
+                    className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <h1
+                  className="text-xl sm:text-2xl font-bold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate"
+                  onClick={startEditingSessionName}
+                  title="Click to edit session name"
+                >
+                  {session.name || 'Untitled Session'}
+                </h1>
+              )}
+              {!session.name && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Session: {session.slug}
+                </p>
+              )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {/* Participant count */}
               {participantCount > 0 && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                  {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+                  <span className="hidden sm:inline">{participantCount} {participantCount === 1 ? 'participant' : 'participants'}</span>
+                  <span className="sm:hidden">{participantCount}</span>
                 </div>
               )}
               <button
@@ -597,29 +709,44 @@ export default function SessionPage() {
                   sessionName: session.name || session.slug,
                 })}
                 disabled={items.length === 0}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Export CSV
+                <span className="hidden sm:inline">Export CSV</span>
+                <span className="sm:hidden">Export</span>
+              </button>
+              <button
+                onClick={handleClearItems}
+                disabled={items.length === 0}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Clear
               </button>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href)
                   alert('Session URL copied to clipboard!')
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm"
               >
-                Copy URL
+                <span className="hidden sm:inline">Copy URL</span>
+                <span className="sm:hidden">Copy</span>
+              </button>
+              <button
+                onClick={handleNewSession}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm"
+              >
+                New
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Add Item Form */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6 sticky top-8">
+          <div className="lg:col-span-1 order-first lg:order-none">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6 lg:sticky lg:top-8">
               <FrameworkSelector
                 value={session.framework}
                 onChange={handleFrameworkChange}
@@ -639,7 +766,7 @@ export default function SessionPage() {
           </div>
 
           {/* Items List */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Value vs Effort Matrix */}
             {session.framework === 'value_effort' && items.length > 0 && (
               <ValueEffortMatrix
@@ -649,9 +776,9 @@ export default function SessionPage() {
               />
             )}
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Items ({items.length})
                 </h2>
               </div>
