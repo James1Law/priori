@@ -3,6 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { generateSlug } from '../lib/slug'
 import { supabase } from '../lib/supabase'
 
+function Logo({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      fill="none"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="brand-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#4f46e5" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+      </defs>
+      <rect width="48" height="48" rx="12" fill="url(#brand-gradient)" />
+      <path d="M24 12L36 34H12L24 12Z" fill="white" />
+    </svg>
+  )
+}
+
 export default function LandingPage() {
   const [isCreating, setIsCreating] = useState(false)
   const navigate = useNavigate()
@@ -30,10 +50,13 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 flex items-center justify-center p-4 font-body">
       <div className="max-w-2xl w-full">
         <header className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-gray-900 mb-4">Priori</h1>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Logo className="w-16 h-16 drop-shadow-lg" />
+            <h1 className="text-6xl font-display font-bold text-indigo-600">Priori</h1>
+          </div>
           <p className="text-xl text-gray-600 mb-2">
             Product Prioritisation Tool
           </p>
@@ -42,8 +65,8 @@ export default function LandingPage() {
           </p>
         </header>
 
-        <section className="bg-white rounded-lg shadow-xl p-8" aria-labelledby="get-started-heading">
-          <h2 id="get-started-heading" className="text-2xl font-semibold text-gray-800 mb-4">
+        <section className="bg-white rounded-2xl shadow-xl p-8" aria-labelledby="get-started-heading">
+          <h2 id="get-started-heading" className="text-2xl font-display font-semibold text-gray-800 mb-4">
             Get Started
           </h2>
           <p className="text-gray-600 mb-6">
@@ -54,7 +77,7 @@ export default function LandingPage() {
           <button
             onClick={handleCreateSession}
             disabled={isCreating}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 text-lg"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 text-lg shadow-lg shadow-indigo-600/30"
           >
             {isCreating ? 'Creating Session...' : 'Create New Session'}
           </button>
@@ -63,15 +86,15 @@ export default function LandingPage() {
             <h3 className="font-semibold text-gray-800 mb-3">Features</h3>
             <ul className="space-y-2 text-gray-600">
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">✓</span>
+                <span className="text-indigo-600 mr-2 font-bold">✓</span>
                 <span>Multiple prioritisation frameworks (RICE, ICE, MoSCoW, and more)</span>
               </li>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">✓</span>
+                <span className="text-indigo-600 mr-2 font-bold">✓</span>
                 <span>Real-time collaboration with your team</span>
               </li>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">✓</span>
+                <span className="text-indigo-600 mr-2 font-bold">✓</span>
                 <span>No authentication required - just share the URL</span>
               </li>
             </ul>

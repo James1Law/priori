@@ -18,6 +18,26 @@ import { usePresence } from '../hooks/usePresence'
 const ValueEffortMatrix = lazy(() => import('../components/ValueEffortMatrix'))
 const WeightedCriteriaEditor = lazy(() => import('../components/WeightedCriteriaEditor'))
 
+function Logo({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      fill="none"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="header-brand-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#4f46e5" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+      </defs>
+      <rect width="48" height="48" rx="12" fill="url(#header-brand-gradient)" />
+      <path d="M24 12L36 34H12L24 12Z" fill="white" />
+    </svg>
+  )
+}
+
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
@@ -686,52 +706,57 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-body">
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              {editingSessionName ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={sessionNameInput}
-                    onChange={(e) => setSessionNameInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSessionNameSave()
-                      if (e.key === 'Escape') setEditingSessionName(false)
-                    }}
-                    placeholder="Session name"
-                    className="text-xl sm:text-2xl font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none w-full"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleSessionNameSave}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            <div className="min-w-0 flex-1 flex items-center gap-3">
+              <a href="/" className="flex-shrink-0" title="Go to home">
+                <Logo className="w-10 h-10" />
+              </a>
+              <div className="min-w-0 flex-1">
+                {editingSessionName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={sessionNameInput}
+                      onChange={(e) => setSessionNameInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSessionNameSave()
+                        if (e.key === 'Escape') setEditingSessionName(false)
+                      }}
+                      placeholder="Session name"
+                      className="text-xl sm:text-2xl font-display font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none w-full"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSessionNameSave}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingSessionName(false)}
+                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <h1
+                    className="text-xl sm:text-2xl font-display font-bold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate"
+                    onClick={startEditingSessionName}
+                    title="Click to edit session name"
                   >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingSessionName(false)}
-                    className="text-sm text-gray-500 hover:text-gray-700 font-medium"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <h1
-                  className="text-xl sm:text-2xl font-bold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate"
-                  onClick={startEditingSessionName}
-                  title="Click to edit session name"
-                >
-                  {session.name || 'Untitled Session'}
-                </h1>
-              )}
-              {!session.name && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Session: {session.slug}
-                </p>
-              )}
+                    {session.name || 'Untitled Session'}
+                  </h1>
+                )}
+                {!session.name && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Session: {session.slug}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {/* Participant count */}
@@ -800,7 +825,7 @@ export default function SessionPage() {
                   />
                 </Suspense>
               )}
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              <h2 className="text-xl font-display font-semibold text-gray-900 mb-4">
                 Add New Item
               </h2>
               <ItemForm onAdd={handleAddItem} />
@@ -822,7 +847,7 @@ export default function SessionPage() {
 
             <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
                   Items ({items.length})
                 </h2>
               </div>

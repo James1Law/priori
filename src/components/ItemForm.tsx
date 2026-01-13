@@ -47,7 +47,7 @@ export default function ItemForm({ onAdd }: ItemFormProps) {
       <button
         type="submit"
         disabled={!title.trim()}
-        className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition-colors"
+        className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed text-white font-semibold py-3 sm:py-2 px-4 rounded-xl transition-colors shadow-lg shadow-indigo-600/30"
       >
         Add Item
       </button>

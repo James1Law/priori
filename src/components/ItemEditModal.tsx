@@ -30,9 +30,9 @@ export default function ItemEditModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 font-body">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
+        <h2 className="text-2xl font-display font-semibold text-gray-900 mb-4">
           Edit Item
         </h2>
 
@@ -74,14 +74,14 @@ export default function ItemEditModal({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim()}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl transition-colors shadow-lg shadow-indigo-600/30"
             >
               Save Changes
             </button>
