@@ -562,9 +562,16 @@ export default function SessionPage() {
       }
     }
 
-    // Refetch items to update scores and re-sort
-    if (session) {
-      await fetchItems(session.id, session.framework)
+    // Re-sort items based on updated scores (no need to refetch - local state is already updated)
+    if (session && (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted')) {
+      setItems((prevItems) => {
+        const sorted = [...prevItems].sort((a, b) => {
+          const scoreA = a.score?.calculated_score || 0
+          const scoreB = b.score?.calculated_score || 0
+          return scoreB - scoreA // Descending order
+        })
+        return sorted
+      })
     }
 
     // Remove from updating state
