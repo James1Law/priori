@@ -38,13 +38,13 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
   const getDefaultRiceScores = (item: ItemWithScore): RiceScores => {
     if (item.score && item.score.criteria) {
       return {
-        reach: (item.score.criteria.reach as number) || 0,
+        reach: (item.score.criteria.reach as number) ?? 100,
         impact: (item.score.criteria.impact as number) || 1,
         confidence: (item.score.criteria.confidence as number) || 0.8,
         effort: (item.score.criteria.effort as number) || 1,
       }
     }
-    return { reach: 0, impact: 1, confidence: 0.8, effort: 1 }
+    return { reach: 100, impact: 1, confidence: 0.8, effort: 1 }
   }
 
   const getDefaultIceScores = (item: ItemWithScore): IceScores => {

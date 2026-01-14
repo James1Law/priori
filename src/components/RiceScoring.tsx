@@ -46,10 +46,12 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
           </label>
           <input
             id="reach"
-            type="number"
-            min="0"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={reach}
-            onChange={(e) => handleChange('reach', Number(e.target.value))}
+            onChange={(e) => handleChange('reach', Number(e.target.value) || 0)}
+            onFocus={(e) => e.target.select()}
             className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Users/quarter"
           />
@@ -62,11 +64,12 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
           </label>
           <input
             id="effort"
-            type="number"
-            min="0"
-            step="0.5"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9]*\.?[0-9]*"
             value={effort}
-            onChange={(e) => handleChange('effort', Number(e.target.value))}
+            onChange={(e) => handleChange('effort', Number(e.target.value) || 0)}
+            onFocus={(e) => e.target.select()}
             className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Person-months"
           />
