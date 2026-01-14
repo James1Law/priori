@@ -375,6 +375,22 @@ export default function SessionPage() {
     // Add to items list with score, then sort
     const newItemWithScore: ItemWithScore = { ...newItemData, score: defaultScore }
     setItems((prevItems) => {
+      // Check for duplicates (realtime subscription may have already added it)
+      if (prevItems.some((item) => item.id === newItemWithScore.id)) {
+        // Update existing item with score instead of adding duplicate
+        const updatedItems = prevItems.map((item) =>
+          item.id === newItemWithScore.id ? newItemWithScore : item
+        )
+        // Sort if using a scored framework
+        if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted') {
+          updatedItems.sort((a, b) => {
+            const scoreA = a.score?.calculated_score || 0
+            const scoreB = b.score?.calculated_score || 0
+            return scoreB - scoreA
+          })
+        }
+        return updatedItems
+      }
       const updatedItems = [...prevItems, newItemWithScore]
       // Sort if using a scored framework
       if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted') {
