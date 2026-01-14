@@ -600,10 +600,10 @@ export default function SessionPage() {
     // Mark item as updating
     setUpdatingScores((prev) => new Set(prev).add(itemId))
 
-    // Update local score immediately for instant feedback
+    // Update local score immediately for instant feedback (sorting happens after save completes)
     const calculatedScore = calculateScore(scores, session.framework, session.weighted_criteria)
-    setItems((prevItems) => {
-      const updatedItems = prevItems.map((item) =>
+    setItems((prevItems) =>
+      prevItems.map((item) =>
         item.id === itemId
           ? {
               ...item,
@@ -617,16 +617,7 @@ export default function SessionPage() {
             }
           : item
       )
-      // Sort immediately for frameworks that use scoring
-      if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted') {
-        updatedItems.sort((a, b) => {
-          const scoreA = a.score?.calculated_score || 0
-          const scoreB = b.score?.calculated_score || 0
-          return scoreB - scoreA // Descending order
-        })
-      }
-      return updatedItems
-    })
+    )
 
     // Create new timeout for saving
     const timeoutId = setTimeout(() => {
