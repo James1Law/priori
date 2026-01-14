@@ -458,6 +458,8 @@ export default function SessionPage() {
     }
 
     setSession({ ...session, framework })
+    // Fetch items with the new framework's scores
+    await fetchItems(session.id, framework)
   }
 
   const handleSessionNameSave = async () => {
