@@ -348,7 +348,62 @@ export default function SessionPage() {
       return
     }
 
-    setItems([...items, data as Item])
+    const newItemData = data as Item
+
+    // Create default score for scored frameworks so sorting works correctly
+    let defaultScore: Score | undefined
+    if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'value_effort' || session.framework === 'weighted') {
+      const defaultCriteria = getDefaultCriteria(session.framework)
+      const calculatedScore = calculateScore(defaultCriteria as Record<string, number | string | WeightedItemScores>, session.framework, session.weighted_criteria)
+
+      const { data: scoreData } = await supabase
+        .from('scores')
+        .insert([{
+          item_id: newItemData.id,
+          framework: session.framework,
+          criteria: defaultCriteria,
+          calculated_score: calculatedScore,
+        } as never])
+        .select()
+        .single()
+
+      if (scoreData) {
+        defaultScore = scoreData as Score
+      }
+    }
+
+    // Add to items list with score, then sort
+    const newItemWithScore: ItemWithScore = { ...newItemData, score: defaultScore }
+    setItems((prevItems) => {
+      const updatedItems = [...prevItems, newItemWithScore]
+      // Sort if using a scored framework
+      if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted') {
+        updatedItems.sort((a, b) => {
+          const scoreA = a.score?.calculated_score || 0
+          const scoreB = b.score?.calculated_score || 0
+          return scoreB - scoreA
+        })
+      }
+      return updatedItems
+    })
+  }
+
+  // Get default criteria for a framework
+  const getDefaultCriteria = (framework: Framework): Record<string, unknown> => {
+    switch (framework) {
+      case 'rice':
+        return { reach: 100, impact: 1, confidence: 0.8, effort: 1 }
+      case 'ice':
+        return { impact: 5, confidence: 5, ease: 5 }
+      case 'value_effort':
+        return { value: 5, effort: 5 }
+      case 'weighted':
+        return { scores: {} }
+      case 'moscow':
+        return { category: 'must' }
+      default:
+        return {}
+    }
   }
 
   const handleEditItem = async (updatedItem: Item) => {
