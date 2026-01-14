@@ -127,9 +127,12 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
             )}
           </div>
           <div className="flex gap-2 shrink-0">
+            {/* Hide edit button on mobile - scores are always editable inline */}
             <button
               onClick={() => onEdit(item)}
-              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2 -my-1 -mx-2"
+              className={`text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2 -my-1 -mx-2 ${
+                isTouchDevice ? 'hidden sm:inline-block' : ''
+              }`}
             >
               Edit
             </button>

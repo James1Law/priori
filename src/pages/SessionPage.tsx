@@ -59,6 +59,10 @@ export default function SessionPage() {
     variant: 'danger' | 'warning' | 'default'
     onConfirm: () => void
   } | null>(null)
+  const [notification, setNotification] = useState<{
+    title: string
+    message: string
+  } | null>(null)
   const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   // Participant name and presence
@@ -811,7 +815,10 @@ export default function SessionPage() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href)
-                  alert('Session URL copied to clipboard!')
+                  setNotification({
+                    title: 'URL Copied',
+                    message: 'Session URL has been copied to your clipboard. Share it with your team to collaborate!',
+                  })
                 }}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm"
               >
@@ -917,6 +924,18 @@ export default function SessionPage() {
           variant={confirmModal.variant}
           onConfirm={confirmModal.onConfirm}
           onCancel={() => setConfirmModal(null)}
+        />
+      )}
+
+      {/* Notification modal */}
+      {notification && (
+        <ConfirmModal
+          title={notification.title}
+          message={notification.message}
+          confirmLabel="OK"
+          variant="default"
+          onConfirm={() => setNotification(null)}
+          onCancel={() => setNotification(null)}
         />
       )}
     </div>

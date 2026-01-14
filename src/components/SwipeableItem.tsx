@@ -29,12 +29,12 @@ export default function SwipeableItem({
       {/* Delete action revealed behind the card */}
       <div
         className={`absolute inset-y-0 right-0 flex items-center bg-red-500 px-6 transition-opacity ${
-          isRevealed ? 'opacity-100' : 'opacity-0'
+          isRevealed ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         <button
           onClick={handleDelete}
-          className="text-white font-semibold text-sm"
+          className="text-white font-semibold text-sm py-2 px-4"
           aria-label="Delete item"
         >
           Delete
