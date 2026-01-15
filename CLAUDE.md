@@ -7,7 +7,8 @@ Priori is a lightweight, collaborative product prioritisation web app. It uses a
 - **Frontend:** React 18 + TypeScript + Vite
 - **Styling:** Tailwind CSS
 - **Backend/DB:** Supabase (PostgreSQL + Realtime)
-- **Testing:** Vitest + React Testing Library
+- **Unit Testing:** Vitest + React Testing Library
+- **E2E Testing:** Playwright
 - **Hosting:** Vercel (live in production)
 
 ## Project Structure
@@ -20,8 +21,10 @@ priori/
 │   ├── types/          # TypeScript types/interfaces
 │   ├── frameworks/     # Prioritisation framework configs & logic
 │   └── pages/          # Route components
-├── tests/              # Test files (mirror src structure)
+├── tests/              # Unit test files (mirror src structure)
+├── e2e/                # Playwright E2E tests
 ├── docs/               # PRD, specs, decisions
+├── plans/              # Design mockups (.mockup.html files)
 └── supabase/           # Database migrations, seed data
 ```
 
@@ -29,17 +32,26 @@ priori/
 
 ### Development
 - `npm run dev` — Start local dev server
-- `npm run test` — Run tests in watch mode
-- `npm run test:run` — Run tests once
-- `npm run lint` — Lint code
 - `npm run build` — Production build
+- `npm run lint` — Lint code
+
+### Unit Tests (Vitest)
+- `npm run test` — Run unit tests in watch mode
+- `npm run test:run` — Run unit tests once
+
+### E2E Tests (Playwright)
+- `npm run test:e2e` — Run all E2E tests (headless)
+- `npm run test:e2e:headed` — Run E2E tests with visible browser
+- `npm run test:e2e:ui` — Open Playwright UI for interactive debugging
+- Tests are in `e2e/` folder, config in `playwright.config.ts`
+- Covers: session creation, scoring, backlog view, cutoff line, mobile
 
 ### Custom Commands (for Claude)
 When I say:
 - **"next feature"** — Read docs/PRD.md, find the next incomplete feature, summarise it and ask for confirmation before starting
 - **"current status"** — List completed features, current feature in progress, and remaining features
 - **"test this"** — Run tests for the current feature/component being worked on
-- **"ship check"** — Run full test suite, lint, and build to verify everything passes
+- **"ship check"** — Run full test suite (unit + E2E), lint, and build to verify everything passes
 
 ## Development Rules
 
@@ -51,7 +63,7 @@ When I say:
 ### 2. Production Deployment
 - App is live on Vercel (auto-deploys from `main` branch)
 - Test locally with `npm run dev` before pushing
-- Run `npm run test:run && npm run build` to verify before pushing
+- Run `npm run test:run && npm run test:e2e && npm run build` to verify before pushing
 
 ### 3. Incremental Development
 - Build one feature at a time from the PRD
@@ -77,6 +89,11 @@ When I say:
 | id | uuid | PK, auto-generated |
 | slug | text | Unique URL identifier (e.g., "abc123") |
 | name | text | Optional session name |
+| framework | text | e.g., "rice", "ice", "moscow" |
+| view | text | Current view: "scoring" or "backlog" |
+| weighted_criteria | jsonb | Custom criteria for weighted scoring |
+| cutoff_position | integer | Position of cutoff line in backlog view |
+| cutoff_label | text | Label for cutoff line (default: "Cutoff") |
 | created_at | timestamp | Auto |
 | updated_at | timestamp | Auto |
 
@@ -87,8 +104,10 @@ When I say:
 | session_id | uuid | FK to sessions |
 | title | text | Required |
 | description | text | Optional |
+| position | integer | For ordering in scoring view |
+| backlog_position | integer | For manual ordering in backlog view |
+| created_by | text | Participant who created the item |
 | created_at | timestamp | Auto |
-| position | integer | For manual ordering |
 
 ### scores
 | Column | Type | Notes |
@@ -163,7 +182,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 5.2 Performance
 - [x] Phase 6 (Branding & UX Polish) - COMPLETE
   - [x] 6.1 Brand Identity (logo, Poppins/Inter typography, indigo colour scheme)
-  - [x] 6.2 Mobile UX Improvements (bottom input bar, swipe-to-delete)
+  - [x] 6.2 Mobile UX Improvements (bottom input bar, touch-friendly delete)
   - [x] 6.3 Custom Confirmation Modals (replaced browser confirm() dialogs)
 
 ## Recent Changes (Phase 6)
@@ -176,7 +195,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 
 ### Mobile UX Improvements
 - **Bottom Input Bar**: On mobile, the sidebar is hidden and replaced with a fixed bottom bar containing a compact framework selector and quick-add input
-- **Swipe-to-Delete**: Items can be swiped left to reveal a delete button (touch devices only)
+- **Touch-friendly Delete**: Tap trash icon to delete items (consistent with desktop)
 - **Safe Area Support**: Proper padding for notched devices (iPhone etc.)
 - Desktop layout remains unchanged - these are mobile-only enhancements
 
@@ -186,16 +205,16 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Features**: Keyboard support (Escape to close), backdrop click to dismiss, responsive layout
 - Used for: Delete item, Clear all items
 
-### Key New Components
+### Key Components (Phase 6)
 - `src/components/MobileBottomBar.tsx` - Fixed bottom input bar for mobile
-- `src/components/SwipeableItem.tsx` - Swipe gesture wrapper for items
 - `src/components/ConfirmModal.tsx` - Branded confirmation modal
-- `src/hooks/useSwipeToDelete.ts` - Touch gesture handling hook
 
 ## Production Details
+- **Live Site**: https://priori.work
 - **GitHub**: https://github.com/James1Law/priori
-- **Live Site**: Deployed on Vercel (auto-deploys from main)
-- **Tests**: 172 passing
+- **Hosting**: Vercel (auto-deploys from main)
+- **Unit Tests**: 204 passing (Vitest)
+- **E2E Tests**: Playwright (session, backlog, cutoff, mobile)
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
 
@@ -222,7 +241,6 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 ### Technical Improvements
 - **PWA Support**: Offline capability with service workers
 - **Performance Monitoring**: Add analytics for load times and interactions
-- **E2E Tests**: Add Playwright tests for critical user journeys
 
 ---
-*Last updated: 2026-01-13 - Phase 6 Branding & UX Polish complete*
+*Last updated: 2026-01-15 - Phase 7 (Backlog View) complete, E2E tests added, live at priori.work*

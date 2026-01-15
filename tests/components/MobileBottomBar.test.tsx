@@ -5,7 +5,9 @@ import MobileBottomBar from '../../src/components/MobileBottomBar'
 describe('MobileBottomBar', () => {
   const defaultProps = {
     framework: 'rice' as const,
+    view: 'scoring' as const,
     onFrameworkChange: vi.fn(),
+    onViewChange: vi.fn(),
     onAddItem: vi.fn(),
   }
 
@@ -112,5 +114,53 @@ describe('MobileBottomBar', () => {
     expect(screen.getByRole('option', { name: 'Value/Effort' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'MoSCoW' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Weighted' })).toBeInTheDocument()
+  })
+
+  // View toggle tests
+  it('renders view toggle buttons', () => {
+    render(<MobileBottomBar {...defaultProps} />)
+
+    expect(screen.getByRole('button', { name: /scoring/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
+  })
+
+  it('highlights scoring button when view is scoring', () => {
+    render(<MobileBottomBar {...defaultProps} view="scoring" />)
+
+    const scoringBtn = screen.getByRole('button', { name: /scoring/i })
+    expect(scoringBtn).toHaveClass('bg-indigo-600')
+  })
+
+  it('highlights backlog button when view is backlog', () => {
+    render(<MobileBottomBar {...defaultProps} view="backlog" />)
+
+    const backlogBtn = screen.getByRole('button', { name: /backlog/i })
+    expect(backlogBtn).toHaveClass('bg-indigo-600')
+  })
+
+  it('calls onViewChange when clicking backlog button', () => {
+    const onViewChange = vi.fn()
+    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
+
+    const backlogBtn = screen.getByRole('button', { name: /backlog/i })
+    fireEvent.click(backlogBtn)
+
+    expect(onViewChange).toHaveBeenCalledWith('backlog')
+  })
+
+  it('shows framework selector only in scoring view', () => {
+    const { rerender } = render(<MobileBottomBar {...defaultProps} view="scoring" />)
+    expect(screen.getByRole('combobox')).toBeInTheDocument()
+
+    rerender(<MobileBottomBar {...defaultProps} view="backlog" />)
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+  })
+
+  it('shows add input in both views', () => {
+    const { rerender } = render(<MobileBottomBar {...defaultProps} view="scoring" />)
+    expect(screen.getByPlaceholderText(/add new item/i)).toBeInTheDocument()
+
+    rerender(<MobileBottomBar {...defaultProps} view="backlog" />)
+    expect(screen.getByPlaceholderText(/add new item/i)).toBeInTheDocument()
   })
 })

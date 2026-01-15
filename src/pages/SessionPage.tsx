@@ -1,18 +1,20 @@
 import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData } from '../types/database'
+import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData, ViewMode } from '../types/database'
 import { calculateRiceScore } from '../lib/rice'
 import { calculateIceScore } from '../lib/ice'
 import { calculateWeightedScore, type WeightedCriterion, type WeightedItemScores } from '../lib/weighted'
 import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
+import BacklogList from '../components/BacklogList'
 import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
 import ConfirmModal from '../components/ConfirmModal'
+import ViewTabs from '../components/ViewTabs'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 
@@ -64,6 +66,13 @@ export default function SessionPage() {
     message: string
   } | null>(null)
   const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  // Ref to track current framework for realtime callbacks (avoids stale closure)
+  const frameworkRef = useRef<Framework | undefined>(session?.framework)
+
+  // Keep frameworkRef in sync with session.framework
+  useEffect(() => {
+    frameworkRef.current = session?.framework
+  }, [session?.framework])
 
   // Participant name and presence
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
@@ -140,7 +149,8 @@ export default function SessionPage() {
         }
 
         const sessionData = data as Session
-        setSession(sessionData)
+        // Default view to 'scoring' if not set (backwards compatibility)
+        setSession({ ...sessionData, view: sessionData.view || 'scoring' })
         await fetchItems(sessionData.id, sessionData.framework)
       } catch (err) {
         console.error('Error fetching session:', err)
@@ -257,8 +267,9 @@ export default function SessionPage() {
 
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newScore = payload.new as Score
-            // Only update if framework matches
-            if (newScore.framework !== session.framework) return
+            // Only update if framework matches (use ref to avoid stale closure)
+            const currentFramework = frameworkRef.current
+            if (newScore.framework !== currentFramework) return
 
             setItems((prevItems) => {
               const updatedItems = prevItems.map((item) =>
@@ -267,7 +278,7 @@ export default function SessionPage() {
                   : item
               )
               // Re-sort if using a scored framework
-              if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted') {
+              if (currentFramework === 'rice' || currentFramework === 'ice' || currentFramework === 'weighted') {
                 updatedItems.sort((a, b) => {
                   const scoreA = a.score?.calculated_score || 0
                   const scoreB = b.score?.calculated_score || 0
@@ -304,8 +315,8 @@ export default function SessionPage() {
         (payload) => {
           const updatedSession = payload.new as Session
           setSession(updatedSession)
-          // Refetch items if framework changed
-          if (updatedSession.framework !== session.framework) {
+          // Refetch items if framework changed (use ref for comparison)
+          if (updatedSession.framework !== frameworkRef.current) {
             fetchItems(session.id, updatedSession.framework)
           }
         }
@@ -318,7 +329,8 @@ export default function SessionPage() {
       supabase.removeChannel(scoresChannel)
       supabase.removeChannel(sessionChannel)
     }
-  }, [session?.id, session?.framework, fetchItems])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- items and session used via refs to avoid stale closures
+  }, [session?.id, fetchItems])
 
   const handleAddItem = async (newItem: {
     title: string
@@ -531,6 +543,137 @@ export default function SessionPage() {
     setSession({ ...session, framework })
     // Fetch items with the new framework's scores
     await fetchItems(session.id, framework)
+  }
+
+  const handleViewChange = async (view: ViewMode) => {
+    if (!session) return
+
+    // Optimistically update local state
+    setSession({ ...session, view })
+
+    // Persist to database (non-blocking)
+    const { error: updateError } = await supabase
+      .from('sessions')
+      .update({ view } as never)
+      .eq('id', session.id)
+
+    if (updateError) {
+      console.error('Error updating view:', updateError)
+      // Revert on error
+      setSession({ ...session })
+    }
+  }
+
+  // Check if items are in manual order (any item has backlog_position set)
+  const isManualOrder = items.some((item) => item.backlog_position !== null && item.backlog_position !== undefined)
+
+  // Get items sorted for scoring view (always by calculated score, ignoring backlog_position)
+  const scoringViewItems = [...items].sort((a, b) => {
+    const scoreA = a.score?.calculated_score || 0
+    const scoreB = b.score?.calculated_score || 0
+    return scoreB - scoreA // Descending order
+  })
+
+  // Get items sorted for backlog view (by backlog_position if set, otherwise by score)
+  const backlogViewItems = isManualOrder
+    ? [...items].sort((a, b) => {
+        const posA = a.backlog_position ?? Number.MAX_SAFE_INTEGER
+        const posB = b.backlog_position ?? Number.MAX_SAFE_INTEGER
+        return posA - posB
+      })
+    : [...items].sort((a, b) => {
+        const scoreA = a.score?.calculated_score || 0
+        const scoreB = b.score?.calculated_score || 0
+        return scoreB - scoreA
+      })
+
+  const handleBacklogReorder = async (reorderedItems: ItemWithScore[]) => {
+    if (!session) return
+
+    // Optimistically update local state with new positions
+    const itemsWithPositions = reorderedItems.map((item, index) => ({
+      ...item,
+      backlog_position: index,
+    }))
+    setItems(itemsWithPositions)
+
+    // Persist to database
+    const updates = reorderedItems.map((item, index) => ({
+      id: item.id,
+      backlog_position: index,
+    }))
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from('items')
+        .update({ backlog_position: update.backlog_position } as never)
+        .eq('id', update.id)
+
+      if (error) {
+        console.error('Error updating item position:', error)
+      }
+    }
+  }
+
+  const handleResetBacklogOrder = async () => {
+    if (!session) return
+
+    // Reset all items to have null backlog_position
+    const resetItems = items.map((item) => ({
+      ...item,
+      backlog_position: null,
+    }))
+    setItems(resetItems)
+
+    // Persist to database
+    for (const item of items) {
+      const { error } = await supabase
+        .from('items')
+        .update({ backlog_position: null } as never)
+        .eq('id', item.id)
+
+      if (error) {
+        console.error('Error resetting item position:', error)
+      }
+    }
+  }
+
+  const handleCutoffChange = async (position: number | null) => {
+    if (!session) return
+
+    // Optimistically update local state
+    setSession({ ...session, cutoff_position: position })
+
+    // Persist to database
+    const { error } = await supabase
+      .from('sessions')
+      .update({ cutoff_position: position } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error updating cutoff position:', error)
+      // Revert on error
+      setSession({ ...session })
+    }
+  }
+
+  const handleCutoffLabelChange = async (label: string) => {
+    if (!session) return
+
+    // Optimistically update local state
+    setSession({ ...session, cutoff_label: label })
+
+    // Persist to database
+    const { error } = await supabase
+      .from('sessions')
+      .update({ cutoff_label: label } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error updating cutoff label:', error)
+      // Revert on error
+      setSession({ ...session })
+    }
   }
 
   const handleSessionNameSave = async () => {
@@ -916,6 +1059,16 @@ export default function SessionPage() {
         </div>
       </header>
 
+      {/* View Tabs - hidden on mobile, shown on desktop */}
+      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <ViewTabs
+            value={session.view || 'scoring'}
+            onChange={handleViewChange}
+          />
+        </div>
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Add Item Form - hidden on mobile, shown in sidebar on desktop */}
@@ -943,34 +1096,63 @@ export default function SessionPage() {
 
           {/* Items List - add bottom padding on mobile for the bottom bar */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6 pb-24 lg:pb-0">
-            {/* Value vs Effort Matrix */}
-            {session.framework === 'value_effort' && items.length > 0 && (
-              <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
-                <ValueEffortMatrix
-                  items={items}
-                  onItemClick={handleMatrixItemClick}
-                  selectedItemId={highlightedItemId || undefined}
-                />
-              </Suspense>
+            {/* Scoring View */}
+            {(session.view || 'scoring') === 'scoring' && (
+              <>
+                {/* Value vs Effort Matrix */}
+                {session.framework === 'value_effort' && items.length > 0 && (
+                  <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
+                    <ValueEffortMatrix
+                      items={scoringViewItems}
+                      onItemClick={handleMatrixItemClick}
+                      selectedItemId={highlightedItemId || undefined}
+                    />
+                  </Suspense>
+                )}
+
+                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
+                      Items ({items.length})
+                    </h2>
+                  </div>
+                  <ItemList
+                    items={scoringViewItems}
+                    framework={session.framework}
+                    onEdit={setEditingItem}
+                    onDelete={handleDeleteItem}
+                    onScoreUpdate={handleScoreUpdate}
+                    updatingScores={updatingScores}
+                    highlightedItemId={highlightedItemId || undefined}
+                    weightedCriteria={session.weighted_criteria}
+                  />
+                </div>
+              </>
             )}
 
-            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
-                  Items ({items.length})
-                </h2>
+            {/* Backlog View */}
+            {session.view === 'backlog' && (
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
+                    Prioritised Backlog ({items.length})
+                  </h2>
+                </div>
+                <BacklogList
+                  items={backlogViewItems}
+                  framework={session.framework}
+                  isManualOrder={isManualOrder}
+                  cutoffPosition={session.cutoff_position}
+                  cutoffLabel={session.cutoff_label}
+                  onEdit={setEditingItem}
+                  onDelete={handleDeleteItem}
+                  onReorder={handleBacklogReorder}
+                  onResetOrder={handleResetBacklogOrder}
+                  onCutoffChange={handleCutoffChange}
+                  onCutoffLabelChange={handleCutoffLabelChange}
+                />
               </div>
-              <ItemList
-                items={items}
-                framework={session.framework}
-                onEdit={setEditingItem}
-                onDelete={handleDeleteItem}
-                onScoreUpdate={handleScoreUpdate}
-                updatingScores={updatingScores}
-                highlightedItemId={highlightedItemId || undefined}
-                weightedCriteria={session.weighted_criteria}
-              />
-            </div>
+            )}
           </div>
         </div>
       </main>
@@ -978,7 +1160,9 @@ export default function SessionPage() {
       {/* Mobile bottom bar - only visible below lg breakpoint */}
       <MobileBottomBar
         framework={session.framework}
+        view={session.view || 'scoring'}
         onFrameworkChange={handleFrameworkChange}
+        onViewChange={handleViewChange}
         onAddItem={handleAddItem}
       />
 

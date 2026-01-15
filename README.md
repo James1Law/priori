@@ -1,6 +1,6 @@
 # Priori
 
-> **Live in Production** | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
+> **Live at **[**priory.work**](https://priory.work) | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
 
 A lightweight, collaborative product prioritisation web app. No authentication required - just share a URL and start prioritising together.
 
@@ -19,6 +19,13 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **MoSCoW**: Must, Should, Could, Won't categorisation
 - **Weighted Scoring**: Custom criteria with configurable weights
 
+### Backlog View
+- **Prioritised Backlog**: View items ranked by score in a clean list
+- **Manual Reordering**: Drag-and-drop to override score-based order
+- **Cutoff Line**: Visual separator to define scope (what's in vs out)
+- **Editable Cutoff Label**: Customise the cutoff label (e.g., "MVP", "Sprint 1")
+- **View Switching**: Toggle between Scoring view and Backlog view
+
 ### Export & Sharing
 - **CSV Export**: Download prioritised items as spreadsheet
 - **Copy URL**: Quick sharing with one click
@@ -27,7 +34,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 ### Mobile Experience
 - **Responsive Design**: Works on all screen sizes
 - **Bottom Input Bar**: Quick item entry on mobile
-- **Swipe-to-Delete**: Native gesture support on touch devices
+- **Touch-friendly Delete**: Tap trash icon to remove items
 
 ### Polish
 - **Custom Brand**: Indigo colour scheme, Poppins/Inter typography
@@ -39,7 +46,8 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Testing**: Vitest + React Testing Library (172 tests)
+- **Unit Testing**: Vitest + React Testing Library (200+ tests)
+- **E2E Testing**: Playwright
 - **Hosting**: Vercel (auto-deploys from main)
 
 ## Development
@@ -94,8 +102,10 @@ Visit `http://localhost:5173`
 ```bash
 npm run dev          # Start dev server
 npm run build        # Production build
-npm run test         # Run tests in watch mode
-npm run test:run     # Run tests once
+npm run test         # Run unit tests in watch mode
+npm run test:run     # Run unit tests once
+npm run test:e2e     # Run E2E tests (Playwright)
+npm run test:e2e:ui  # Run E2E tests with Playwright UI
 npm run lint         # Lint code
 ```
 
