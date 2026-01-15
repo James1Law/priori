@@ -553,8 +553,58 @@ export default function SessionPage() {
     }
 
     setSession({ ...session, framework })
+
+    // Create default scores for items that don't have scores in the new framework
+    await createDefaultScoresForFramework(session.id, framework)
+
     // Fetch items with the new framework's scores
     await fetchItems(session.id, framework)
+  }
+
+  // Create default scores for all items that don't have scores in the specified framework
+  const createDefaultScoresForFramework = async (sessionId: string, framework: Framework) => {
+    // Get all item IDs for this session
+    const { data: itemsData } = await supabase
+      .from('items')
+      .select('id')
+      .eq('session_id', sessionId)
+
+    if (!itemsData || itemsData.length === 0) return
+
+    const itemIds = (itemsData as { id: string }[]).map((item) => item.id)
+
+    // Get existing scores for this framework
+    const { data: existingScores } = await supabase
+      .from('scores')
+      .select('item_id')
+      .in('item_id', itemIds)
+      .eq('framework', framework)
+
+    const scoredItemIds = new Set((existingScores as { item_id: string }[] | null)?.map((s) => s.item_id) || [])
+
+    // Find items without scores in this framework
+    const unscoredItemIds = itemIds.filter((id) => !scoredItemIds.has(id))
+
+    if (unscoredItemIds.length === 0) return
+
+    // Create default scores for unscored items
+    const defaultCriteria = getDefaultCriteria(framework)
+    const calculatedScore = calculateScore(
+      defaultCriteria as Record<string, number | string | WeightedItemScores>,
+      framework,
+      session?.weighted_criteria
+    )
+
+    const scoreRecords = unscoredItemIds.map((itemId) => ({
+      item_id: itemId,
+      framework,
+      criteria: defaultCriteria,
+      calculated_score: calculatedScore,
+    }))
+
+    await supabase
+      .from('scores')
+      .insert(scoreRecords as never)
   }
 
   const handleViewChange = async (view: ViewMode) => {

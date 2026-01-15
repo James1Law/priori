@@ -112,11 +112,94 @@ test.describe('View Switching', () => {
   })
 
   // Note: Drag-and-drop tests with dnd-kit require complex event simulation
-  test.skip('scoring view maintains score order after backlog reorder', async ({ page }) => {
+  test.skip('scoring view maintains score order after backlog reorder', async () => {
     // Test skipped - dnd-kit drag simulation is complex
   })
 
-  test.skip('backlog preserves manual order when switching views', async ({ page }) => {
+  test.skip('backlog preserves manual order when switching views', async () => {
     // Test skipped - dnd-kit drag simulation is complex
+  })
+})
+
+test.describe('Framework Switching with Scores', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await page.click('button:has-text("Create New Session")')
+    await dismissNameModal(page)
+  })
+
+  test('creates default scores when switching frameworks', async ({ page }) => {
+    // Start with RICE framework
+    await page.selectOption('select', 'rice')
+
+    // Add items
+    await page.fill('input[placeholder="Item title (required)"]', 'Feature A')
+    await page.click('button:has-text("Add Item")')
+    await expect(page.locator('text=Feature A')).toBeVisible()
+
+    await page.fill('input[placeholder="Item title (required)"]', 'Feature B')
+    await page.click('button:has-text("Add Item")')
+    await expect(page.locator('text=Feature B')).toBeVisible()
+
+    await expect(page.locator('text=Items (2)')).toBeVisible()
+
+    // Switch to backlog view
+    await page.click('button:has-text("Backlog")')
+    await expect(page.locator('text=Prioritised Backlog (2)')).toBeVisible()
+
+    // Both items should show RICE scores (not dashes)
+    const riceBadges = page.locator('text=RICE:')
+    await expect(riceBadges.first()).toBeVisible()
+    expect(await riceBadges.count()).toBe(2)
+
+    // Switch to ICE framework
+    await page.selectOption('select', 'ice')
+
+    // Wait for scores to update - both items should now show ICE scores
+    await expect(page.locator('text=ICE:').first()).toBeVisible({ timeout: 10000 })
+    const iceBadges = page.locator('text=ICE:')
+    expect(await iceBadges.count()).toBe(2)
+
+    // No dashes should be visible in the score badges
+    const dashBadges = page.locator('article').locator('text=—')
+    expect(await dashBadges.count()).toBe(0)
+  })
+
+  test('all items have scores after multiple framework switches', async ({ page }) => {
+    // Start with ICE
+    await page.selectOption('select', 'ice')
+
+    // Add items
+    await page.fill('input[placeholder="Item title (required)"]', 'Task 1')
+    await page.click('button:has-text("Add Item")')
+    await expect(page.locator('text=Task 1')).toBeVisible()
+
+    await page.fill('input[placeholder="Item title (required)"]', 'Task 2')
+    await page.click('button:has-text("Add Item")')
+    await expect(page.locator('text=Task 2')).toBeVisible()
+
+    await page.fill('input[placeholder="Item title (required)"]', 'Task 3')
+    await page.click('button:has-text("Add Item")')
+    await expect(page.locator('text=Task 3')).toBeVisible()
+
+    await expect(page.locator('text=Items (3)')).toBeVisible()
+
+    // Switch to backlog
+    await page.click('button:has-text("Backlog")')
+    await expect(page.locator('text=Prioritised Backlog (3)')).toBeVisible()
+
+    // All should have ICE scores
+    await expect(page.locator('text=ICE:').first()).toBeVisible()
+    expect(await page.locator('text=ICE:').count()).toBe(3)
+
+    // Switch to Value vs Effort
+    await page.selectOption('select', 'value_effort')
+    await expect(page.locator('text=V/E:').first()).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('text=V/E:').count()).toBe(3)
+
+    // Switch to RICE
+    await page.selectOption('select', 'rice')
+    await expect(page.locator('text=RICE:').first()).toBeVisible({ timeout: 10000 })
+    expect(await page.locator('text=RICE:').count()).toBe(3)
   })
 })
