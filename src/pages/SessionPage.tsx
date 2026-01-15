@@ -502,6 +502,18 @@ export default function SessionPage() {
           return
         }
 
+        // Also reset cutoff position since there are no items
+        if (session.cutoff_position !== null) {
+          const { error: updateError } = await supabase
+            .from('sessions')
+            .update({ cutoff_position: null } as never)
+            .eq('id', session.id)
+
+          if (!updateError) {
+            setSession({ ...session, cutoff_position: null })
+          }
+        }
+
         setItems([])
       },
     })
