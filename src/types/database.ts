@@ -1,6 +1,6 @@
 export type Framework = 'rice' | 'ice' | 'value_effort' | 'moscow' | 'weighted'
 
-export type ViewMode = 'scoring' | 'backlog'
+export type ViewMode = 'scoring' | 'backlog' | 'roadmap'
 
 export interface Session {
   id: string
@@ -29,6 +29,22 @@ export interface Item {
   position: number
   backlog_position: number | null
   created_by: string | null
+  created_at: string
+  // Legacy period-based positioning (kept for backward compatibility)
+  roadmap_start_period: string | null
+  roadmap_end_period: string | null
+  // New quadrant-based positioning (each period = 4 quadrants)
+  roadmap_start_quadrant: number | null
+  roadmap_end_quadrant: number | null
+  roadmap_row: number
+}
+
+export interface RoadmapPeriod {
+  id: string
+  session_id: string
+  name: string
+  width: number
+  position: number
   created_at: string
 }
 

@@ -350,9 +350,24 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - [x] 6.2 Mobile UX Improvements (bottom input bar, touch-friendly delete)
 - [x] 6.3 Custom Confirmation Modals (replaced browser confirm() dialogs)
 
+**Phase 7 (Backlog View) - COMPLETE**
+- [x] 7.1 Backlog View with cutoff line
+- [x] Drag-and-drop reordering
+- [x] Manual vs Score ordering toggle
+- [x] Editable cutoff label
+
+**Phase 8 (Roadmap View) - COMPLETE**
+- [x] 7.5 Roadmap View with custom time periods
+- [x] Drag-and-drop item scheduling
+- [x] Item bar resizing across periods
+- [x] 4-quadrant grid system for finer positioning
+- [x] Ghost preview when dragging items onto roadmap
+- [x] Orphaned item handling when periods deleted
+- [x] Mobile placeholder (desktop-only feature)
+
 **Current Status:**
-- https://priori.workLive at https://priori.work
-- 172 tests passing
+- Live at https://priori.work
+- 232 unit tests passing
 - All 5 prioritisation frameworks complete
 - Real-time collaboration enabled via Supabase Realtime
 - Participant presence tracking with names
@@ -361,12 +376,14 @@ A simple, collaborative prioritisation tool that works like planning poker — s
 - Error boundary and 404 page
 - Lazy loading for framework-specific components
 - Custom branding (logo, typography, colour scheme)
+- Backlog view with cutoff line
+- Roadmap view with quadrant-based positioning
 - UK English spelling throughout
 
 ---
 
-*Document version: 2.0*
-*Last updated: 2026-01-15 - Phase 6 complete, Phase 2 PRD added*
+*Document version: 3.0*
+*Last updated: 2026-01-16 - Phase 8 (Roadmap View with quadrant system) complete*
 
 ---
 
@@ -377,19 +394,19 @@ Extend Priori beyond scoring/evaluation into **planning and communication**. Ins
 
 ---
 
-### 7.1 Backlog View
+### 7.1 Backlog View ✅
 **As a** product manager
 **I want** to view my items as a ranked backlog with a cutoff line
 **So that** I can communicate what's in scope for a release/sprint
 
 **Acceptance Criteria:**
-- [ ] New "Backlog" tab in view selector (alongside Scoring)
-- [ ] Items displayed as a numbered ranked list (1, 2, 3...)
-- [ ] Drag-and-drop to reorder items manually
-- [ ] Draggable horizontal "cutoff line" that can be positioned between any two items
-- [ ] Items above the line styled differently (in scope) vs below (out of scope)
-- [ ] Line position persists to session
-- [ ] Optional: Label for the line (e.g., "Sprint 1", "MVP", "Phase 1")
+- [x] New "Backlog" tab in view selector (alongside Scoring)
+- [x] Items displayed as a numbered ranked list (1, 2, 3...)
+- [x] Drag-and-drop to reorder items manually
+- [x] Draggable horizontal "cutoff line" that can be positioned between any two items
+- [x] Items above the line styled differently (in scope) vs below (out of scope)
+- [x] Line position persists to session
+- [x] Optional: Label for the line (e.g., "Sprint 1", "MVP", "Phase 1")
 
 **UX Considerations:**
 - View tabs: Scoring | Backlog | Roadmap (future)
@@ -447,19 +464,19 @@ Extend Priori beyond scoring/evaluation into **planning and communication**. Ins
 
 ---
 
-### 7.5 Roadmap View (Gantt-style)
+### 7.5 Roadmap View ✅
 **As a** product manager
 **I want** to visualise items on a timeline
 **So that** I can plan and communicate delivery schedules
 
 **Acceptance Criteria:**
-- [ ] Horizontal timeline with configurable date range (weeks/months/quarters)
-- [ ] Items displayed as horizontal bars showing start → end
-- [ ] Drag items horizontally to change timing
-- [ ] Drag bar edges to adjust duration
-- [ ] Items can overlap (parallel work) or be sequential
-- [ ] Visual "today" marker line
-- [ ] Zoom controls (week/month/quarter views)
+- [x] Horizontal timeline with custom time periods (Now/Next/Later or user-defined)
+- [x] Items displayed as horizontal bars showing start → end
+- [x] Drag items horizontally to change timing
+- [x] Drag bar edges to adjust duration
+- [x] Items sorted by start position in sidebar
+- [x] 4-quadrant grid system for finer positioning within periods
+- [x] Ghost preview when dragging items onto roadmap
 
 **Data Model:**
 - Add `start_date` and `end_date` (or `duration_days`) to items table
@@ -617,3 +634,285 @@ ALTER TABLE items ADD COLUMN backlog_position integer;
 ### Design Mockups
 - Backlog view: `plans/backlog-view.mockup.html`
 - Roadmap view: `plans/roadmap-view.mockup.html`
+
+---
+
+## 7.5 Roadmap View - Implementation Plan
+
+### Overview
+A timeline view with **custom time buckets** (not calendar dates). Users define their own time periods (e.g., "Q1", "Sprint 1", "v1.0", "Now/Next/Later") and place items within them. This approach is more flexible than date-based Gantt charts and doesn't require date pickers.
+
+### Key Concepts
+
+**Custom Time Buckets:**
+- Users define named time periods (columns)
+- Default buckets: "Now", "Next", "Later"
+- Buckets have a width (1-4 units) representing relative duration
+- Buckets can be renamed, resized, added, and deleted
+
+**Item Placement:**
+- Items are represented as horizontal bars
+- Bars snap to bucket boundaries
+- Bars can span multiple buckets
+- Items not yet placed are "unscheduled"
+- Moving items horizontally changes their timeline position
+
+**No Dates Required:**
+- Buckets represent relative time, not calendar dates
+- More flexible for different planning styles (sprints, quarters, releases, etc.)
+- Simpler UX without date pickers
+
+### Design Decisions
+
+| Decision | Choice | Rationale |
+| --- | --- | --- |
+| Time model | Custom buckets, not dates | Flexibility, no date pickers needed |
+| Default buckets | "Now", "Next", "Later" | Universal, clearly editable |
+| Bucket width | 1-4 units (default 4) | Relative sizing for different period lengths |
+| Initial item state | Unscheduled (no bar) | User explicitly places items |
+| Bar sizing | Default to bucket width | Simplest mental model |
+| Bar snapping | Snap to bucket boundaries | Cleaner UX, easier to align |
+| Mobile support | Deferred (placeholder message) | Drag interactions too complex for touch |
+| CSV export | Disabled in roadmap view | Complexity deferred |
+| Real-time sync | Yes | Consistent with other views |
+
+### Data Model Changes
+
+**New table: \****`roadmap_periods`**
+```sql
+CREATE TABLE roadmap_periods (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid REFERENCES sessions(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  width integer NOT NULL DEFAULT 4 CHECK (width >= 1 AND width <= 4),
+  position integer NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_roadmap_periods_session ON roadmap_periods(session_id);
+```
+
+**items table additions:**
+```sql
+ALTER TABLE items ADD COLUMN roadmap_start_period uuid REFERENCES roadmap_periods(id) ON DELETE SET NULL;
+ALTER TABLE items ADD COLUMN roadmap_end_period uuid REFERENCES roadmap_periods(id) ON DELETE SET NULL;
+ALTER TABLE items ADD COLUMN roadmap_row integer;
+```
+
+### Iterative Build Steps
+
+#### Step 1: Database Schema & View Tab
+Set up the data model and enable navigation to the Roadmap view.
+
+- [x] Create migration for `roadmap_periods` table
+- [x] Add `roadmap_start_period`, `roadmap_end_period`, `roadmap_row` columns to items
+- [x] Add "Roadmap" option to view enum/tabs
+- [x] Add Roadmap tab to ViewTabs component (desktop only)
+- [x] Hide Roadmap tab on mobile, show placeholder message instead
+
+**Tests:**
+- Migration runs successfully
+- Roadmap tab visible on desktop
+- Roadmap tab hidden on mobile
+
+#### Step 2: Default Bucket Initialisation
+When user first opens Roadmap view, create default buckets.
+
+- [x] Create `useRoadmapPeriods` hook to fetch/manage periods
+- [x] On first Roadmap view open: create "Now", "Next", "Later" buckets if none exist
+- [x] Display periods as column headers
+- [x] Show "+ Add Period" button at the end
+
+**Tests:**
+- Default buckets created on first view
+- Buckets display in correct order
+- Existing buckets loaded correctly
+
+#### Step 3: Bucket Header Editing
+Allow users to rename and delete buckets.
+
+- [x] Click bucket header to enter edit mode (inline input)
+- [x] Press Enter or blur to save
+- [x] Hover bucket header to reveal delete button (×)
+- [x] Confirm before deleting (custom modal)
+- [x] Deletion shifts remaining buckets left
+- [x] Items in deleted bucket become "outside period" (greyed, warning state)
+
+**Tests:**
+- Rename persists to database
+- Delete removes bucket and shifts others
+- Items in deleted bucket show warning state
+
+#### Step 4: Bucket Resizing
+Allow users to change bucket width.
+
+- [x] Add ⋮⋮ drag handle on right edge of bucket header
+- [x] Drag left/right to resize (snaps to 1, 2, 3, or 4 units)
+- [x] Width persists to database
+- [x] Visual width proportional to unit value
+
+**Tests:**
+- Drag changes width
+- Width snaps to valid values (1-4)
+- Width persists and displays correctly
+
+#### Step 5: Adding New Buckets
+Allow users to add more time periods.
+
+- [x] Click "+ Add Period" button
+- [x] New bucket created with name "Period N" (sequential)
+- [x] Default width: 4
+- [x] Inserted at end
+- [x] Immediately enter edit mode for name
+
+**Tests:**
+- New bucket created with correct defaults
+- Position is at end
+- Name is editable immediately
+
+#### Step 6: Timeline Grid Layout
+Render the timeline grid with rows for each item.
+
+- [x] Create `RoadmapTimeline` component
+- [x] Sidebar: list of items with priority number and period assignment
+- [x] Grid: bucket columns with item rows
+- [x] Row height: ~48px per item
+- [x] Grid lines between buckets
+
+**Tests:**
+- Layout renders correctly
+- Items appear in sidebar
+- Bucket columns have correct proportional widths
+
+#### Step 7: Placing Items (Hover to Drop)
+Allow users to place unscheduled items onto the timeline.
+
+- [x] Unscheduled items: empty row with hover interaction
+- [x] On hover over row within a bucket: show ghost bar (greyed, dashed border)
+- [x] On click: place item there with default width (1 bucket)
+- [x] Update `roadmap_start_period` and `roadmap_end_period` to same bucket
+- [x] Sidebar updates to show period assignment
+
+**Tests:**
+- Hover shows ghost bar
+- Click places item
+- Database updated correctly
+- Sidebar reflects placement
+
+#### Step 8: Moving Item Bars
+Allow users to drag bars horizontally to different buckets.
+
+- [x] Bars are draggable horizontally
+- [x] Snaps to bucket boundaries on drop
+- [x] Updates `roadmap_start_period` and `roadmap_end_period`
+- [x] Sidebar reorders based on timeline position (left-to-right = top-to-bottom)
+
+**Tests:**
+- Drag moves bar
+- Snaps to bucket boundaries
+- Database updated
+- Sidebar reorders
+
+#### Step 9: Resizing Item Bars
+Allow users to extend bars across multiple buckets.
+
+- [x] Left and right resize handles on bars
+- [x] Drag handle to extend/shrink bar
+- [x] Minimum size: 1 bucket
+- [x] Snaps to bucket boundaries
+- [x] Updates `roadmap_start_period` (left) and `roadmap_end_period` (right)
+
+**Tests:**
+- Resize handles visible on hover
+- Drag extends/shrinks bar
+- Minimum size enforced
+- Snaps correctly
+
+#### Step 10: Outside Period Handling
+Handle items that become orphaned when buckets are deleted.
+
+- [x] Items with invalid period references shown in "overflow" area
+- [x] Greyed bar with ⚠️ indicator
+- [x] Warning message: "X items outside of defined periods"
+- [x] User can re-place by clicking in timeline
+
+**Tests:**
+- Orphaned items display in overflow
+- Warning indicator visible
+- Re-placement works
+
+#### Step 11: Real-time Sync
+Ensure all roadmap changes sync across collaborators.
+
+- [x] Subscribe to `roadmap_periods` table changes
+- [x] Subscribe to item `roadmap_*` field changes
+- [x] Optimistic updates for responsive UX
+- [x] Handle concurrent edits gracefully
+
+**Tests:**
+- Period changes sync to other users
+- Item placement syncs to other users
+- No conflicts on concurrent edits
+
+#### Step 12: Mobile Placeholder
+Show a helpful placeholder on mobile explaining roadmap is desktop-only.
+
+- [x] Hide Roadmap tab in mobile nav
+- [x] If user somehow reaches roadmap on mobile (e.g., URL), show placeholder
+- [x] Placeholder message: "Roadmap view is available on desktop"
+- [x] Show icon/illustration indicating desktop feature
+- [x] Include "Open on desktop" CTA or QR code (stretch)
+
+**Tests:**
+- Roadmap tab not visible on mobile
+- Placeholder renders on mobile
+- Message is clear and helpful
+
+#### Step 13: Disable CSV Export in Roadmap View
+Keep CSV export simple by disabling in roadmap view.
+
+- [x] In Roadmap view: Export CSV button is disabled/hidden
+- [x] Tooltip: "Switch to Scoring or Backlog view to export"
+- [x] Export still works normally in Scoring and Backlog views
+
+**Tests:**
+- Export disabled in Roadmap view
+- Export works in other views
+- Tooltip explains why
+
+### Component Structure
+
+```
+src/
+├── components/
+│   ├── RoadmapView.tsx           # Main container
+│   ├── RoadmapTimeline.tsx       # Grid layout
+│   ├── RoadmapSidebar.tsx        # Item list sidebar
+│   ├── RoadmapPeriodHeader.tsx   # Bucket header (editable)
+│   ├── RoadmapItemBar.tsx        # Draggable/resizable bar
+│   ├── RoadmapGhostBar.tsx       # Hover placeholder for placing items
+│   └── RoadmapMobilePlaceholder.tsx # Mobile fallback message
+├── hooks/
+│   ├── useRoadmapPeriods.ts      # CRUD for periods
+│   └── useRoadmapPlacement.ts    # Item placement logic
+└── lib/
+    └── roadmap.ts                # Helper functions
+```
+
+### UX Flow Summary
+
+1. **First open**: User sees 3 default buckets ("Now", "Next", "Later") with empty rows for each item
+2. **Place item**: Hover over empty row → ghost bar appears → click to place
+3. **Move item**: Drag bar left/right → snaps to new bucket
+4. **Resize item**: Drag bar edges → extends across buckets
+5. **Edit bucket**: Click header to rename, drag edge to resize, hover for delete
+6. **Add bucket**: Click "+" to add new period
+7. **Delete bucket**: Items in bucket become "outside period", user must re-place
+
+### Out of Scope (Future)
+- Calendar date integration
+- Milestone markers
+- Dependencies between items
+- Colour customisation for bars
+- Mobile editing (read-only or fully deferred)
+- CSV export of roadmap data

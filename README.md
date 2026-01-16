@@ -1,6 +1,6 @@
 # Priori
 
-> **Live at **[**priory.work**](https://priory.work) | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
+> **Live at [priori.work](https://priori.work)** | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
 
 A lightweight, collaborative product prioritisation web app. No authentication required - just share a URL and start prioritising together.
 
@@ -24,7 +24,13 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Manual Reordering**: Drag-and-drop to override score-based order
 - **Cutoff Line**: Visual separator to define scope (what's in vs out)
 - **Editable Cutoff Label**: Customise the cutoff label (e.g., "MVP", "Sprint 1")
-- **View Switching**: Toggle between Scoring view and Backlog view
+
+### Roadmap View
+- **Custom Time Periods**: Define your own timeline periods (default: Now, Next, Later)
+- **Drag-and-Drop Scheduling**: Place items onto the timeline by dragging
+- **Item Bar Resizing**: Extend items across multiple periods by dragging edges
+- **4-Quadrant Grid**: Each period is divided into 4 quadrants for finer positioning
+- **Items Sorted by Position**: Sidebar shows items in timeline order
 
 ### Export & Sharing
 - **CSV Export**: Download prioritised items as spreadsheet
@@ -34,7 +40,8 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 ### Mobile Experience
 - **Responsive Design**: Works on all screen sizes
 - **Bottom Input Bar**: Quick item entry on mobile
-- **Touch-friendly Delete**: Tap trash icon to remove items
+- **Touch-friendly Controls**: Tap-friendly interactions throughout
+- **Roadmap Placeholder**: Desktop-only feature with helpful mobile message
 
 ### Polish
 - **Custom Brand**: Indigo colour scheme, Poppins/Inter typography
@@ -46,7 +53,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Unit Testing**: Vitest + React Testing Library (200+ tests)
+- **Unit Testing**: Vitest + React Testing Library (232 tests)
 - **E2E Testing**: Playwright
 - **Hosting**: Vercel (auto-deploys from main)
 
@@ -84,9 +91,14 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 
 4. Set up Supabase database
 
-Run the SQL scripts in order:
-- `supabase/001_initial_schema.sql`
-- `supabase/002_enable_rls.sql`
+Run the SQL migration scripts in order:
+- `supabase/001_initial_schema.sql` - Core tables
+- `supabase/002_enable_rls.sql` - Row Level Security
+- `supabase/003_add_framework_column.sql` - Framework support
+- `supabase/004_add_view_and_cutoff_columns.sql` - Backlog view
+- `supabase/005_add_backlog_position.sql` - Manual ordering
+- `supabase/006_add_roadmap_support.sql` - Roadmap periods
+- `supabase/007_add_quadrant_columns.sql` - Quadrant positioning
 
 See `supabase/README.md` for detailed instructions.
 

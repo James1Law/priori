@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Session, Item, Score } from '../types/database'
+import type { Session, Item, Score, RoadmapPeriod } from '../types/database'
 
 export interface Database {
   public: {
@@ -18,6 +18,11 @@ export interface Database {
         Row: Score
         Insert: Omit<Score, 'id'>
         Update: Partial<Omit<Score, 'id'>>
+      }
+      roadmap_periods: {
+        Row: RoadmapPeriod
+        Insert: Omit<RoadmapPeriod, 'id' | 'created_at'>
+        Update: Partial<Omit<RoadmapPeriod, 'id' | 'created_at'>>
       }
     }
   }

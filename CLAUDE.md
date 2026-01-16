@@ -106,7 +106,22 @@ When I say:
 | description | text | Optional |
 | position | integer | For ordering in scoring view |
 | backlog_position | integer | For manual ordering in backlog view |
+| roadmap_start_period | uuid | FK to roadmap_periods (legacy) |
+| roadmap_end_period | uuid | FK to roadmap_periods (legacy) |
+| roadmap_start_quadrant | integer | Absolute quadrant index (0-based) |
+| roadmap_end_quadrant | integer | Inclusive end quadrant |
+| roadmap_row | integer | For future swimlane support |
 | created_by | text | Participant who created the item |
+| created_at | timestamp | Auto |
+
+### roadmap_periods
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | uuid | PK |
+| session_id | uuid | FK to sessions |
+| name | text | Period name (e.g., "Now", "Next", "Later") |
+| width | integer | Visual width 1-4 (legacy, now fixed at 4) |
+| position | integer | Order in timeline |
 | created_at | timestamp | Auto |
 
 ### scores
@@ -184,37 +199,45 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 6.1 Brand Identity (logo, Poppins/Inter typography, indigo colour scheme)
   - [x] 6.2 Mobile UX Improvements (bottom input bar, touch-friendly delete)
   - [x] 6.3 Custom Confirmation Modals (replaced browser confirm() dialogs)
+- [x] Phase 7 (Backlog View) - COMPLETE
+  - [x] 7.1 Backlog View with cutoff line
+  - [x] Drag-and-drop reordering
+  - [x] Manual vs Score ordering toggle
+- [x] Phase 8 (Roadmap View) - COMPLETE
+  - [x] 7.5 Roadmap View with custom time periods
+  - [x] Drag-and-drop item scheduling
+  - [x] Item bar resizing across periods
+  - [x] 4-quadrant grid system for finer positioning
+  - [x] Ghost preview when dragging items onto roadmap
+  - [x] Orphaned item handling when periods deleted
+  - [x] Mobile placeholder (desktop-only feature)
 
-## Recent Changes (Phase 6)
+## Recent Changes (Phase 8 - Roadmap View)
 
-### Brand Identity
-- **Logo**: Triangle/arrow icon representing priorities rising to the top
-- **Typography**: Poppins for headings (font-display), Inter for body text (font-body)
-- **Colours**: Indigo-based palette (#4f46e5 primary) with full Tailwind scale
-- **Design mockups**: Located in `plans/` folder (`.mockup.html` files)
+### Roadmap View
+- **Custom Time Periods**: Users define named periods (default: Now, Next, Later)
+- **4-Quadrant Grid System**: Each period divided into 4 quadrants for finer item positioning
+- **Drag-and-Drop Scheduling**: Drag items from sidebar onto timeline
+- **Item Bar Resizing**: Drag bar edges to extend/shrink across periods
+- **Ghost Preview**: Shows full 4-quadrant drop zone when dragging items in
+- **Orphaned Item Handling**: Items cleared when their period is deleted
+- **Mobile Placeholder**: Roadmap is desktop-only, mobile shows helpful message
 
-### Mobile UX Improvements
-- **Bottom Input Bar**: On mobile, the sidebar is hidden and replaced with a fixed bottom bar containing a compact framework selector and quick-add input
-- **Touch-friendly Delete**: Tap trash icon to delete items (consistent with desktop)
-- **Safe Area Support**: Proper padding for notched devices (iPhone etc.)
-- Desktop layout remains unchanged - these are mobile-only enhancements
+### Key Components (Phase 8)
+- `src/components/RoadmapView.tsx` - Main roadmap timeline with quadrant grid
+- `src/components/RoadmapMobilePlaceholder.tsx` - Mobile fallback message
+- `src/hooks/useRoadmapPeriods.ts` - CRUD for roadmap periods
 
-### Custom Confirmation Modals
-- **ConfirmModal component**: Branded modal replacing native browser `confirm()` dialogs
-- **Variants**: danger (red), warning (amber), default (indigo) with appropriate icons
-- **Features**: Keyboard support (Escape to close), backdrop click to dismiss, responsive layout
-- Used for: Delete item, Clear all items
-
-### Key Components (Phase 6)
-- `src/components/MobileBottomBar.tsx` - Fixed bottom input bar for mobile
-- `src/components/ConfirmModal.tsx` - Branded confirmation modal
+### Database Changes
+- `supabase/006_add_roadmap_support.sql` - Roadmap periods table and item columns
+- `supabase/007_add_quadrant_columns.sql` - Quadrant-based positioning columns
 
 ## Production Details
 - **Live Site**: https://priori.work
 - **GitHub**: https://github.com/James1Law/priori
 - **Hosting**: Vercel (auto-deploys from main)
-- **Unit Tests**: 204 passing (Vitest)
-- **E2E Tests**: Playwright (session, backlog, cutoff, mobile)
+- **Unit Tests**: 232 passing (Vitest)
+- **E2E Tests**: Playwright (session, backlog, cutoff, roadmap, mobile)
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
 
@@ -243,4 +266,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Performance Monitoring**: Add analytics for load times and interactions
 
 ---
-*Last updated: 2026-01-15 - Phase 7 (Backlog View) complete, E2E tests added, live at priori.work*
+*Last updated: 2026-01-16 - Phase 8 (Roadmap View with 4-quadrant system) complete*

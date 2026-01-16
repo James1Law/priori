@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Roadmap View Mockups</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f1f5f9;
+      padding: 40px;
+      color: #1e293b;
+    }
+    h1 { font-family: 'Poppins', sans-serif; font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: 'Poppins', sans-serif; font-size: 20px; margin-bottom: 16px; color: #475569; }
+    h3 { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .description { color: #64748b; margin-bottom: 32px; max-width: 700px; line-height: 1.6; }
+
+    .section { margin-bottom: 64px; }
+
+    /* Desktop Mockup Container */
+    .desktop-frame {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 8px;
+      max-width: 1400px;
+    }
+    .desktop-frame .browser-bar {
+      background: #334155;
+      border-radius: 8px 8px 0 0;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .desktop-frame .browser-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #475569;
+    }
+    .desktop-frame .browser-dot.red { background: #ef4444; }
+    .desktop-frame .browser-dot.yellow { background: #eab308; }
+    .desktop-frame .browser-dot.green { background: #22c55e; }
+    .desktop-frame .url-bar {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 4px;
+      padding: 6px 12px;
+      color: #94a3b8;
+      font-size: 13px;
+      margin-left: 12px;
+    }
+
+    /* App Container */
+    .app {
+      background: #f8fafc;
+      min-height: 600px;
+    }
+
+    /* Header */
+    .app-header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-icon::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 12px solid white;
+    }
+    .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #4f46e5; }
+    .session-name { color: #64748b; font-size: 14px; }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    /* View Tabs */
+    .view-tabs {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+    }
+    .view-tab {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: #4f46e5; }
+    .view-tab.active {
+      color: #4f46e5;
+      border-bottom-color: #4f46e5;
+    }
+
+    /* Roadmap Controls */
+    .timeline-controls {
+      background: white;
+      padding: 12px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .zoom-controls {
+      display: flex;
+      gap: 4px;
+    }
+    .zoom-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 6px;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .zoom-btn.active {
+      background: #4f46e5;
+      color: white;
+    }
+    .date-range {
+      font-size: 14px;
+      color: #64748b;
+    }
+    .nav-arrows {
+      display: flex;
+      gap: 8px;
+    }
+    .nav-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Roadmap Container */
+    .timeline-container {
+      display: flex;
+      background: white;
+      min-height: 500px;
+    }
+
+    /* Item List Sidebar */
+    .timeline-sidebar {
+      width: 280px;
+      border-right: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 600;
+      font-size: 13px;
+      color: #64748b;
+      background: #f8fafc;
+    }
+    .sidebar-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sidebar-item:hover { background: #f8fafc; }
+    .sidebar-item-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-item-dates {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* Roadmap Grid */
+    .timeline-grid {
+      flex: 1;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    /* Roadmap Header (months) */
+    .timeline-header {
+      display: flex;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      position: sticky;
+      top: 0;
+    }
+    .timeline-month {
+      min-width: 180px;
+      padding: 8px 12px;
+      border-right: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    .timeline-month-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #475569;
+    }
+    .timeline-weeks {
+      display: flex;
+      margin-top: 4px;
+    }
+    .timeline-week {
+      flex: 1;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* Roadmap Rows */
+    .timeline-rows {
+      position: relative;
+    }
+    .timeline-row {
+      height: 48px;
+      border-bottom: 1px solid #f1f5f9;
+      position: relative;
+    }
+
+    /* Roadmap Bars */
+    .timeline-bar {
+      position: absolute;
+      height: 32px;
+      top: 8px;
+      border-radius: 6px;
+      cursor: move;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .timeline-bar:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .timeline-bar.blue { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .timeline-bar.green { background: linear-gradient(90deg, #10b981, #34d399); }
+    .timeline-bar.purple { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .timeline-bar.orange { background: linear-gradient(90deg, #f97316, #fb923c); }
+    .timeline-bar.pink { background: linear-gradient(90deg, #ec4899, #f472b6); }
+    .timeline-bar.indigo { background: linear-gradient(90deg, #4f46e5, #6366f1); }
+
+    /* Resize handles */
+    .bar-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      cursor: ew-resize;
+    }
+    .bar-handle.left { left: 0; }
+    .bar-handle.right { right: 0; }
+
+    /* Today line */
+    .today-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #ef4444;
+      z-index: 10;
+    }
+    .today-label {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ef4444;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    /* Grid lines */
+    .grid-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #f1f5f9;
+    }
+
+    /* Notes */
+    .notes {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 24px;
+      max-width: 800px;
+    }
+    .notes h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+    .notes ul {
+      font-size: 13px;
+      color: #78350f;
+      padding-left: 20px;
+    }
+    .notes li { margin-bottom: 4px; }
+
+    /* Alternative Concepts */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .concept-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .concept-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    .concept-card p {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+    .concept-card .pros { color: #059669; }
+    .concept-card .cons { color: #dc2626; }
+    .concept-card ul {
+      font-size: 12px;
+      padding-left: 16px;
+      margin-bottom: 8px;
+    }
+
+    /* Simple Roadmap Preview */
+    .simple-timeline {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .simple-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .simple-label {
+      width: 100px;
+      font-size: 11px;
+      color: #64748b;
+      flex-shrink: 0;
+    }
+    .simple-track {
+      flex: 1;
+      height: 20px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      position: relative;
+    }
+    .simple-bar {
+      position: absolute;
+      height: 100%;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Roadmap View</h1>
+  <h2>Gantt-style Planning & Scheduling</h2>
+  <p class="description">
+    A timeline view for visualising when items will be worked on. Items appear as horizontal bars
+    that can be dragged to adjust timing and duration. Inspired by Aha! roadmaps.
+    This is a more complex feature planned for Phase 3.
+  </p>
+
+  <div class="section">
+    <h3>Desktop View - Full Roadmap</h3>
+    <div class="desktop-frame">
+      <div class="browser-bar">
+        <div class="browser-dot red"></div>
+        <div class="browser-dot yellow"></div>
+        <div class="browser-dot green"></div>
+        <div class="url-bar">priori.work/s/abc123</div>
+      </div>
+      <div class="app">
+        <div class="app-header">
+          <div>
+            <div class="logo">
+              <div class="logo-icon"></div>
+              <span class="logo-text">Priori</span>
+            </div>
+            <div class="session-name">Q1 2026 Planning</div>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary">Export CSV</button>
+            <button class="btn btn-primary">+ Add Item</button>
+          </div>
+        </div>
+
+        <div class="view-tabs">
+          <div class="view-tab">Scoring</div>
+          <div class="view-tab">Backlog</div>
+          <div class="view-tab active">Roadmap</div>
+        </div>
+
+        <div class="timeline-controls">
+          <div class="zoom-controls">
+            <button class="zoom-btn">Week</button>
+            <button class="zoom-btn active">Month</button>
+            <button class="zoom-btn">Quarter</button>
+          </div>
+          <div class="date-range">January 2026 - April 2026</div>
+          <div class="nav-arrows">
+            <button class="nav-btn">←</button>
+            <button class="nav-btn">Today</button>
+            <button class="nav-btn">→</button>
+          </div>
+        </div>
+
+        <div class="timeline-container">
+          <div class="timeline-sidebar">
+            <div class="sidebar-header">ITEMS</div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">User authentication</div>
+              <div class="sidebar-item-dates">Jan 6 - Jan 31</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Dashboard redesign</div>
+              <div class="sidebar-item-dates">Jan 20 - Feb 21</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">API rate limiting</div>
+              <div class="sidebar-item-dates">Feb 3 - Feb 14</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Dark mode theme</div>
+              <div class="sidebar-item-dates">Feb 24 - Mar 7</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Export to PDF</div>
+              <div class="sidebar-item-dates">Mar 10 - Mar 21</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Keyboard shortcuts</div>
+              <div class="sidebar-item-dates">Mar 24 - Apr 4</div>
+            </div>
+          </div>
+
+          <div class="timeline-grid">
+            <div class="timeline-header">
+              <div class="timeline-month">
+                <div class="timeline-month-name">January 2026</div>
+                <div class="timeline-weeks">
+                  <span class="timeline-week">W1</span>
+                  <span class="timeline-week">W2</span>
+                  <span class="timeline-week">W3</span>
+                  <span class="timeline-week">W4</span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <div class="timeline-month-name">February 2026</div>
+                <div class="timeline-weeks">
+                  <span class="timeline-week">W5</span>
+                  <span class="timeline-week">W6</span>
+                  <span class="timeline-week">W7</span>
+                  <span class="timeline-week">W8</span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <div class="timeline-month-name">March 2026</div>
+                <div class="timeline-weeks">
+                  <span class="timeline-week">W9</span>
+                  <span class="timeline-week">W10</span>
+                  <span class="timeline-week">W11</span>
+                  <span class="timeline-week">W12</span>
+                </div>
+              </div>
+              <div class="timeline-month">
+                <div class="timeline-month-name">April 2026</div>
+                <div class="timeline-weeks">
+                  <span class="timeline-week">W13</span>
+                  <span class="timeline-week">W14</span>
+                  <span class="timeline-week">W15</span>
+                  <span class="timeline-week">W16</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="timeline-rows">
+              <!-- Today line -->
+              <div class="today-line" style="left: 68px;">
+                <span class="today-label">Today</span>
+              </div>
+
+              <!-- Row 1: User auth -->
+              <div class="timeline-row">
+                <div class="timeline-bar indigo" style="left: 20px; width: 160px;">
+                  User authentication
+                </div>
+              </div>
+
+              <!-- Row 2: Dashboard (overlaps with auth) -->
+              <div class="timeline-row">
+                <div class="timeline-bar blue" style="left: 90px; width: 200px;">
+                  Dashboard redesign
+                </div>
+              </div>
+
+              <!-- Row 3: API rate limiting -->
+              <div class="timeline-row">
+                <div class="timeline-bar green" style="left: 200px; width: 80px;">
+                  API rate limiting
+                </div>
+              </div>
+
+              <!-- Row 4: Dark mode -->
+              <div class="timeline-row">
+                <div class="timeline-bar purple" style="left: 320px; width: 90px;">
+                  Dark mode
+                </div>
+              </div>
+
+              <!-- Row 5: Export PDF -->
+              <div class="timeline-row">
+                <div class="timeline-bar orange" style="left: 430px; width: 80px;">
+                  Export to PDF
+                </div>
+              </div>
+
+              <!-- Row 6: Keyboard shortcuts -->
+              <div class="timeline-row">
+                <div class="timeline-bar pink" style="left: 530px; width: 80px;">
+                  Keyboard shortcuts
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h4>UX Notes - Roadmap View</h4>
+      <ul>
+        <li><strong>Sidebar:</strong> Fixed list of items with dates. Click to highlight bar in timeline.</li>
+        <li><strong>Roadmap bars:</strong> Drag horizontally to move start date. Drag edges to resize duration.</li>
+        <li><strong>Overlapping work:</strong> Bars can overlap vertically to show parallel work streams.</li>
+        <li><strong>Today line:</strong> Red vertical marker showing current date.</li>
+        <li><strong>Zoom levels:</strong> Week (detailed), Month (default), Quarter (high-level planning).</li>
+        <li><strong>Colours:</strong> Auto-assigned or user-selectable per item.</li>
+        <li><strong>Data model:</strong> Requires adding start_date and end_date fields to items.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Implementation Approaches</h3>
+    <p class="description">
+      Two possible approaches for implementing the Roadmap view, with different trade-offs.
+    </p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <h4>Option A: Simple Duration-Based</h4>
+        <p>Items have a duration (in days/weeks) but no specific dates. Roadmap shows relative sequencing.</p>
+        <ul class="pros">
+          <li>Simpler data model (just add duration_days)</li>
+          <li>No need for date pickers</li>
+          <li>Works well for rough planning</li>
+        </ul>
+        <ul class="cons">
+          <li>Can't set specific start dates</li>
+          <li>Less precise than real Gantt</li>
+          <li>Harder to plan around milestones</li>
+        </ul>
+
+        <div class="simple-timeline">
+          <div class="simple-row">
+            <span class="simple-label">Auth (3 wks)</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 0; width: 30%; background: #4f46e5;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Dashboard (4 wks)</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 15%; width: 40%; background: #3b82f6;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">API (2 wks)</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 40%; width: 20%; background: #10b981;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <h4>Option B: Full Date-Based</h4>
+        <p>Items have explicit start and end dates. Full Gantt-chart functionality.</p>
+        <ul class="pros">
+          <li>Precise scheduling</li>
+          <li>Can plan around milestones</li>
+          <li>Industry-standard UX</li>
+        </ul>
+        <ul class="cons">
+          <li>More complex data model</li>
+          <li>Requires date pickers</li>
+          <li>More UI complexity</li>
+        </ul>
+
+        <div class="simple-timeline">
+          <div class="simple-row">
+            <span class="simple-label">Jan 6 - Jan 31</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 5%; width: 25%; background: #4f46e5;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Jan 20 - Feb 21</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 18%; width: 32%; background: #3b82f6;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Feb 3 - Feb 14</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 30%; width: 12%; background: #10b981;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top: 24px;">
+      <h4>Recommendation</h4>
+      <ul>
+        <li><strong>Start with Option A</strong> for MVP - simpler to build and test.</li>
+        <li>Add full date support (Option B) later based on user feedback.</li>
+        <li>Roadmap is Phase 3 - focus on Roadmap Mode first.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Option C: Custom Time Buckets (Recommended)</h3>
+    <p class="description">
+      Instead of calendar dates, users define their own time periods (quarters, sprints, releases, etc.).
+      Items span across these buckets using a simple unit system - no date pickers needed.
+    </p>
+
+    <div class="desktop-frame" style="max-width: 1200px;">
+      <div class="browser-bar">
+        <div class="browser-dot red"></div>
+        <div class="browser-dot yellow"></div>
+        <div class="browser-dot green"></div>
+        <div class="url-bar">priori.work/s/abc123</div>
+      </div>
+      <div class="app">
+        <div class="app-header">
+          <div>
+            <div class="logo">
+              <div class="logo-icon"></div>
+              <span class="logo-text">Priori</span>
+            </div>
+            <div class="session-name">2026 Product Roadmap</div>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary">+ Add Period</button>
+            <button class="btn btn-primary">+ Add Item</button>
+          </div>
+        </div>
+
+        <div class="view-tabs">
+          <div class="view-tab">Scoring</div>
+          <div class="view-tab">Backlog</div>
+          <div class="view-tab active">Roadmap</div>
+        </div>
+
+        <!-- Custom Buckets Timeline -->
+        <div class="timeline-container">
+          <div class="timeline-sidebar">
+            <div class="sidebar-header">ITEMS</div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">User authentication</div>
+              <div class="sidebar-item-dates" style="color: #4f46e5;">Q1 → Q1</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Dashboard redesign</div>
+              <div class="sidebar-item-dates" style="color: #3b82f6;">Q1 → Q2</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">API rate limiting</div>
+              <div class="sidebar-item-dates" style="color: #10b981;">Q2 → Q2</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Dark mode theme</div>
+              <div class="sidebar-item-dates" style="color: #8b5cf6;">Q3 → Q3</div>
+            </div>
+            <div class="sidebar-item">
+              <div class="sidebar-item-title">Export to PDF</div>
+              <div class="sidebar-item-dates" style="color: #f97316;">Q3 → Q4</div>
+            </div>
+            <div class="sidebar-item" style="background: #f8fafc; border-left: 3px solid #94a3b8;">
+              <div class="sidebar-item-title" style="color: #94a3b8;">Keyboard shortcuts</div>
+              <div class="sidebar-item-dates" style="color: #cbd5e1;">Not scheduled</div>
+            </div>
+          </div>
+
+          <div class="timeline-grid">
+            <!-- Editable bucket headers -->
+            <div class="timeline-header" style="min-height: 56px;">
+              <div class="timeline-month" style="min-width: 200px; position: relative; cursor: pointer;">
+                <div class="timeline-month-name" contenteditable="false">Q1 2026</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Jan - Mar</div>
+                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #cbd5e1; cursor: ew-resize;" title="Drag to resize">⋮⋮</div>
+              </div>
+              <div class="timeline-month" style="min-width: 200px; position: relative; cursor: pointer;">
+                <div class="timeline-month-name" contenteditable="false">Q2 2026</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Apr - Jun</div>
+                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #cbd5e1; cursor: ew-resize;">⋮⋮</div>
+              </div>
+              <div class="timeline-month" style="min-width: 200px; position: relative; cursor: pointer;">
+                <div class="timeline-month-name" contenteditable="false">Q3 2026</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Jul - Sep</div>
+                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #cbd5e1; cursor: ew-resize;">⋮⋮</div>
+              </div>
+              <div class="timeline-month" style="min-width: 200px; position: relative; cursor: pointer;">
+                <div class="timeline-month-name" contenteditable="false">Q4 2026</div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Oct - Dec</div>
+                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #cbd5e1; cursor: ew-resize;">⋮⋮</div>
+              </div>
+              <!-- Add new bucket button -->
+              <div style="min-width: 60px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-right: 1px solid #e2e8f0;">
+                <button style="width: 36px; height: 36px; border-radius: 8px; border: 2px dashed #cbd5e1; background: transparent; color: #94a3b8; font-size: 20px; cursor: pointer;">+</button>
+              </div>
+            </div>
+
+            <div class="timeline-rows">
+              <!-- Row 1: User auth - spans within Q1 -->
+              <div class="timeline-row">
+                <div class="timeline-bar indigo" style="left: 10px; width: 180px;">
+                  User authentication
+                  <div class="bar-handle left"></div>
+                  <div class="bar-handle right"></div>
+                </div>
+              </div>
+
+              <!-- Row 2: Dashboard - spans Q1 to Q2 -->
+              <div class="timeline-row">
+                <div class="timeline-bar blue" style="left: 100px; width: 250px;">
+                  Dashboard redesign
+                  <div class="bar-handle left"></div>
+                  <div class="bar-handle right"></div>
+                </div>
+              </div>
+
+              <!-- Row 3: API rate limiting - within Q2 -->
+              <div class="timeline-row">
+                <div class="timeline-bar green" style="left: 220px; width: 140px;">
+                  API rate limiting
+                  <div class="bar-handle left"></div>
+                  <div class="bar-handle right"></div>
+                </div>
+              </div>
+
+              <!-- Row 4: Dark mode - within Q3 -->
+              <div class="timeline-row">
+                <div class="timeline-bar purple" style="left: 420px; width: 160px;">
+                  Dark mode theme
+                  <div class="bar-handle left"></div>
+                  <div class="bar-handle right"></div>
+                </div>
+              </div>
+
+              <!-- Row 5: Export PDF - spans Q3 to Q4 -->
+              <div class="timeline-row">
+                <div class="timeline-bar orange" style="left: 500px; width: 220px;">
+                  Export to PDF
+                  <div class="bar-handle left"></div>
+                  <div class="bar-handle right"></div>
+                </div>
+              </div>
+
+              <!-- Row 6: Unscheduled item (greyed out) -->
+              <div class="timeline-row" style="background: #fafafa;">
+                <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 12px; color: #cbd5e1;">
+                  Drag item from sidebar or click to schedule
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top: 24px;">
+      <h4>Custom Buckets - Key Concepts</h4>
+      <ul>
+        <li><strong>Flexible periods:</strong> Name buckets anything - Q1/Q2, Sprint 1/2/3, Release 1.0/2.0, Milestone A/B/C</li>
+        <li><strong>Resizable columns:</strong> Drag the ⋮⋮ handle to make a bucket wider or narrower (represents relative time)</li>
+        <li><strong>No dates required:</strong> Optional subtitle for context ("Jan - Mar") but not enforced</li>
+        <li><strong>Bar positioning:</strong> Drag bars horizontally and resize with edge handles</li>
+        <li><strong>Unscheduled items:</strong> Items without roadmap placement shown greyed in sidebar</li>
+        <li><strong>Add buckets:</strong> Click + to add new time periods, click header to edit name</li>
+      </ul>
+    </div>
+
+    <div class="concept-grid" style="margin-top: 24px;">
+      <div class="concept-card">
+        <h4>Example: Quarterly Planning</h4>
+        <div class="simple-timeline">
+          <div style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 8px; padding-bottom: 4px;">
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Q1</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Q2</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Q3</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Q4</span>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Auth</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 0; width: 25%; background: #4f46e5;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Dashboard</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 12%; width: 35%; background: #3b82f6;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <h4>Example: Sprint Planning</h4>
+        <div class="simple-timeline">
+          <div style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 8px; padding-bottom: 4px;">
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Sprint 1</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Sprint 2</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Sprint 3</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Sprint 4</span>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Auth</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 0; width: 50%; background: #4f46e5;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Dashboard</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 50%; width: 50%; background: #3b82f6;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <h4>Example: Release Planning</h4>
+        <div class="simple-timeline">
+          <div style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 8px; padding-bottom: 4px;">
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">v1.0</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">v1.1</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">v2.0</span>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Core features</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 0; width: 33%; background: #4f46e5;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Polish</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 33%; width: 33%; background: #10b981;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <h4>Example: Now/Next/Later</h4>
+        <div class="simple-timeline">
+          <div style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 8px; padding-bottom: 4px;">
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Now</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Next</span>
+            <span style="flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Later</span>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Auth</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 0; width: 33%; background: #4f46e5;"></div>
+            </div>
+          </div>
+          <div class="simple-row">
+            <span class="simple-label">Dashboard</span>
+            <div class="simple-track">
+              <div class="simple-bar" style="left: 33%; width: 33%; background: #3b82f6;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- USER FLOW: Step-by-step walkthrough of the Roadmap View experience     -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <div class="section">
+    <h3>User Flow: First Time Opening Roadmap View</h3>
+    <p class="description">
+      What the user sees when clicking the Roadmap tab for the first time, and how they interact with it.
+    </p>
+
+    <!-- STEP 1: Initial State -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User clicks "Roadmap" tab</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Initial state shows default buckets ("Now", "Next", "Later") with items auto-distributed based on backlog priority.
+        The top backlog item goes in "Now", second in "Next", third in "Later", and so on cycling through.
+      </p>
+
+      <div class="desktop-frame" style="max-width: 1100px;">
+        <div class="browser-bar">
+          <div class="browser-dot red"></div>
+          <div class="browser-dot yellow"></div>
+          <div class="browser-dot green"></div>
+          <div class="url-bar">priori.work/s/abc123</div>
+        </div>
+        <div class="app" style="min-height: 400px;">
+          <div class="view-tabs">
+            <div class="view-tab">Scoring</div>
+            <div class="view-tab">Backlog</div>
+            <div class="view-tab active">Roadmap</div>
+          </div>
+
+          <div class="timeline-container" style="min-height: 350px;">
+            <div class="timeline-sidebar">
+              <div class="sidebar-header">ITEMS (by priority)</div>
+              <div class="sidebar-item">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #94a3b8; font-size: 11px;">#1</span>
+                  <div class="sidebar-item-title">User authentication</div>
+                </div>
+                <div class="sidebar-item-dates" style="color: #4f46e5;">Now</div>
+              </div>
+              <div class="sidebar-item">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #94a3b8; font-size: 11px;">#2</span>
+                  <div class="sidebar-item-title">Dashboard redesign</div>
+                </div>
+                <div class="sidebar-item-dates" style="color: #3b82f6;">Next</div>
+              </div>
+              <div class="sidebar-item">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #94a3b8; font-size: 11px;">#3</span>
+                  <div class="sidebar-item-title">API rate limiting</div>
+                </div>
+                <div class="sidebar-item-dates" style="color: #10b981;">Later</div>
+              </div>
+              <div class="sidebar-item">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #94a3b8; font-size: 11px;">#4</span>
+                  <div class="sidebar-item-title">Dark mode theme</div>
+                </div>
+                <div class="sidebar-item-dates" style="color: #4f46e5;">Now</div>
+              </div>
+              <div class="sidebar-item">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #94a3b8; font-size: 11px;">#5</span>
+                  <div class="sidebar-item-title">Export to PDF</div>
+                </div>
+                <div class="sidebar-item-dates" style="color: #3b82f6;">Next</div>
+              </div>
+            </div>
+
+            <div class="timeline-grid">
+              <div class="timeline-header" style="min-height: 56px;">
+                <div class="timeline-month" style="flex: 4; min-width: 200px; position: relative; cursor: pointer;">
+                  <div class="timeline-month-name">Now</div>
+                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Click to edit</div>
+                  <div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #cbd5e1; cursor: ew-resize;">⋮⋮</div>
+                </div>
+                <div class="timeline-month" style="flex: 4; min-width: 200px; position: relative; cursor: pointer;">
+                  <div class="timeline-month-name">Next</div>
+                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Click to edit</div>
+                  <div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #cbd5e1; cursor: ew-resize;">⋮⋮</div>
+                </div>
+                <div class="timeline-month" style="flex: 4; min-width: 200px; position: relative; cursor: pointer;">
+                  <div class="timeline-month-name">Later</div>
+                  <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Click to edit</div>
+                  <div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #cbd5e1; cursor: ew-resize;">⋮⋮</div>
+                </div>
+                <div style="min-width: 50px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+                  <button style="width: 32px; height: 32px; border-radius: 6px; border: 2px dashed #cbd5e1; background: transparent; color: #94a3b8; font-size: 18px; cursor: pointer;" title="Add period">+</button>
+                </div>
+              </div>
+
+              <div class="timeline-rows">
+                <!-- Item 1: Now -->
+                <div class="timeline-row">
+                  <div class="timeline-bar indigo" style="left: 10px; width: calc(33% - 20px);">
+                    User authentication
+                  </div>
+                </div>
+                <!-- Item 2: Next -->
+                <div class="timeline-row">
+                  <div class="timeline-bar blue" style="left: calc(33% + 10px); width: calc(33% - 20px);">
+                    Dashboard redesign
+                  </div>
+                </div>
+                <!-- Item 3: Later -->
+                <div class="timeline-row">
+                  <div class="timeline-bar green" style="left: calc(66% + 10px); width: calc(33% - 20px);">
+                    API rate limiting
+                  </div>
+                </div>
+                <!-- Item 4: Now (cycles back) -->
+                <div class="timeline-row">
+                  <div class="timeline-bar purple" style="left: 10px; width: calc(33% - 20px);">
+                    Dark mode theme
+                  </div>
+                </div>
+                <!-- Item 5: Next -->
+                <div class="timeline-row">
+                  <div class="timeline-bar orange" style="left: calc(33% + 10px); width: calc(33% - 20px);">
+                    Export to PDF
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes" style="margin-top: 16px; margin-left: 44px;">
+        <h4>Initial State Behaviour</h4>
+        <ul>
+          <li>Three default buckets: "Now", "Next", "Later" (all width 4)</li>
+          <li>Items distributed round-robin based on backlog priority order</li>
+          <li>Each bar fills its bucket (default width)</li>
+          <li>Sidebar shows priority number and current bucket assignment</li>
+          <li>"Click to edit" hint shown on bucket headers</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STEP 2: Editing a Bucket Name -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User clicks bucket header to rename</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Clicking a bucket header makes it editable. User types new name and clicks away or presses Enter to save.
+      </p>
+
+      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 700px; margin-left: 44px;">
+        <div style="display: flex; gap: 16px; align-items: flex-start;">
+          <div style="flex: 1;">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">BEFORE</div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center;">
+              <div style="font-weight: 600; color: #475569;">Now</div>
+              <div style="font-size: 11px; color: #94a3b8;">Click to edit</div>
+            </div>
+          </div>
+          <div style="color: #94a3b8; padding-top: 32px;">→</div>
+          <div style="flex: 1;">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">EDITING</div>
+            <div style="background: white; border: 2px solid #4f46e5; border-radius: 8px; padding: 12px; text-align: center;">
+              <input type="text" value="Q1 2026" style="font-weight: 600; color: #475569; border: none; background: transparent; text-align: center; width: 100%; outline: none; font-size: 14px;" />
+              <div style="font-size: 11px; color: #4f46e5;">Press Enter to save</div>
+            </div>
+          </div>
+          <div style="color: #94a3b8; padding-top: 32px;">→</div>
+          <div style="flex: 1;">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">SAVED</div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center;">
+              <div style="font-weight: 600; color: #475569;">Q1 2026</div>
+              <div style="font-size: 11px; color: #94a3b8;">⋮⋮</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Resizing a Bucket -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User drags bucket edge to resize</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Dragging the ⋮⋮ handle changes the bucket width (1-4 units). Smaller buckets represent shorter time periods.
+      </p>
+
+      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 800px; margin-left: 44px;">
+        <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
+          <div style="flex: 4; text-align: center; font-weight: 600; font-size: 13px; color: #475569;">Q1 (4 units)</div>
+          <div style="flex: 4; text-align: center; font-weight: 600; font-size: 13px; color: #475569;">Q2 (4 units)</div>
+          <div style="flex: 4; text-align: center; font-weight: 600; font-size: 13px; color: #475569;">Q3 (4 units)</div>
+        </div>
+        <div style="text-align: center; color: #94a3b8; margin: 16px 0;">↓ User drags Q2 smaller ↓</div>
+        <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+          <div style="flex: 4; text-align: center; font-weight: 600; font-size: 13px; color: #475569;">Q1 (4 units)</div>
+          <div style="flex: 2; text-align: center; font-weight: 600; font-size: 13px; color: #4f46e5; background: #eef2ff; border-radius: 4px; padding: 4px;">Q2 (2 units)</div>
+          <div style="flex: 4; text-align: center; font-weight: 600; font-size: 13px; color: #475569;">Q3 (4 units)</div>
+        </div>
+        <p style="font-size: 12px; color: #64748b; margin-top: 12px; text-align: center;">
+          Q2 is now visually narrower, indicating a shorter time period (e.g., a 2-week sprint vs 4-week quarters)
+        </p>
+      </div>
+    </div>
+
+    <!-- STEP 4: Moving an Item Bar -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">4</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User drags item bar to different bucket</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Dragging a bar horizontally moves it to a different time period. The bar snaps to bucket boundaries.
+        When moved, the sidebar list reorders to reflect the new timeline order (left-to-right = top-to-bottom).
+      </p>
+
+      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 800px; margin-left: 44px;">
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">BEFORE: "Dashboard" is in Q2</div>
+          <div style="display: flex; gap: 4px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #64748b;">Q1</div>
+            <div style="flex: 1; height: 32px; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">Dashboard</div>
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #64748b;">Q3</div>
+          </div>
+        </div>
+        <div style="text-align: center; color: #94a3b8; margin: 16px 0;">↓ User drags bar left to Q1 ↓</div>
+        <div>
+          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">AFTER: "Dashboard" snaps to Q1</div>
+          <div style="display: flex; gap: 4px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+            <div style="flex: 1; height: 32px; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.4);">Dashboard</div>
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #64748b;">Q2</div>
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #64748b;">Q3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Resizing an Item Bar -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">5</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User drags bar edge to span multiple buckets</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Dragging the left or right edge of a bar extends it to span multiple time periods.
+        The bar snaps to bucket boundaries when resizing.
+      </p>
+
+      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 800px; margin-left: 44px;">
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">BEFORE: "Dashboard" spans Q1 only</div>
+          <div style="display: flex; gap: 4px; background: #f8fafc; padding: 12px; border-radius: 8px; position: relative;">
+            <div style="flex: 1; height: 32px; background: #3b82f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; position: relative;">
+              Dashboard
+              <div style="position: absolute; right: -2px; top: 0; bottom: 0; width: 6px; background: rgba(255,255,255,0.3); border-radius: 0 4px 4px 0; cursor: ew-resize;"></div>
+            </div>
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px;"></div>
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px;"></div>
+          </div>
+        </div>
+        <div style="text-align: center; color: #94a3b8; margin: 16px 0;">↓ User drags right edge to Q2 boundary ↓</div>
+        <div>
+          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">AFTER: "Dashboard" spans Q1 → Q2</div>
+          <div style="display: flex; gap: 4px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+            <div style="flex: 2; height: 32px; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.4);">
+              Dashboard (Q1 → Q2)
+            </div>
+            <div style="flex: 1; height: 32px; background: #e2e8f0; border-radius: 4px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: Adding a New Bucket -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">6</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User clicks + to add a new bucket</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Clicking the + button adds a new bucket at the end. New buckets are named sequentially
+        ("Period 4", "Period 5", etc.) and default to width 4.
+      </p>
+
+      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 800px; margin-left: 44px;">
+        <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+          <div style="flex: 1; text-align: center; padding: 8px; background: white; border-radius: 6px; font-weight: 600; font-size: 13px;">Q1</div>
+          <div style="flex: 1; text-align: center; padding: 8px; background: white; border-radius: 6px; font-weight: 600; font-size: 13px;">Q2</div>
+          <div style="flex: 1; text-align: center; padding: 8px; background: white; border-radius: 6px; font-weight: 600; font-size: 13px;">Q3</div>
+          <div style="flex: 1; text-align: center; padding: 8px; background: #eef2ff; border: 2px dashed #4f46e5; border-radius: 6px; font-weight: 600; font-size: 13px; color: #4f46e5;">
+            Period 4 ✨
+          </div>
+          <button style="width: 36px; height: 36px; border-radius: 6px; border: 2px dashed #cbd5e1; background: transparent; color: #94a3b8; font-size: 18px; cursor: pointer;">+</button>
+        </div>
+        <p style="font-size: 12px; color: #64748b; margin-top: 12px; text-align: center;">
+          New bucket appears with default name, ready to be edited
+        </p>
+      </div>
+    </div>
+
+    <!-- STEP 7: Deleting a Bucket -->
+    <div style="margin-bottom: 48px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">7</div>
+        <h4 style="font-family: 'Poppins', sans-serif; font-size: 16px; margin: 0;">User deletes a bucket</h4>
+      </div>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px; margin-left: 44px;">
+        Hovering a bucket header reveals a delete button. When deleted, remaining buckets shift left.
+        Items that now fall outside any bucket are shown greyed out with an "Outside period" indicator.
+      </p>
+
+      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 900px; margin-left: 44px;">
+        <div style="margin-bottom: 24px;">
+          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">BEFORE: Q2 has "API rate limiting"</div>
+          <div style="display: flex; gap: 4px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+            <div style="flex: 1; text-align: center;">
+              <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Q1</div>
+              <div style="height: 32px; background: #4f46e5; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">Auth</div>
+            </div>
+            <div style="flex: 1; text-align: center; position: relative;">
+              <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #ef4444;">Q2 🗑️</div>
+              <div style="height: 32px; background: #10b981; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">API limits</div>
+            </div>
+            <div style="flex: 1; text-align: center;">
+              <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Q3</div>
+              <div style="height: 32px; background: #8b5cf6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">Dark mode</div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: center; color: #94a3b8; margin: 16px 0;">↓ User deletes Q2 ↓</div>
+        <div>
+          <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">AFTER: Q3 shifts left, "API rate limiting" is outside period</div>
+          <div style="display: flex; gap: 4px; background: #f8fafc; padding: 12px; border-radius: 8px;">
+            <div style="flex: 1; text-align: center;">
+              <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Q1</div>
+              <div style="height: 32px; background: #4f46e5; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">Auth</div>
+            </div>
+            <div style="flex: 1; text-align: center;">
+              <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px;">Q3</div>
+              <div style="height: 32px; background: #8b5cf6; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white;">Dark mode</div>
+            </div>
+            <div style="flex: 1; text-align: center; opacity: 0.5;">
+              <div style="font-size: 11px; color: #94a3b8; margin-bottom: 8px;">Outside period</div>
+              <div style="height: 32px; background: #94a3b8; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; border: 2px dashed #cbd5e1;">API limits ⚠️</div>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: #f59e0b; margin-top: 8px; text-align: center;">
+            ⚠️ 1 item is outside of defined periods - drag it to reschedule
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Final Design Decisions -->
+  <div class="section">
+    <h3>Final Design Decisions</h3>
+    <div class="notes" style="background: #dcfce7; border-left-color: #22c55e;">
+      <h4 style="color: #166534;">Decisions Made</h4>
+      <ul style="color: #166534;">
+        <li><strong>Scheduling items:</strong> Hover over empty row to see ghost bar, click to place. Items start unscheduled.</li>
+        <li><strong>"Outside period" items:</strong> Show greyed out in overflow area. User re-places by hovering/clicking.</li>
+        <li><strong>Mobile:</strong> Desktop-only feature. Mobile shows placeholder message encouraging desktop use.</li>
+        <li><strong>CSV export:</strong> Disabled in Roadmap view. User must switch to Scoring/Backlog to export.</li>
+        <li><strong>Initial state:</strong> All items start unscheduled (no bars). User explicitly places each one.</li>
+        <li><strong>Bar sizing:</strong> Default to 1 bucket wide when placed. User can resize to span multiple.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Mobile Placeholder Mockup -->
+  <div class="section">
+    <h3>Mobile: Desktop-Only Placeholder</h3>
+    <p class="description">
+      On mobile devices, the Roadmap tab is hidden. If a user somehow reaches the roadmap view (e.g., via URL),
+      they see a friendly placeholder encouraging them to open on desktop.
+    </p>
+
+    <div style="background: #1e293b; border-radius: 24px; padding: 8px; max-width: 375px; margin: 0 auto;">
+      <!-- Mobile frame -->
+      <div style="background: #f8fafc; border-radius: 20px; min-height: 600px; overflow: hidden;">
+        <!-- Header -->
+        <div style="background: white; padding: 16px; border-bottom: 1px solid #e2e8f0;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border-radius: 6px;"></div>
+            <span style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 18px; color: #4f46e5;">Priori</span>
+          </div>
+        </div>
+
+        <!-- Placeholder content -->
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; min-height: 450px;">
+          <!-- Desktop icon -->
+          <div style="width: 80px; height: 64px; background: #e2e8f0; border-radius: 8px; margin-bottom: 24px; position: relative;">
+            <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 40px; height: 8px; background: #cbd5e1; border-radius: 0 0 4px 4px;"></div>
+            <div style="position: absolute; top: 8px; left: 8px; right: 8px; bottom: 16px; background: #f8fafc; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+              <div style="display: flex; gap: 4px;">
+                <div style="width: 16px; height: 8px; background: #4f46e5; border-radius: 2px;"></div>
+                <div style="width: 24px; height: 8px; background: #3b82f6; border-radius: 2px;"></div>
+                <div style="width: 12px; height: 8px; background: #10b981; border-radius: 2px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <h3 style="font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; color: #1e293b; margin-bottom: 12px;">
+            Roadmap View
+          </h3>
+          <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 24px;">
+            The Roadmap view is optimised for desktop screens. Open this session on a computer to plan your timeline.
+          </p>
+
+          <div style="background: #eef2ff; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #4338ca;">
+            <strong>Tip:</strong> Scoring and Backlog views work great on mobile!
+          </div>
+        </div>
+
+        <!-- Bottom nav hint -->
+        <div style="background: white; border-top: 1px solid #e2e8f0; padding: 12px 24px;">
+          <div style="display: flex; justify-content: center; gap: 24px;">
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #64748b;">Scoring</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 12px; color: #64748b;">Backlog</div>
+            </div>
+            <div style="text-align: center; opacity: 0.4;">
+              <div style="font-size: 12px; color: #94a3b8;">Roadmap</div>
+              <div style="font-size: 10px; color: #cbd5e1;">Desktop only</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Updated Initial State (Unscheduled) -->
+  <div class="section">
+    <h3>Updated Step 1: Items Start Unscheduled</h3>
+    <p class="description">
+      When the user first opens Roadmap view, all items are unscheduled. Each item has an empty row.
+      Hovering over a bucket area in that row shows a ghost bar that can be clicked to place the item.
+    </p>
+
+    <div class="desktop-frame" style="max-width: 1100px;">
+      <div class="browser-bar">
+        <div class="browser-dot red"></div>
+        <div class="browser-dot yellow"></div>
+        <div class="browser-dot green"></div>
+        <div class="url-bar">priori.work/s/abc123</div>
+      </div>
+      <div class="app" style="min-height: 380px;">
+        <div class="view-tabs">
+          <div class="view-tab">Scoring</div>
+          <div class="view-tab">Backlog</div>
+          <div class="view-tab active">Roadmap</div>
+        </div>
+
+        <div class="timeline-container" style="min-height: 320px;">
+          <div class="timeline-sidebar">
+            <div class="sidebar-header">ITEMS</div>
+            <div class="sidebar-item" style="border-left: 3px solid #94a3b8;">
+              <div class="sidebar-item-title" style="color: #64748b;">User authentication</div>
+              <div class="sidebar-item-dates" style="color: #cbd5e1;">Not scheduled</div>
+            </div>
+            <div class="sidebar-item" style="border-left: 3px solid #94a3b8;">
+              <div class="sidebar-item-title" style="color: #64748b;">Dashboard redesign</div>
+              <div class="sidebar-item-dates" style="color: #cbd5e1;">Not scheduled</div>
+            </div>
+            <div class="sidebar-item" style="border-left: 3px solid #94a3b8;">
+              <div class="sidebar-item-title" style="color: #64748b;">API rate limiting</div>
+              <div class="sidebar-item-dates" style="color: #cbd5e1;">Not scheduled</div>
+            </div>
+          </div>
+
+          <div class="timeline-grid">
+            <div class="timeline-header" style="min-height: 56px;">
+              <div class="timeline-month" style="flex: 4; min-width: 180px;">
+                <div class="timeline-month-name">Now</div>
+              </div>
+              <div class="timeline-month" style="flex: 4; min-width: 180px;">
+                <div class="timeline-month-name">Next</div>
+              </div>
+              <div class="timeline-month" style="flex: 4; min-width: 180px;">
+                <div class="timeline-month-name">Later</div>
+              </div>
+              <div style="min-width: 50px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+                <button style="width: 32px; height: 32px; border-radius: 6px; border: 2px dashed #cbd5e1; background: transparent; color: #94a3b8; font-size: 18px; cursor: pointer;">+</button>
+              </div>
+            </div>
+
+            <div class="timeline-rows">
+              <!-- Row 1: Unscheduled, hovering over "Now" -->
+              <div class="timeline-row" style="background: #fafafa;">
+                <div style="position: absolute; left: 10px; width: calc(33% - 20px); height: 32px; top: 8px; border: 2px dashed #4f46e5; border-radius: 6px; background: rgba(79, 70, 229, 0.1); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #4f46e5; cursor: pointer;">
+                  Click to place here
+                </div>
+              </div>
+              <!-- Row 2: Unscheduled -->
+              <div class="timeline-row" style="background: #fafafa;">
+                <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 12px; color: #cbd5e1;">
+                  Hover to schedule
+                </div>
+              </div>
+              <!-- Row 3: Unscheduled -->
+              <div class="timeline-row" style="background: #fafafa;">
+                <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 12px; color: #cbd5e1;">
+                  Hover to schedule
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top: 16px;">
+      <h4>Hover-to-Place Behaviour</h4>
+      <ul>
+        <li>Empty rows show "Hover to schedule" hint</li>
+        <li>Hovering over a bucket area shows a ghost bar with "Click to place here"</li>
+        <li>Clicking places the item with default width (1 bucket)</li>
+        <li>After placement, the bar can be moved and resized</li>
+      </ul>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -5,9 +5,16 @@ interface ViewTabsProps {
   onChange: (view: ViewMode) => void
 }
 
-const tabs: { value: ViewMode; label: string }[] = [
+interface Tab {
+  value: ViewMode
+  label: string
+  desktopOnly?: boolean
+}
+
+const tabs: Tab[] = [
   { value: 'scoring', label: 'Scoring' },
   { value: 'backlog', label: 'Backlog' },
+  { value: 'roadmap', label: 'Roadmap', desktopOnly: true },
 ]
 
 export default function ViewTabs({ value, onChange }: ViewTabsProps) {
@@ -20,6 +27,7 @@ export default function ViewTabs({ value, onChange }: ViewTabsProps) {
             onClick={() => onChange(tab.value)}
             className={`
               flex-1 py-3 px-4 text-center text-sm font-medium border-b-2 transition-colors
+              ${tab.desktopOnly ? 'hidden lg:block' : ''}
               ${
                 value === tab.value
                   ? 'border-indigo-500 text-indigo-600'

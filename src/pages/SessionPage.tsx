@@ -9,6 +9,7 @@ import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import BacklogList from '../components/BacklogList'
+import RoadmapMobilePlaceholder from '../components/RoadmapMobilePlaceholder'
 import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
 import NamePromptModal from '../components/NamePromptModal'
@@ -17,10 +18,12 @@ import ConfirmModal from '../components/ConfirmModal'
 import ViewTabs from '../components/ViewTabs'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
+import { useRoadmapPeriods } from '../hooks/useRoadmapPeriods'
 
-// Lazy load components that are only used for specific frameworks
+// Lazy load components that are only used for specific frameworks/views
 const ValueEffortMatrix = lazy(() => import('../components/ValueEffortMatrix'))
 const WeightedCriteriaEditor = lazy(() => import('../components/WeightedCriteriaEditor'))
+const RoadmapView = lazy(() => import('../components/RoadmapView'))
 
 function Logo({ className = '' }: { className?: string }) {
   return (
@@ -61,6 +64,7 @@ export default function SessionPage() {
     variant: 'danger' | 'warning' | 'default'
     onConfirm: () => void
   } | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [notification, setNotification] = useState<{
     title: string
     message: string
@@ -77,6 +81,15 @@ export default function SessionPage() {
   // Participant name and presence
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
   const { participantCount } = usePresence(session?.id || null, participantName)
+
+  // Roadmap periods
+  const {
+    periods: roadmapPeriods,
+    loading: roadmapPeriodsLoading,
+    addPeriod: addRoadmapPeriod,
+    updatePeriod: updateRoadmapPeriod,
+    deletePeriod: deleteRoadmapPeriod,
+  } = useRoadmapPeriods(session?.view === 'roadmap' ? session?.id : null)
 
   // Helper function to fetch items with scores
   const fetchItems = useCallback(async (sessionId: string, framework?: Framework) => {
@@ -738,6 +751,132 @@ export default function SessionPage() {
     }
   }
 
+  const handleScheduleItem = async (itemId: string, startQuadrant: number, endQuadrant: number) => {
+    // Optimistically update local state
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === itemId
+          ? { ...item, roadmap_start_quadrant: startQuadrant, roadmap_end_quadrant: endQuadrant }
+          : item
+      )
+    )
+
+    // Persist to database
+    const { error } = await supabase
+      .from('items')
+      .update({
+        roadmap_start_quadrant: startQuadrant,
+        roadmap_end_quadrant: endQuadrant,
+      } as never)
+      .eq('id', itemId)
+
+    if (error) {
+      console.error('Error scheduling item:', error)
+      // Revert on error
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === itemId
+            ? { ...item, roadmap_start_quadrant: null, roadmap_end_quadrant: null }
+            : item
+        )
+      )
+    }
+  }
+
+  const handleUnscheduleItem = async (itemId: string) => {
+    // Find the current item to store for potential revert
+    const currentItem = items.find((item) => item.id === itemId)
+
+    // Optimistically update local state
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === itemId
+          ? { ...item, roadmap_start_quadrant: null, roadmap_end_quadrant: null }
+          : item
+      )
+    )
+
+    // Persist to database
+    const { error } = await supabase
+      .from('items')
+      .update({
+        roadmap_start_quadrant: null,
+        roadmap_end_quadrant: null,
+      } as never)
+      .eq('id', itemId)
+
+    if (error) {
+      console.error('Error unscheduling item:', error)
+      // Revert on error
+      if (currentItem) {
+        setItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  roadmap_start_quadrant: currentItem.roadmap_start_quadrant,
+                  roadmap_end_quadrant: currentItem.roadmap_end_quadrant,
+                }
+              : item
+          )
+        )
+      }
+    }
+  }
+
+  const handleDeletePeriod = async (periodId: string) => {
+    // Find the period being deleted and its position
+    const periodToDelete = roadmapPeriods.find((p) => p.id === periodId)
+    if (!periodToDelete) return
+
+    // Calculate the quadrant range this period covers
+    const QUADRANTS_PER_PERIOD = 4
+    let quadrantOffset = 0
+    for (const period of roadmapPeriods) {
+      if (period.id === periodId) break
+      quadrantOffset += QUADRANTS_PER_PERIOD
+    }
+    const deletedPeriodStartQuadrant = quadrantOffset
+    const deletedPeriodEndQuadrant = quadrantOffset + QUADRANTS_PER_PERIOD - 1
+
+    // Find items that overlap with this period's quadrant range
+    const affectedItems = items.filter((item) => {
+      if (item.roadmap_start_quadrant === null || item.roadmap_end_quadrant === null) {
+        return false
+      }
+      // Check if item's range overlaps with the deleted period's range
+      return (
+        item.roadmap_start_quadrant <= deletedPeriodEndQuadrant &&
+        item.roadmap_end_quadrant >= deletedPeriodStartQuadrant
+      )
+    })
+
+    // Clear quadrant values for affected items (optimistically)
+    if (affectedItems.length > 0) {
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          affectedItems.some((ai) => ai.id === item.id)
+            ? { ...item, roadmap_start_quadrant: null, roadmap_end_quadrant: null }
+            : item
+        )
+      )
+
+      // Persist to database
+      for (const item of affectedItems) {
+        await supabase
+          .from('items')
+          .update({
+            roadmap_start_quadrant: null,
+            roadmap_end_quadrant: null,
+          } as never)
+          .eq('id', item.id)
+      }
+    }
+
+    // Now delete the period
+    await deleteRoadmapPeriod(periodId)
+  }
+
   const handleSessionNameSave = async () => {
     if (!session) return
 
@@ -1084,7 +1223,8 @@ export default function SessionPage() {
                   framework: session.framework,
                   sessionName: session.name || session.slug,
                 })}
-                disabled={items.length === 0}
+                disabled={items.length === 0 || session.view === 'roadmap'}
+                title={session.view === 'roadmap' ? 'Switch to Scoring or Backlog view to export' : undefined}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="hidden sm:inline">Export CSV</span>
@@ -1132,10 +1272,30 @@ export default function SessionPage() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+        <div className={`grid grid-cols-1 gap-4 sm:gap-8 ${
+          session.view === 'roadmap' && sidebarCollapsed
+            ? 'lg:grid-cols-1'
+            : 'lg:grid-cols-3'
+        }`}>
           {/* Add Item Form - hidden on mobile, shown in sidebar on desktop */}
-          <div className="hidden lg:block lg:col-span-1">
+          {/* In roadmap view, can be collapsed */}
+          <div className={`hidden lg:block lg:col-span-1 ${
+            session.view === 'roadmap' && sidebarCollapsed ? '!hidden' : ''
+          }`}>
             <div className="bg-white rounded-lg shadow p-4 sm:p-6 lg:sticky lg:top-8">
+              {/* Collapse button for roadmap view */}
+              {session.view === 'roadmap' && (
+                <button
+                  onClick={() => setSidebarCollapsed(true)}
+                  className="mb-4 w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Collapse sidebar"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                  </svg>
+                  Collapse
+                </button>
+              )}
               <FrameworkSelector
                 value={session.framework}
                 onChange={handleFrameworkChange}
@@ -1213,6 +1373,52 @@ export default function SessionPage() {
                   onCutoffChange={handleCutoffChange}
                   onCutoffLabelChange={handleCutoffLabelChange}
                 />
+              </div>
+            )}
+
+            {/* Roadmap View */}
+            {session.view === 'roadmap' && (
+              <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+                {/* Desktop: Roadmap timeline */}
+                <div className="hidden lg:block">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <div className="flex items-center gap-3">
+                      {/* Expand button when sidebar is collapsed */}
+                      {sidebarCollapsed && (
+                        <button
+                          onClick={() => setSidebarCollapsed(false)}
+                          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 py-1.5 px-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          title="Show sidebar"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                          </svg>
+                          Expand
+                        </button>
+                      )}
+                      <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
+                        Roadmap
+                      </h2>
+                    </div>
+                  </div>
+                  <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
+                    <RoadmapView
+                      periods={roadmapPeriods}
+                      items={items}
+                      loading={roadmapPeriodsLoading}
+                      onAddPeriod={addRoadmapPeriod}
+                      onUpdatePeriod={updateRoadmapPeriod}
+                      onDeletePeriod={handleDeletePeriod}
+                      onScheduleItem={handleScheduleItem}
+                      onUnscheduleItem={handleUnscheduleItem}
+                    />
+                  </Suspense>
+                </div>
+
+                {/* Mobile: Placeholder directing to desktop */}
+                <div className="lg:hidden">
+                  <RoadmapMobilePlaceholder />
+                </div>
               </div>
             )}
           </div>

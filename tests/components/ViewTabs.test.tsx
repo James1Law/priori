@@ -4,11 +4,12 @@ import ViewTabs from '../../src/components/ViewTabs'
 import type { ViewMode } from '../../src/types/database'
 
 describe('ViewTabs', () => {
-  it('renders both Scoring and Backlog tabs', () => {
+  it('renders Scoring, Backlog, and Roadmap tabs', () => {
     render(<ViewTabs value="scoring" onChange={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: /scoring/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /roadmap/i })).toBeInTheDocument()
   })
 
   it('highlights the active tab', () => {
@@ -73,5 +74,30 @@ describe('ViewTabs', () => {
 
     expect(scoringTab).not.toHaveAttribute('aria-current')
     expect(backlogTab).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('roadmap tab has hidden lg:block class for desktop-only visibility', () => {
+    render(<ViewTabs value="scoring" onChange={vi.fn()} />)
+
+    const roadmapTab = screen.getByRole('button', { name: /roadmap/i })
+    expect(roadmapTab).toHaveClass('hidden')
+    expect(roadmapTab).toHaveClass('lg:block')
+  })
+
+  it('highlights roadmap tab when selected', () => {
+    render(<ViewTabs value="roadmap" onChange={vi.fn()} />)
+
+    const roadmapTab = screen.getByRole('button', { name: /roadmap/i })
+    expect(roadmapTab).toHaveClass('border-indigo-500')
+  })
+
+  it('calls onChange when clicking roadmap tab', () => {
+    const onChange = vi.fn()
+    render(<ViewTabs value="scoring" onChange={onChange} />)
+
+    const roadmapTab = screen.getByRole('button', { name: /roadmap/i })
+    fireEvent.click(roadmapTab)
+
+    expect(onChange).toHaveBeenCalledWith('roadmap')
   })
 })

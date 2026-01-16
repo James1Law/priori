@@ -14,6 +14,11 @@ describe('BacklogList', () => {
       backlog_position: null,
       created_by: 'Alice',
       created_at: '2024-01-01',
+      roadmap_start_period: null,
+      roadmap_end_period: null,
+      roadmap_start_quadrant: null,
+      roadmap_end_quadrant: null,
+      roadmap_row: 0,
       score: {
         id: 'score-1',
         item_id: '1',
@@ -31,6 +36,11 @@ describe('BacklogList', () => {
       backlog_position: null,
       created_by: 'Bob',
       created_at: '2024-01-02',
+      roadmap_start_period: null,
+      roadmap_end_period: null,
+      roadmap_start_quadrant: null,
+      roadmap_end_quadrant: null,
+      roadmap_row: 0,
       score: {
         id: 'score-2',
         item_id: '2',
@@ -48,6 +58,11 @@ describe('BacklogList', () => {
       backlog_position: null,
       created_by: null,
       created_at: '2024-01-03',
+      roadmap_start_period: null,
+      roadmap_end_period: null,
+      roadmap_start_quadrant: null,
+      roadmap_end_quadrant: null,
+      roadmap_row: 0,
       score: {
         id: 'score-3',
         item_id: '3',
@@ -337,20 +352,12 @@ describe('BacklogList', () => {
   })
 
   it('disables move down button when cutoff at last position', () => {
-    // Position 3 would be after the last item, so we use position 2 (before 3rd item)
-    // and check if it's disabled when at max (items.length)
-    // Actually, with 3 items, position can be 1, 2, or 3
-    // Position 3 means cutoff is after 2nd item (before 3rd), so down should work
-    // We need to test when cutoff is at position = items.length (after all items)
-    // But that's not a valid scenario as cutoff must be before an item
-    // So max valid position is items.length (3), which would grey out item at index 3
-    // But there's no item at index 3, so cutoff at position 3 won't render
-    // The real "bottom" is when only the last item is out of scope
+    // With 3 items, position 3 means cutoff is after all items
+    // The cutoff line should be rendered at position 3, showing all items above it
+    // The "move down" button should be disabled since there's nowhere to move down to
     render(<BacklogList {...defaultProps} cutoffPosition={3} cutoffLabel="Cutoff" />)
-    // When position is equal to items.length, there's no item to show cutoff before
-    // So we test with position = items.length - 1 = 2, checking down takes to 3
-    // Actually let's just verify the component doesn't crash when position = 3
-    expect(screen.queryByLabelText('Move cutoff down')).not.toBeInTheDocument()
+    const moveDownButton = screen.getByLabelText('Move cutoff down')
+    expect(moveDownButton).toBeDisabled()
   })
 
   it('calls onCutoffChange when move up clicked', () => {

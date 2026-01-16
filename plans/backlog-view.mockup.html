@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Backlog View Mockups</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f1f5f9;
+      padding: 40px;
+      color: #1e293b;
+    }
+    h1 { font-family: 'Poppins', sans-serif; font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: 'Poppins', sans-serif; font-size: 20px; margin-bottom: 16px; color: #475569; }
+    h3 { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .description { color: #64748b; margin-bottom: 32px; max-width: 600px; line-height: 1.6; }
+
+    .section { margin-bottom: 64px; }
+
+    /* Desktop Mockup Container */
+    .desktop-frame {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 8px;
+      max-width: 1200px;
+    }
+    .desktop-frame .browser-bar {
+      background: #334155;
+      border-radius: 8px 8px 0 0;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .desktop-frame .browser-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #475569;
+    }
+    .desktop-frame .browser-dot.red { background: #ef4444; }
+    .desktop-frame .browser-dot.yellow { background: #eab308; }
+    .desktop-frame .browser-dot.green { background: #22c55e; }
+    .desktop-frame .url-bar {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 4px;
+      padding: 6px 12px;
+      color: #94a3b8;
+      font-size: 13px;
+      margin-left: 12px;
+    }
+
+    /* App Container */
+    .app {
+      background: #f8fafc;
+      min-height: 600px;
+    }
+
+    /* Header */
+    .app-header {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-icon::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 12px solid white;
+    }
+    .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #4f46e5; }
+    .session-name { color: #64748b; font-size: 14px; }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    /* View Tabs */
+    .view-tabs {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 24px;
+      display: flex;
+      gap: 4px;
+    }
+    .view-tab {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: #4f46e5; }
+    .view-tab.active {
+      color: #4f46e5;
+      border-bottom-color: #4f46e5;
+    }
+
+    /* Main Content */
+    .main-content {
+      padding: 24px;
+    }
+
+    /* Roadmap List */
+    .roadmap-list {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .roadmap-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .roadmap-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .roadmap-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .sort-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 6px;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .sort-btn.manual {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .reset-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .reset-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    /* Roadmap Items */
+    .roadmap-item {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.15s;
+      cursor: grab;
+    }
+    .roadmap-item:hover { background: #f8fafc; }
+    .roadmap-item.dragging {
+      background: #eef2ff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+    }
+
+    .item-rank {
+      width: 32px;
+      height: 32px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: #64748b;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+    .item-drag {
+      color: #cbd5e1;
+      margin-right: 12px;
+      cursor: grab;
+    }
+    .item-content { flex: 1; }
+    .item-title { font-weight: 500; margin-bottom: 2px; }
+    .item-desc { font-size: 13px; color: #64748b; }
+    .item-score {
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 16px;
+    }
+    .item-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      margin-left: 16px;
+      cursor: pointer;
+    }
+    .item-checkbox.checked {
+      background: #4f46e5;
+      border-color: #4f46e5;
+    }
+
+    /* Priority Line */
+    .priority-line {
+      position: relative;
+      padding: 8px 20px;
+      cursor: ns-resize;
+    }
+    .priority-line-bar {
+      height: 3px;
+      background: linear-gradient(90deg, #f97316, #fb923c);
+      border-radius: 2px;
+      position: relative;
+    }
+    .priority-line-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #f97316;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .priority-line-handle {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 24px;
+      background: #f97316;
+      border-radius: 4px;
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .priority-line-handle::before {
+      content: '⋮⋮';
+      color: white;
+      font-size: 10px;
+      letter-spacing: -2px;
+    }
+
+    /* Below the line items - greyed out */
+    .roadmap-item.below-line {
+      opacity: 0.5;
+    }
+    .roadmap-item.below-line .item-rank {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+
+    /* Mobile Frame */
+    .mobile-frame {
+      width: 375px;
+      background: #1e293b;
+      border-radius: 40px;
+      padding: 12px;
+    }
+    .mobile-screen {
+      background: #f8fafc;
+      border-radius: 32px;
+      overflow: hidden;
+      min-height: 700px;
+    }
+    .mobile-notch {
+      background: #1e293b;
+      width: 150px;
+      height: 28px;
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto;
+    }
+
+    /* Mobile Header */
+    .mobile-header {
+      background: white;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .mobile-header .logo { justify-content: center; }
+    .mobile-session { text-align: center; font-size: 13px; color: #64748b; margin-top: 4px; }
+
+    /* Mobile View Toggle */
+    .mobile-view-toggle {
+      display: flex;
+      background: #f1f5f9;
+      margin: 12px 16px;
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .mobile-view-toggle .toggle-btn {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .mobile-view-toggle .toggle-btn.active {
+      background: white;
+      color: #4f46e5;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Mobile Roadmap */
+    .mobile-roadmap {
+      padding: 0 16px 100px;
+    }
+    .mobile-item {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .mobile-item .item-rank {
+      width: 28px;
+      height: 28px;
+      font-size: 13px;
+      margin-right: 12px;
+    }
+    .mobile-item .item-title { font-size: 14px; }
+    .mobile-item .item-score {
+      font-size: 12px;
+      padding: 3px 8px;
+    }
+
+    /* Mobile Priority Line */
+    .mobile-priority-line {
+      padding: 12px 0;
+      position: relative;
+    }
+    .mobile-priority-line .priority-line-bar {
+      height: 2px;
+    }
+    .mobile-priority-line .priority-line-label {
+      font-size: 11px;
+      padding: 3px 10px;
+    }
+
+    /* Side by side layout */
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* Notes */
+    .notes {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 24px;
+    }
+    .notes h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+    .notes ul {
+      font-size: 13px;
+      color: #78350f;
+      padding-left: 20px;
+    }
+    .notes li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Backlog View</h1>
+  <h2>Prioritised List with Scope Line</h2>
+  <p class="description">
+    A dedicated view for managing and communicating your prioritised backlog. Items are displayed as a ranked list
+    with a draggable "cutoff line" to visually separate what's in scope from what's not. Supports both
+    score-based auto-sorting and manual drag-and-drop reordering.
+  </p>
+
+  <div class="section">
+    <h3>Desktop View</h3>
+    <div class="desktop-frame">
+      <div class="browser-bar">
+        <div class="browser-dot red"></div>
+        <div class="browser-dot yellow"></div>
+        <div class="browser-dot green"></div>
+        <div class="url-bar">priori.work/s/abc123</div>
+      </div>
+      <div class="app">
+        <div class="app-header">
+          <div>
+            <div class="logo">
+              <div class="logo-icon"></div>
+              <span class="logo-text">Priori</span>
+            </div>
+            <div class="session-name">Q1 2026 Planning</div>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-secondary">Export CSV</button>
+            <button class="btn btn-secondary">Copy Link</button>
+            <button class="btn btn-primary">+ Add Item</button>
+          </div>
+        </div>
+
+        <div class="view-tabs">
+          <div class="view-tab">Scoring</div>
+          <div class="view-tab active">Backlog</div>
+          <div class="view-tab">Roadmap</div>
+        </div>
+
+        <div class="main-content">
+          <div class="roadmap-list">
+            <div class="roadmap-header">
+              <span class="roadmap-title">Prioritised Backlog</span>
+              <div class="roadmap-actions">
+                <button class="sort-btn manual">Order: Manual</button>
+                <button class="reset-btn">↻ Reset to Score</button>
+              </div>
+            </div>
+
+            <!-- In Scope Items -->
+            <div class="roadmap-item">
+              <span class="item-drag">⋮⋮</span>
+              <span class="item-rank">1</span>
+              <div class="item-content">
+                <div class="item-title">User authentication system</div>
+                <div class="item-desc">OAuth2 integration with Google and Microsoft</div>
+              </div>
+              <span class="item-score">RICE: 142</span>
+            </div>
+
+            <div class="roadmap-item">
+              <span class="item-drag">⋮⋮</span>
+              <span class="item-rank">2</span>
+              <div class="item-content">
+                <div class="item-title">Dashboard redesign</div>
+                <div class="item-desc">New analytics widgets and KPI cards</div>
+              </div>
+              <span class="item-score">RICE: 98</span>
+            </div>
+
+            <div class="roadmap-item">
+              <span class="item-drag">⋮⋮</span>
+              <span class="item-rank">3</span>
+              <div class="item-content">
+                <div class="item-title">API rate limiting</div>
+                <div class="item-desc">Implement throttling for public endpoints</div>
+              </div>
+              <span class="item-score">RICE: 76</span>
+            </div>
+
+            <!-- Priority Line -->
+            <div class="priority-line">
+              <div class="priority-line-bar">
+                <span class="priority-line-label">Sprint 1 Cutoff</span>
+              </div>
+            </div>
+
+            <!-- Below the Line Items -->
+            <div class="roadmap-item below-line">
+              <span class="item-drag">⋮⋮</span>
+              <span class="item-rank">4</span>
+              <div class="item-content">
+                <div class="item-title">Dark mode theme</div>
+                <div class="item-desc">System-preference-aware colour scheme</div>
+              </div>
+              <span class="item-score">RICE: 45</span>
+            </div>
+
+            <div class="roadmap-item below-line">
+              <span class="item-drag">⋮⋮</span>
+              <span class="item-rank">5</span>
+              <div class="item-content">
+                <div class="item-title">Export to PDF</div>
+                <div class="item-desc">Formatted report generation</div>
+              </div>
+              <span class="item-score">RICE: 32</span>
+            </div>
+
+            <div class="roadmap-item below-line">
+              <span class="item-drag">⋮⋮</span>
+              <span class="item-rank">6</span>
+              <div class="item-content">
+                <div class="item-title">Keyboard shortcuts</div>
+                <div class="item-desc">Power user navigation</div>
+              </div>
+              <span class="item-score">RICE: 28</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h4>UX Notes - Desktop</h4>
+      <ul>
+        <li><strong>View Tabs:</strong> Scoring (frameworks) | Backlog (this view) | Roadmap (timeline, future)</li>
+        <li><strong>Drag handles:</strong> Items can be reordered by dragging the ⋮⋮ handle</li>
+        <li><strong>Cutoff Line:</strong> Draggable between any two items. Label is editable (click to rename)</li>
+        <li><strong>Below-line styling:</strong> Greyed out to show "out of scope" status</li>
+        <li><strong>Score badge:</strong> Shows score from whichever framework is active in Scoring view</li>
+        <li><strong>Order modes:</strong>
+          <ul>
+            <li><strong>Score (default):</strong> Auto-sorted by framework score, highest first</li>
+            <li><strong>Manual:</strong> User has dragged items to custom positions (amber indicator)</li>
+          </ul>
+        </li>
+        <li><strong>Reset to Score:</strong> Button appears when in Manual mode. Clicking resets to score order.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Mobile View</h3>
+    <div class="mockup-grid">
+      <div class="mobile-frame">
+        <div class="mobile-screen">
+          <div class="mobile-notch"></div>
+          <div class="mobile-header">
+            <div class="logo">
+              <div class="logo-icon" style="width:28px;height:28px;border-radius:6px;"></div>
+              <span class="logo-text" style="font-size:18px;">Priori</span>
+            </div>
+            <div class="mobile-session">Q1 2026 Planning</div>
+          </div>
+
+          <div class="mobile-view-toggle">
+            <div class="toggle-btn">Scoring</div>
+            <div class="toggle-btn active">Backlog</div>
+          </div>
+
+          <div class="mobile-roadmap">
+            <div class="mobile-item">
+              <span class="item-rank">1</span>
+              <div class="item-content">
+                <div class="item-title">User authentication system</div>
+              </div>
+              <span class="item-score">142</span>
+            </div>
+
+            <div class="mobile-item">
+              <span class="item-rank">2</span>
+              <div class="item-content">
+                <div class="item-title">Dashboard redesign</div>
+              </div>
+              <span class="item-score">98</span>
+            </div>
+
+            <div class="mobile-item">
+              <span class="item-rank">3</span>
+              <div class="item-content">
+                <div class="item-title">API rate limiting</div>
+              </div>
+              <span class="item-score">76</span>
+            </div>
+
+            <div class="mobile-priority-line">
+              <div class="priority-line-bar">
+                <span class="priority-line-label">Sprint 1 Cutoff</span>
+              </div>
+            </div>
+
+            <div class="mobile-item" style="opacity: 0.5;">
+              <span class="item-rank">4</span>
+              <div class="item-content">
+                <div class="item-title">Dark mode theme</div>
+              </div>
+              <span class="item-score">45</span>
+            </div>
+
+            <div class="mobile-item" style="opacity: 0.5;">
+              <span class="item-rank">5</span>
+              <div class="item-content">
+                <div class="item-title">Export to PDF</div>
+              </div>
+              <span class="item-score">32</span>
+            </div>
+
+            <div class="mobile-item" style="opacity: 0.5;">
+              <span class="item-rank">6</span>
+              <div class="item-content">
+                <div class="item-title">Keyboard shortcuts</div>
+              </div>
+              <span class="item-score">28</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes" style="max-width: 300px;">
+        <h4>UX Notes - Mobile</h4>
+        <ul>
+          <li><strong>Toggle view:</strong> Simple pill toggle between Scoring and Backlog</li>
+          <li><strong>Compact cards:</strong> Show rank, title, and score only</li>
+          <li><strong>Long-press to reorder:</strong> Touch and hold to drag items</li>
+          <li><strong>Tap cutoff line:</strong> Opens modal to rename or reposition</li>
+          <li><strong>Roadmap tab:</strong> Hidden on mobile (timeline too complex for small screen)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
