@@ -11,28 +11,46 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
+// Helper to add an item via the FAB + BottomSheet (mobile)
+async function addItemMobile(page: import('@playwright/test').Page, title: string, description?: string) {
+  // Click the FAB (floating action button)
+  await page.locator('button[aria-label="Add item"]').click()
+
+  // Wait for bottom sheet to open
+  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
+
+  // Fill in the form
+  await page.fill('input[placeholder="Item title (required)"]', title)
+  if (description) {
+    await page.fill('textarea[placeholder="Description (optional)"]', description)
+  }
+
+  // Submit using the specific form submit button
+  await page.click('[data-testid="submit-item-button"]')
+
+  // Wait for item to appear in the list
+  await expect(page.locator(`text=${title}`)).toBeVisible()
+}
+
+// Helper to change framework via MobileMenu (kebab menu)
+async function changeFrameworkMobile(page: import('@playwright/test').Page, frameworkLabel: string) {
+  // Open kebab menu
+  await page.locator('button[aria-label="Open menu"]').click()
+
+  // Click framework option in menu (use getByRole to be specific)
+  await page.getByRole('menuitem', { name: frameworkLabel, exact: true }).click()
+}
+
 test.describe('Mobile Experience', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
 
-    // On mobile, we use the bottom bar input
-    // Wait for the mobile bottom bar to be visible
-    await expect(page.locator('.fixed.bottom-0')).toBeVisible()
-
-    // Add items using mobile bottom bar
-    await page.fill('.fixed.bottom-0 input[placeholder="Add new item..."]', 'Mobile item 1')
-    await page.click('.fixed.bottom-0 button:has-text("Add")')
-    await expect(page.locator('text=Mobile item 1')).toBeVisible()
-
-    await page.fill('.fixed.bottom-0 input[placeholder="Add new item..."]', 'Mobile item 2')
-    await page.click('.fixed.bottom-0 button:has-text("Add")')
-    await expect(page.locator('text=Mobile item 2')).toBeVisible()
-
-    await page.fill('.fixed.bottom-0 input[placeholder="Add new item..."]', 'Mobile item 3')
-    await page.click('.fixed.bottom-0 button:has-text("Add")')
-    await expect(page.locator('text=Mobile item 3')).toBeVisible()
+    // Add items using mobile FAB + BottomSheet
+    await addItemMobile(page, 'Mobile item 1')
+    await addItemMobile(page, 'Mobile item 2')
+    await addItemMobile(page, 'Mobile item 3')
   })
 
   test('shows mobile bottom bar with view toggle', async ({ page }) => {
@@ -84,11 +102,57 @@ test.describe('Mobile Experience', () => {
     await expect(page.locator('text=Mobile item 1')).not.toBeVisible()
   })
 
-  test('framework selector works in mobile bottom bar', async ({ page }) => {
-    // Click the framework selector in bottom bar
-    await page.selectOption('.fixed.bottom-0 select', 'ice')
+  test('framework selector works in mobile menu', async ({ page }) => {
+    // Change to ICE framework via mobile menu
+    await changeFrameworkMobile(page, 'ICE')
 
     // Should show ICE scoring on items
     await expect(page.locator('article').locator('label:has-text("Impact")').first()).toBeVisible()
+  })
+
+  test('FAB is visible on all views', async ({ page }) => {
+    // FAB should be visible on scoring view
+    await expect(page.locator('button[aria-label="Add item"]')).toBeVisible()
+
+    // Switch to backlog
+    await page.locator('.fixed.bottom-0 button:has-text("Backlog")').click()
+    await expect(page.locator('button[aria-label="Add item"]')).toBeVisible()
+
+    // Switch to estimates
+    await page.locator('.fixed.bottom-0 button:has-text("Estimates")').click()
+    await expect(page.locator('button[aria-label="Add item"]')).toBeVisible()
+  })
+
+  test('can add item with description on mobile', async ({ page }) => {
+    // Add item with description
+    await addItemMobile(page, 'Feature with description', 'This is a detailed description')
+
+    // Item should appear
+    await expect(page.locator('text=Feature with description')).toBeVisible()
+  })
+
+  test('mobile menu has all session actions', async ({ page }) => {
+    // Open kebab menu
+    await page.locator('button[aria-label="Open menu"]').click()
+
+    // Should show all session actions as menu items
+    await expect(page.getByRole('menuitem', { name: 'Copy URL' })).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: 'Export CSV' })).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: 'Clear Items' })).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: 'New Session' })).toBeVisible()
+  })
+
+  test('framework badge shows current framework on scoring view', async ({ page }) => {
+    // Mobile framework badge is below header and shows current framework
+    // The badge is a button that opens the mobile menu
+    const frameworkBadge = page.locator('button:has-text("RICE")').filter({ has: page.locator('svg') })
+    await expect(frameworkBadge.first()).toBeVisible()
+
+    // Change to ICE via mobile menu
+    await changeFrameworkMobile(page, 'ICE')
+
+    // Badge should update to show ICE
+    const iceBadge = page.locator('button:has-text("ICE")').filter({ has: page.locator('svg') })
+    await expect(iceBadge.first()).toBeVisible()
   })
 })

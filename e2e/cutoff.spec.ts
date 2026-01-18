@@ -6,18 +6,33 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
+// Helper to add an item via the slide-in panel (desktop)
+async function addItem(page: import('@playwright/test').Page, title: string) {
+  await page.click('[data-testid="add-item-button"]')
+  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
+  await page.fill('input[placeholder="Item title (required)"]', title)
+  await page.click('[data-testid="submit-item-button"]')
+  // Wait for item to appear and panel to close
+  await expect(page.locator(`text=${title}`)).toBeVisible({ timeout: 10000 })
+  // Wait for panel to close before continuing
+  await expect(page.locator('[data-testid="add-item-button"]')).toBeVisible({ timeout: 5000 })
+}
+
+// Helper to change framework via ViewTabs dropdown (desktop)
+async function changeFramework(page: import('@playwright/test').Page, framework: string) {
+  await page.selectOption('[data-testid="framework-selector"]', framework)
+}
+
 test.describe('Cutoff Line', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
-    await page.selectOption('select', 'ice')
+    await changeFramework(page, 'ice')
 
     // Add 4 items one at a time with waiting
     for (const name of ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4']) {
-      await page.fill('input[placeholder="Item title (required)"]', name)
-      await page.click('button:has-text("Add Item")')
-      await expect(page.locator(`text=${name}`)).toBeVisible()
+      await addItem(page, name)
     }
 
     await expect(page.locator('text=Items (4)')).toBeVisible({ timeout: 10000 })

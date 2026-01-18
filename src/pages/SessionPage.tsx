@@ -12,11 +12,14 @@ import BacklogList from '../components/BacklogList'
 import EstimatesView from '../components/EstimatesView'
 import RoadmapMobilePlaceholder from '../components/RoadmapMobilePlaceholder'
 import ItemEditModal from '../components/ItemEditModal'
-import FrameworkSelector from '../components/FrameworkSelector'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
 import ConfirmModal from '../components/ConfirmModal'
 import ViewTabs from '../components/ViewTabs'
+import SlideInPanel from '../components/SlideInPanel'
+import FAB from '../components/FAB'
+import BottomSheet from '../components/BottomSheet'
+import MobileMenu from '../components/MobileMenu'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 import { useRoadmapPeriods } from '../hooks/useRoadmapPeriods'
@@ -26,7 +29,8 @@ const ValueEffortMatrix = lazy(() => import('../components/ValueEffortMatrix'))
 const WeightedCriteriaEditor = lazy(() => import('../components/WeightedCriteriaEditor'))
 const RoadmapView = lazy(() => import('../components/RoadmapView'))
 
-function Logo({ className = '' }: { className?: string }) {
+function Logo({ className = '', id = 'header-brand' }: { className?: string; id?: string }) {
+  const gradientId = `${id}-gradient`
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -35,12 +39,12 @@ function Logo({ className = '' }: { className?: string }) {
       className={className}
     >
       <defs>
-        <linearGradient id="header-brand-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+        <linearGradient id={gradientId} x1="0%" y1="100%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#4f46e5" />
           <stop offset="100%" stopColor="#6366f1" />
         </linearGradient>
       </defs>
-      <rect width="48" height="48" rx="12" fill="url(#header-brand-gradient)" />
+      <rect width="48" height="48" rx="12" fill={`url(#${gradientId})`} />
       <path d="M24 12L36 34H12L24 12Z" fill="white" />
     </svg>
   )
@@ -65,19 +69,25 @@ export default function SessionPage() {
     variant: 'danger' | 'warning' | 'default'
     onConfirm: () => void
   } | null>(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isAddPanelOpen, setIsAddPanelOpen] = useState(false)
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [notification, setNotification] = useState<{
     title: string
     message: string
   } | null>(null)
+  // Local view state - stored per-participant, not synced to database
+  const [localView, setLocalView] = useState<ViewMode>('scoring')
   const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
-  // Ref to track current framework for realtime callbacks (avoids stale closure)
+  // Refs to track current values for realtime callbacks (avoids stale closure)
   const frameworkRef = useRef<Framework | undefined>(session?.framework)
+  const sessionIdRef = useRef<string | undefined>(session?.id)
 
-  // Keep frameworkRef in sync with session.framework
+  // Keep refs in sync with session state
   useEffect(() => {
     frameworkRef.current = session?.framework
-  }, [session?.framework])
+    sessionIdRef.current = session?.id
+  }, [session?.framework, session?.id])
 
   // Participant name and presence
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
@@ -90,7 +100,35 @@ export default function SessionPage() {
     addPeriod: addRoadmapPeriod,
     updatePeriod: updateRoadmapPeriod,
     deletePeriod: deleteRoadmapPeriod,
-  } = useRoadmapPeriods(session?.view === 'roadmap' ? session?.id : null)
+  } = useRoadmapPeriods(localView === 'roadmap' ? (session?.id ?? null) : null)
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input/textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+
+      // "N" key opens add item panel (desktop) or bottom sheet (mobile)
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault()
+        // Check if we're on mobile (< lg breakpoint = 1024px)
+        if (window.innerWidth < 1024) {
+          setIsAddSheetOpen(true)
+        } else {
+          setIsAddPanelOpen(true)
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   // Helper function to fetch items with scores
   const fetchItems = useCallback(async (sessionId: string, framework?: Framework) => {
@@ -264,20 +302,18 @@ export default function SessionPage() {
           const scoreData = (payload.new || payload.old) as Score
           if (!scoreData?.item_id) return
 
-          // Verify this score belongs to an item in our session
-          const itemBelongsToSession = items.some(
-            (item) => item.id === scoreData.item_id
-          )
-          if (!itemBelongsToSession && payload.eventType !== 'DELETE') {
-            // Check database if item exists in session (for new items we might not have locally)
-            const { data } = await supabase
-              .from('items')
-              .select('id')
-              .eq('id', scoreData.item_id)
-              .eq('session_id', session.id)
-              .single()
-            if (!data) return
-          }
+          // Use sessionIdRef to avoid stale closure
+          const currentSessionId = sessionIdRef.current
+          if (!currentSessionId) return
+
+          // Check database if item exists in session
+          const { data } = await supabase
+            .from('items')
+            .select('id')
+            .eq('id', scoreData.item_id)
+            .eq('session_id', currentSessionId)
+            .single()
+          if (!data) return
 
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const newScore = payload.new as Score
@@ -286,6 +322,10 @@ export default function SessionPage() {
             if (newScore.framework !== currentFramework) return
 
             setItems((prevItems) => {
+              // Check if this item exists in our local state
+              const itemExists = prevItems.some((item) => item.id === newScore.item_id)
+              if (!itemExists) return prevItems
+
               const updatedItems = prevItems.map((item) =>
                 item.id === newScore.item_id
                   ? { ...item, score: newScore }
@@ -621,22 +661,20 @@ export default function SessionPage() {
       .insert(scoreRecords as never)
   }
 
-  const handleViewChange = async (view: ViewMode) => {
-    if (!session) return
+  // Initialize local view from localStorage on mount
+  useEffect(() => {
+    if (!slug) return
+    const savedView = localStorage.getItem(`priori_view_${slug}`)
+    if (savedView && ['scoring', 'estimates', 'backlog', 'roadmap'].includes(savedView)) {
+      setLocalView(savedView as ViewMode)
+    }
+  }, [slug])
 
-    // Optimistically update local state
-    setSession({ ...session, view })
-
-    // Persist to database (non-blocking)
-    const { error: updateError } = await supabase
-      .from('sessions')
-      .update({ view } as never)
-      .eq('id', session.id)
-
-    if (updateError) {
-      console.error('Error updating view:', updateError)
-      // Revert on error
-      setSession({ ...session })
+  const handleViewChange = (view: ViewMode) => {
+    setLocalView(view)
+    // Persist to localStorage for this session only (not synced across participants)
+    if (slug) {
+      localStorage.setItem(`priori_view_${slug}`, view)
     }
   }
 
@@ -1260,13 +1298,15 @@ export default function SessionPage() {
   return (
     <div className="min-h-screen bg-gray-50 font-body">
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          {/* Desktop header - hidden on mobile */}
+          <div className="hidden lg:flex lg:items-center lg:justify-between">
+            {/* Left: Logo + Session name + ID */}
             <div className="min-w-0 flex-1 flex items-center gap-3">
               <a href="/" className="flex-shrink-0" title="Go to home">
-                <Logo className="w-10 h-10" />
+                <Logo className="w-9 h-9" />
               </a>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex items-center gap-3">
                 {editingSessionName ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -1278,7 +1318,108 @@ export default function SessionPage() {
                         if (e.key === 'Escape') setEditingSessionName(false)
                       }}
                       placeholder="Session name"
-                      className="text-xl sm:text-2xl font-display font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none w-full"
+                      className="text-lg font-display font-semibold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSessionNameSave}
+                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingSessionName(false)}
+                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h1
+                      className="text-lg font-display font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate max-w-xs"
+                      onClick={startEditingSessionName}
+                      title="Click to edit session name"
+                    >
+                      {session.name || 'Untitled Session'}
+                    </h1>
+                    {!session.name && (
+                      <span className="text-sm text-gray-400 font-mono">{session.slug}</span>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Participant indicator + Actions */}
+            <div className="flex items-center gap-3">
+              {/* Participant indicator */}
+              {participantCount > 0 && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 pr-2 border-r border-gray-200">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span>{participantCount} {participantCount === 1 ? 'participant' : 'participants'}</span>
+                </div>
+              )}
+
+              {/* Session actions */}
+              <button
+                onClick={() => exportToCsv({
+                  items,
+                  framework: session.framework,
+                  sessionName: session.name || session.slug,
+                })}
+                disabled={items.length === 0 || localView === 'roadmap'}
+                title={localView === 'roadmap' ? 'Switch to Scoring or Backlog view to export' : undefined}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Export CSV
+              </button>
+              <button
+                onClick={handleClearItems}
+                disabled={items.length === 0}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href)
+                  setNotification({
+                    title: 'URL Copied',
+                    message: 'Session URL has been copied to your clipboard. Share it with your team to collaborate!',
+                  })
+                }}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm"
+              >
+                Copy URL
+              </button>
+              <button
+                onClick={handleNewSession}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors text-sm"
+              >
+                New
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile header - visible on mobile only */}
+          <div className="lg:hidden flex items-center justify-between gap-3">
+            <a href="/" className="flex-shrink-0" title="Go to home">
+              <Logo className="w-10 h-10" id="mobile-brand" />
+            </a>
+            <div className="min-w-0 flex-1">
+                {editingSessionName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={sessionNameInput}
+                      onChange={(e) => setSessionNameInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSessionNameSave()
+                        if (e.key === 'Escape') setEditingSessionName(false)
+                      }}
+                      placeholder="Session name"
+                      className="text-xl font-display font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none w-full"
                       autoFocus
                     />
                     <button
@@ -1296,68 +1437,55 @@ export default function SessionPage() {
                   </div>
                 ) : (
                   <h1
-                    className="text-xl sm:text-2xl font-display font-bold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate"
+                    className="text-xl font-display font-bold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate"
                     onClick={startEditingSessionName}
                     title="Click to edit session name"
                   >
                     {session.name || 'Untitled Session'}
                   </h1>
                 )}
-                {!session.name && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Session: {session.slug}
-                  </p>
-                )}
-              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              {/* Participant count */}
+            <div className="flex items-center gap-2 relative">
+              {/* Participant count - compact on mobile */}
               {participantCount > 0 && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span className="hidden sm:inline">{participantCount} {participantCount === 1 ? 'participant' : 'participants'}</span>
-                  <span className="sm:hidden">{participantCount}</span>
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span>{participantCount}</span>
                 </div>
               )}
+              {/* Kebab menu button */}
               <button
-                onClick={() => exportToCsv({
-                  items,
-                  framework: session.framework,
-                  sessionName: session.name || session.slug,
-                })}
-                disabled={items.length === 0 || session.view === 'roadmap'}
-                title={session.view === 'roadmap' ? 'Switch to Scoring or Backlog view to export' : undefined}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Open menu"
               >
-                <span className="hidden sm:inline">Export CSV</span>
-                <span className="sm:hidden">Export</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
               </button>
-              <button
-                onClick={handleClearItems}
-                disabled={items.length === 0}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => {
+              {/* Mobile menu dropdown */}
+              <MobileMenu
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
+                view={localView}
+                framework={session.framework}
+                onFrameworkChange={handleFrameworkChange}
+                onCopyUrl={() => {
                   navigator.clipboard.writeText(window.location.href)
                   setNotification({
                     title: 'URL Copied',
                     message: 'Session URL has been copied to your clipboard. Share it with your team to collaborate!',
                   })
                 }}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm"
-              >
-                <span className="hidden sm:inline">Copy URL</span>
-                <span className="sm:hidden">Copy</span>
-              </button>
-              <button
-                onClick={handleNewSession}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg transition-colors text-sm"
-              >
-                New
-              </button>
+                onExportCsv={() => exportToCsv({
+                  items,
+                  framework: session.framework,
+                  sessionName: session.name || session.slug,
+                })}
+                onClearItems={handleClearItems}
+                onNewSession={handleNewSession}
+                itemCount={items.length}
+              />
             </div>
           </div>
         </div>
@@ -1367,61 +1495,41 @@ export default function SessionPage() {
       <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <ViewTabs
-            value={session.view || 'scoring'}
+            value={localView}
             onChange={handleViewChange}
+            framework={session.framework}
+            onFrameworkChange={handleFrameworkChange}
+            onAddItemClick={() => setIsAddPanelOpen(true)}
           />
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className={`grid grid-cols-1 gap-4 sm:gap-8 ${
-          session.view === 'roadmap' && sidebarCollapsed
-            ? 'lg:grid-cols-1'
-            : 'lg:grid-cols-3'
-        }`}>
-          {/* Add Item Form - hidden on mobile, shown in sidebar on desktop */}
-          {/* In roadmap view, can be collapsed */}
-          <div className={`hidden lg:block lg:col-span-1 ${
-            session.view === 'roadmap' && sidebarCollapsed ? '!hidden' : ''
-          }`}>
-            <div className="bg-white rounded-lg shadow p-4 sm:p-6 lg:sticky lg:top-8">
-              {/* Collapse button for roadmap view */}
-              {session.view === 'roadmap' && (
-                <button
-                  onClick={() => setSidebarCollapsed(true)}
-                  className="mb-4 w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  title="Collapse sidebar"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                  </svg>
-                  Collapse
-                </button>
-              )}
-              <FrameworkSelector
-                value={session.framework}
-                onChange={handleFrameworkChange}
-              />
-              {/* Weighted Criteria Editor */}
-              {session.framework === 'weighted' && (
-                <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-32 mb-4" />}>
-                  <WeightedCriteriaEditor
-                    criteria={session.weighted_criteria || []}
-                    onChange={handleWeightedCriteriaChange}
-                  />
-                </Suspense>
-              )}
-              <h2 className="text-xl font-display font-semibold text-gray-900 mb-4">
-                Add New Item
-              </h2>
-              <ItemForm onAdd={handleAddItem} />
-            </div>
-          </div>
+      {/* Mobile framework badge - only in scoring view */}
+      {localView === 'scoring' && (
+        <div className="lg:hidden bg-gray-50 border-b border-gray-200 px-4 py-2">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <span className="font-medium">
+              {session.framework === 'rice' && 'RICE'}
+              {session.framework === 'ice' && 'ICE'}
+              {session.framework === 'value_effort' && 'Value vs Effort'}
+              {session.framework === 'moscow' && 'MoSCoW'}
+              {session.framework === 'weighted' && 'Weighted Scoring'}
+            </span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
 
-          {/* Items List - add bottom padding on mobile for the bottom bar */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6 pb-24 lg:pb-0">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Main content area - full width for most views, grid for roadmap */}
+        <div className="space-y-4 sm:space-y-6 pb-24 lg:pb-0">
             {/* Scoring View */}
-            {(session.view || 'scoring') === 'scoring' && (
+            {localView === 'scoring' && (
               <>
                 {/* Value vs Effort Matrix */}
                 {session.framework === 'value_effort' && items.length > 0 && (
@@ -1455,7 +1563,7 @@ export default function SessionPage() {
             )}
 
             {/* Estimates View (Planning Poker) */}
-            {session.view === 'estimates' && (
+            {localView === 'estimates' && (
               <div className="bg-white rounded-lg shadow">
                 <EstimatesView
                   items={items}
@@ -1473,7 +1581,7 @@ export default function SessionPage() {
             )}
 
             {/* Backlog View */}
-            {session.view === 'backlog' && (
+            {localView === 'backlog' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
@@ -1497,29 +1605,14 @@ export default function SessionPage() {
             )}
 
             {/* Roadmap View */}
-            {session.view === 'roadmap' && (
+            {localView === 'roadmap' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
                 {/* Desktop: Roadmap timeline */}
                 <div className="hidden lg:block">
                   <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <div className="flex items-center gap-3">
-                      {/* Expand button when sidebar is collapsed */}
-                      {sidebarCollapsed && (
-                        <button
-                          onClick={() => setSidebarCollapsed(false)}
-                          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 py-1.5 px-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                          title="Show sidebar"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                          </svg>
-                          Expand
-                        </button>
-                      )}
-                      <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
-                        Roadmap
-                      </h2>
-                    </div>
+                    <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
+                      Roadmap
+                    </h2>
                   </div>
                   <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
                     <RoadmapView
@@ -1541,18 +1634,34 @@ export default function SessionPage() {
                 </div>
               </div>
             )}
-          </div>
         </div>
       </main>
+
+      {/* Mobile FAB - only visible below lg breakpoint */}
+      <FAB onClick={() => setIsAddSheetOpen(true)} />
 
       {/* Mobile bottom bar - only visible below lg breakpoint */}
       <MobileBottomBar
         framework={session.framework}
-        view={session.view || 'scoring'}
+        view={localView}
         onFrameworkChange={handleFrameworkChange}
         onViewChange={handleViewChange}
         onAddItem={handleAddItem}
       />
+
+      {/* Mobile add item bottom sheet */}
+      <BottomSheet
+        isOpen={isAddSheetOpen}
+        onClose={() => setIsAddSheetOpen(false)}
+        title="Add New Item"
+      >
+        <ItemForm
+          onAdd={(item) => {
+            handleAddItem(item)
+            setIsAddSheetOpen(false)
+          }}
+        />
+      </BottomSheet>
 
       {editingItem && (
         <ItemEditModal
@@ -1590,6 +1699,29 @@ export default function SessionPage() {
           onCancel={() => setNotification(null)}
         />
       )}
+
+      {/* Add Item slide-in panel (desktop only) */}
+      <SlideInPanel
+        isOpen={isAddPanelOpen}
+        onClose={() => setIsAddPanelOpen(false)}
+        title="Add New Item"
+      >
+        {/* Weighted Criteria Editor - only show in scoring view with weighted framework */}
+        {session.framework === 'weighted' && localView === 'scoring' && (
+          <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-32 mb-4" />}>
+            <WeightedCriteriaEditor
+              criteria={session.weighted_criteria || []}
+              onChange={handleWeightedCriteriaChange}
+            />
+          </Suspense>
+        )}
+        <ItemForm
+          onAdd={(item) => {
+            handleAddItem(item)
+            setIsAddPanelOpen(false)
+          }}
+        />
+      </SlideInPanel>
     </div>
   )
 }

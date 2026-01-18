@@ -7,6 +7,32 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
+// Helper to add an item via the slide-in panel (desktop)
+async function addItem(page: import('@playwright/test').Page, title: string, description?: string) {
+  // Click "Add Item" button in the ViewTabs
+  await page.click('[data-testid="add-item-button"]')
+
+  // Wait for panel to open
+  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
+
+  // Fill in the form
+  await page.fill('input[placeholder="Item title (required)"]', title)
+  if (description) {
+    await page.fill('textarea[placeholder="Description (optional)"]', description)
+  }
+
+  // Submit using the specific form submit button
+  await page.click('[data-testid="submit-item-button"]')
+
+  // Wait for item to appear in the list
+  await expect(page.locator(`text=${title}`)).toBeVisible()
+}
+
+// Helper to change framework via ViewTabs dropdown (desktop)
+async function changeFramework(page: import('@playwright/test').Page, framework: string) {
+  await page.selectOption('[data-testid="framework-selector"]', framework)
+}
+
 test.describe('Session Creation and Basic Functionality', () => {
   test('creates a new session from landing page', async ({ page }) => {
     await page.goto('/')
@@ -20,8 +46,8 @@ test.describe('Session Creation and Basic Functionality', () => {
     // Dismiss name modal
     await dismissNameModal(page)
 
-    // Should show session page elements
-    await expect(page.locator('text=Untitled Session')).toBeVisible()
+    // Should show session page elements (use first() since it appears in both desktop and mobile headers)
+    await expect(page.locator('text=Untitled Session').first()).toBeVisible()
     await expect(page.locator('text=Items (0)')).toBeVisible()
   })
 
@@ -31,18 +57,11 @@ test.describe('Session Creation and Basic Functionality', () => {
     await dismissNameModal(page)
 
     // Add first item
-    await page.fill('input[placeholder="Item title (required)"]', 'First feature')
-    await page.click('button:has-text("Add Item")')
-
-    // Item should appear
-    await expect(page.locator('text=First feature')).toBeVisible()
+    await addItem(page, 'First feature')
     await expect(page.locator('text=Items (1)')).toBeVisible()
 
     // Add second item
-    await page.fill('input[placeholder="Item title (required)"]', 'Second feature')
-    await page.click('button:has-text("Add Item")')
-
-    await expect(page.locator('text=Second feature')).toBeVisible()
+    await addItem(page, 'Second feature')
     await expect(page.locator('text=Items (2)')).toBeVisible()
   })
 
@@ -52,14 +71,10 @@ test.describe('Session Creation and Basic Functionality', () => {
     await dismissNameModal(page)
 
     // Change to ICE framework
-    await page.selectOption('select', 'ice')
+    await changeFramework(page, 'ice')
 
     // Add an item
-    await page.fill('input[placeholder="Item title (required)"]', 'Test item')
-    await page.click('button:has-text("Add Item")')
-
-    // Wait for item to appear
-    await expect(page.locator('text=Test item')).toBeVisible()
+    await addItem(page, 'Test item')
 
     // Should show ICE scoring sliders inside the article (not the select option)
     await expect(page.locator('article').locator('label:has-text("Impact")')).toBeVisible()
@@ -72,15 +87,15 @@ test.describe('Session Creation and Basic Functionality', () => {
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
 
-    // Click on the session name to edit
-    await page.click('text=Untitled Session')
+    // Click on the session name to edit (use first() since it appears in both headers)
+    await page.locator('text=Untitled Session').first().click()
 
     // Type new name
     await page.fill('input[placeholder="Session name"]', 'My Prioritisation Session')
     await page.click('button:has-text("Save")')
 
-    // Should show new name
-    await expect(page.locator('text=My Prioritisation Session')).toBeVisible()
+    // Should show new name (use first() since it appears in both headers)
+    await expect(page.locator('text=My Prioritisation Session').first()).toBeVisible()
   })
 
   test('deletes an item', async ({ page }) => {
@@ -89,10 +104,7 @@ test.describe('Session Creation and Basic Functionality', () => {
     await dismissNameModal(page)
 
     // Add an item
-    await page.fill('input[placeholder="Item title (required)"]', 'Item to delete')
-    await page.click('button:has-text("Add Item")')
-
-    await expect(page.locator('text=Item to delete')).toBeVisible()
+    await addItem(page, 'Item to delete')
 
     // Click delete button on the item card (desktop text button)
     await page.locator('article').locator('button:has-text("Delete")').click()

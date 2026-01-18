@@ -6,6 +6,23 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
+// Helper to add an item via the slide-in panel (desktop)
+async function addItem(page: import('@playwright/test').Page, title: string) {
+  await page.click('[data-testid="add-item-button"]')
+  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
+  await page.fill('input[placeholder="Item title (required)"]', title)
+  await page.click('[data-testid="submit-item-button"]')
+  // Wait for item to appear and panel to close
+  await expect(page.locator(`text=${title}`)).toBeVisible({ timeout: 10000 })
+  // Wait for panel to close before continuing
+  await expect(page.locator('[data-testid="add-item-button"]')).toBeVisible({ timeout: 5000 })
+}
+
+// Helper to change framework via ViewTabs dropdown (desktop)
+async function changeFramework(page: import('@playwright/test').Page, framework: string) {
+  await page.selectOption('[data-testid="framework-selector"]', framework)
+}
+
 test.describe('Backlog View', () => {
   test.beforeEach(async ({ page }) => {
     // Create a session and add items
@@ -14,20 +31,12 @@ test.describe('Backlog View', () => {
     await dismissNameModal(page)
 
     // Use ICE framework for simpler scoring
-    await page.selectOption('select', 'ice')
+    await changeFramework(page, 'ice')
 
     // Add items
-    await page.fill('input[placeholder="Item title (required)"]', 'High priority')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=High priority')).toBeVisible()
-
-    await page.fill('input[placeholder="Item title (required)"]', 'Medium priority')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Medium priority')).toBeVisible()
-
-    await page.fill('input[placeholder="Item title (required)"]', 'Low priority')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Low priority')).toBeVisible()
+    await addItem(page, 'High priority')
+    await addItem(page, 'Medium priority')
+    await addItem(page, 'Low priority')
 
     // Wait for items count to be visible
     await expect(page.locator('text=Items (3)')).toBeVisible()
@@ -85,16 +94,11 @@ test.describe('View Switching', () => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
-    await page.selectOption('select', 'ice')
+    await changeFramework(page, 'ice')
 
     // Add items
-    await page.fill('input[placeholder="Item title (required)"]', 'Item A')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Item A')).toBeVisible()
-
-    await page.fill('input[placeholder="Item title (required)"]', 'Item B')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Item B')).toBeVisible()
+    await addItem(page, 'Item A')
+    await addItem(page, 'Item B')
 
     await expect(page.locator('text=Items (2)')).toBeVisible()
   })
@@ -131,16 +135,11 @@ test.describe('Framework Switching with Scores', () => {
 
   test('creates default scores when switching frameworks', async ({ page }) => {
     // Start with RICE framework
-    await page.selectOption('select', 'rice')
+    await changeFramework(page, 'rice')
 
     // Add items
-    await page.fill('input[placeholder="Item title (required)"]', 'Feature A')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Feature A')).toBeVisible()
-
-    await page.fill('input[placeholder="Item title (required)"]', 'Feature B')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Feature B')).toBeVisible()
+    await addItem(page, 'Feature A')
+    await addItem(page, 'Feature B')
 
     await expect(page.locator('text=Items (2)')).toBeVisible()
 
@@ -154,8 +153,14 @@ test.describe('Framework Switching with Scores', () => {
     await expect(riceBadges.first()).toBeVisible()
     expect(await riceBadges.count()).toBe(2)
 
+    // Switch back to scoring view to change framework
+    await page.click('button:has-text("Scoring")')
+
     // Switch to ICE framework
-    await page.selectOption('select', 'ice')
+    await changeFramework(page, 'ice')
+
+    // Switch back to backlog
+    await page.click('button:has-text("Backlog")')
 
     // Wait for scores to update - both items should now show ICE scores
     const iceBadges = page.locator('text=ICE:').locator('visible=true')
@@ -169,20 +174,12 @@ test.describe('Framework Switching with Scores', () => {
 
   test('all items have scores after multiple framework switches', async ({ page }) => {
     // Start with ICE
-    await page.selectOption('select', 'ice')
+    await changeFramework(page, 'ice')
 
     // Add items
-    await page.fill('input[placeholder="Item title (required)"]', 'Task 1')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Task 1')).toBeVisible()
-
-    await page.fill('input[placeholder="Item title (required)"]', 'Task 2')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Task 2')).toBeVisible()
-
-    await page.fill('input[placeholder="Item title (required)"]', 'Task 3')
-    await page.click('button:has-text("Add Item")')
-    await expect(page.locator('text=Task 3')).toBeVisible()
+    await addItem(page, 'Task 1')
+    await addItem(page, 'Task 2')
+    await addItem(page, 'Task 3')
 
     await expect(page.locator('text=Items (3)')).toBeVisible()
 
@@ -195,14 +192,26 @@ test.describe('Framework Switching with Scores', () => {
     await expect(iceBadges.first()).toBeVisible()
     expect(await iceBadges.count()).toBe(3)
 
+    // Switch back to scoring view to change framework
+    await page.click('button:has-text("Scoring")')
+
     // Switch to Value vs Effort
-    await page.selectOption('select', 'value_effort')
+    await changeFramework(page, 'value_effort')
+
+    // Switch back to backlog
+    await page.click('button:has-text("Backlog")')
     const veBadges = page.locator('text=V/E:').locator('visible=true')
     await expect(veBadges.first()).toBeVisible({ timeout: 10000 })
     expect(await veBadges.count()).toBe(3)
 
+    // Switch back to scoring view to change framework
+    await page.click('button:has-text("Scoring")')
+
     // Switch to RICE
-    await page.selectOption('select', 'rice')
+    await changeFramework(page, 'rice')
+
+    // Switch back to backlog
+    await page.click('button:has-text("Backlog")')
     const riceBadges = page.locator('text=RICE:').locator('visible=true')
     await expect(riceBadges.first()).toBeVisible({ timeout: 10000 })
     expect(await riceBadges.count()).toBe(3)
