@@ -1,6 +1,6 @@
 # Priori
 
-> **Live at **[**priory.work**](https://priory.work) | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
+> **Live at **[**priori.work**](https://priori.work) | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
 
 A lightweight, collaborative product prioritisation web app. No authentication required - just share a URL and start prioritising together.
 
@@ -47,9 +47,17 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Copy URL**: Quick sharing with one click
 - **Session Naming**: Give sessions meaningful names
 
+### Desktop UI
+- **Slide-in Panel**: Add items via a clean slide-in panel from the right
+- **Integrated Tabs**: Framework selector and "+ Add Item" button in view tabs
+- **Keyboard Shortcut**: Press "N" to quickly open add item panel
+- **Full-width Content**: No sidebar, maximising workspace
+
 ### Mobile Experience
 - **Responsive Design**: Works on all screen sizes
-- **Bottom Input Bar**: Quick item entry on mobile
+- **FAB (Floating Action Button)**: Quick item entry with bottom-right button
+- **Bottom Sheet**: Full item form slides up from bottom
+- **Kebab Menu**: Framework selection and session actions in dropdown menu
 - **Touch-friendly Controls**: Tap-friendly interactions throughout
 - **Roadmap Placeholder**: Desktop-only feature with helpful mobile message
 
@@ -63,7 +71,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Unit Testing**: Vitest + React Testing Library (360 tests)
+- **Unit Testing**: Vitest + React Testing Library (350 tests)
 - **E2E Testing**: Playwright
 - **Hosting**: Vercel (auto-deploys from main)
 
@@ -110,6 +118,8 @@ Run the SQL migration scripts in order:
 - `supabase/006_add_roadmap_support.sql` - Roadmap periods
 - `supabase/007_add_quadrant_columns.sql` - Quadrant positioning
 - `supabase/008_add_planning_poker_support.sql` - Planning Poker tables
+- `supabase/009_enable_realtime_for_core_tables.sql` - Realtime subscriptions
+- `supabase/010_add_backlog_position.sql` - Backlog position column
 
 See `supabase/README.md` for detailed instructions.
 

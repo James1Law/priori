@@ -24,6 +24,9 @@ This folder contains SQL migration scripts for setting up the Priori database in
 | `005_add_backlog_position.sql` | Manual ordering in backlog view |
 | `006_add_roadmap_support.sql` | Roadmap periods table and item columns |
 | `007_add_quadrant_columns.sql` | Quadrant-based positioning for roadmap |
+| `008_add_planning_poker_support.sql` | Planning Poker (estimation_votes, story_points, etc.) |
+| `009_enable_realtime_for_core_tables.sql` | Enable Realtime subscriptions for tables |
+| `010_add_backlog_position.sql` | Ensure backlog_position column exists |
 
 Copy and paste each script into the SQL Editor and click "Run".
 
@@ -32,7 +35,7 @@ Copy and paste each script into the SQL Editor and click "Run".
 After running all scripts, verify the setup:
 
 1. Go to "Table Editor" in Supabase
-2. You should see four tables: `sessions`, `items`, `scores`, `roadmap_periods`
+2. You should see five tables: `sessions`, `items`, `scores`, `roadmap_periods`, `estimation_votes`
 3. Click on each table to see the columns
 
 ## Database Schema
@@ -48,6 +51,8 @@ After running all scripts, verify the setup:
 | weighted_criteria | jsonb | Custom criteria for weighted scoring |
 | cutoff_position | integer | Position of cutoff line in backlog |
 | cutoff_label | text | Label for cutoff line |
+| current_estimation_item_id | uuid | Item currently being estimated |
+| estimation_revealed | boolean | Whether estimation votes are visible |
 | created_at | timestamptz | Auto-generated timestamp |
 | updated_at | timestamptz | Auto-updated timestamp |
 
@@ -65,6 +70,7 @@ After running all scripts, verify the setup:
 | roadmap_start_quadrant | integer | Absolute quadrant index (0-based) |
 | roadmap_end_quadrant | integer | Inclusive end quadrant |
 | roadmap_row | integer | For future swimlane support |
+| story_points | integer | Estimated story points from Planning Poker |
 | created_by | text | Participant who created the item |
 | created_at | timestamptz | Auto-generated timestamp |
 
@@ -85,6 +91,16 @@ After running all scripts, verify the setup:
 | name | text | Period name (e.g., "Now", "Next", "Later") |
 | width | integer | Visual width 1-4 (legacy, now fixed at 4) |
 | position | integer | Order in timeline |
+| created_at | timestamptz | Auto-generated timestamp |
+
+### estimation_votes
+| Column | Type | Description |
+| --- | --- | --- |
+| id | uuid | Primary key (auto-generated) |
+| session_id | uuid | Foreign key to sessions |
+| item_id | uuid | Foreign key to items |
+| participant_name | text | Name of the voter |
+| vote | text | Vote value (e.g., "5", "?", "coffee") |
 | created_at | timestamptz | Auto-generated timestamp |
 
 ## Testing Your Setup

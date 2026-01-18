@@ -225,7 +225,40 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 9.1k Real-time Edge Cases (Step 11)
   - [ ] 9.2 Team Chat (Steps 1-10)
 
-## Recent Changes (Phase 9 - Planning Poker & Chat)
+## Recent Changes (UX Enhancement PRD)
+
+### Desktop UI Redesign
+- **Consolidated Header**: Logo, session name, participant count, Copy/Export/New buttons in single row
+- **ViewTabs Integration**: Framework selector and "+ Add Item" button moved to tab bar
+- **Slide-in Panel**: Add item form now opens in 320px right panel instead of sidebar
+- **Sidebar Removed**: Main content area now full-width for more workspace
+- **Keyboard Shortcut**: Press "N" to quickly open add item panel
+
+### Mobile UI Redesign
+- **FAB (Floating Action Button)**: Fixed bottom-right button to add items
+- **Bottom Sheet**: Full item form (title + description) slides up from bottom
+- **Mobile Menu**: Kebab (⋮) menu for framework selection and session actions
+- **Framework Badge**: Shows current framework below header (Scoring view only)
+- **Simplified Bottom Bar**: Now only contains view tabs (Scoring, Estimates, Backlog, Roadmap)
+- **Logo Restored**: Priori logo visible in mobile header
+
+### New Components
+- `src/components/SlideInPanel.tsx` - Desktop slide-in panel with focus trap
+- `src/components/BottomSheet.tsx` - Mobile bottom sheet modal
+- `src/components/FAB.tsx` - Floating action button for mobile
+- `src/components/MobileMenu.tsx` - Kebab dropdown menu
+
+### Accessibility
+- `motion-reduce:transition-none` on all animations
+- Focus trap in modals/panels
+- Escape key closes panels
+- Proper ARIA labels on interactive elements
+
+### Design Spec
+- Full PRD at `docs/PRD-ux-enhancement.md`
+- All 5 phases implemented and verified
+
+## Previous Changes (Phase 9 - Planning Poker & Chat)
 
 ### Planning Poker Foundation (Step 1 - Complete)
 - **Database Schema**: Added `estimation_votes` table, `story_points` column on items, estimation state columns on sessions
@@ -341,8 +374,8 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Live Site**: https://priori.work
 - **GitHub**: https://github.com/James1Law/priori
 - **Hosting**: Vercel (auto-deploys from main)
-- **Unit Tests**: 353 passing (Vitest)
-- **E2E Tests**: Playwright (session, backlog, cutoff, roadmap, mobile)
+- **Unit Tests**: 350 passing (Vitest)
+- **E2E Tests**: 31 passing (Playwright - session, backlog, cutoff, mobile)
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
 
@@ -371,4 +404,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Performance Monitoring**: Add analytics for load times and interactions
 
 ---
-*Last updated: 2026-01-18 - Phase 9 (Planning Poker) Step 11 complete - Real-time Edge Cases*
+*Last updated: 2026-01-18 - UX Enhancement PRD complete - Desktop/Mobile UI redesign*
