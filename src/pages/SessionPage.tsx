@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
+import { useEffect, useState, useCallback, useRef, lazy, Suspense, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData, ViewMode } from '../types/database'
@@ -681,12 +681,73 @@ export default function SessionPage() {
   // Check if items are in manual order (any item has backlog_position set)
   const isManualOrder = items.some((item) => item.backlog_position !== null && item.backlog_position !== undefined)
 
-  // Get items sorted for scoring view (always by calculated score, ignoring backlog_position)
-  const scoringViewItems = [...items].sort((a, b) => {
-    const scoreA = a.score?.calculated_score || 0
-    const scoreB = b.score?.calculated_score || 0
-    return scoreB - scoreA // Descending order
-  })
+  // Track the last stable sort order (when no items are being updated)
+  const [stableSortedItems, setStableSortedItems] = useState<ItemWithScore[]>([])
+  // Ref to track previous sort order for comparison (avoids infinite loop)
+  const prevSortOrderRef = useRef<string[]>([])
+  // Track the most recently edited item (for highlight animation)
+  const [recentlyEditedId, setRecentlyEditedId] = useState<string | null>(null)
+  // Track which item was last being updated
+  const lastUpdatingIdRef = useRef<string | null>(null)
+
+  // Track the item being edited
+  useEffect(() => {
+    if (updatingScores.size > 0) {
+      // Store the first item being updated
+      const updatingId = Array.from(updatingScores)[0]
+      lastUpdatingIdRef.current = updatingId
+    }
+  }, [updatingScores])
+
+  // Update stable sort order when no items are being updated
+  useEffect(() => {
+    if (updatingScores.size === 0) {
+      const sorted = [...items].sort((a, b) => {
+        const scoreA = a.score?.calculated_score || 0
+        const scoreB = b.score?.calculated_score || 0
+        return scoreB - scoreA
+      })
+
+      const newSortOrder = sorted.map((item) => item.id)
+      const prevSortOrder = prevSortOrderRef.current
+
+      // Check if the last edited item changed position
+      if (prevSortOrder.length > 0 && lastUpdatingIdRef.current) {
+        const editedId = lastUpdatingIdRef.current
+        const oldIndex = prevSortOrder.indexOf(editedId)
+        const newIndex = newSortOrder.indexOf(editedId)
+
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          setRecentlyEditedId(editedId)
+          // Clear highlight after 3 seconds
+          setTimeout(() => {
+            setRecentlyEditedId(null)
+          }, 3000)
+        }
+        lastUpdatingIdRef.current = null
+      }
+
+      prevSortOrderRef.current = newSortOrder
+      setStableSortedItems(sorted)
+    }
+  }, [items, updatingScores.size])
+
+  // Get items sorted for scoring view - use stable order while editing, update data in place
+  const scoringViewItems = useMemo(() => {
+    if (updatingScores.size > 0 && stableSortedItems.length > 0) {
+      // Keep the stable order but update the item data (scores) in place
+      return stableSortedItems.map((stableItem) => {
+        const currentItem = items.find((item) => item.id === stableItem.id)
+        return currentItem || stableItem
+      }).filter((item) => items.some((i) => i.id === item.id)) // Remove deleted items
+    }
+    // No items being updated - sort normally
+    return [...items].sort((a, b) => {
+      const scoreA = a.score?.calculated_score || 0
+      const scoreB = b.score?.calculated_score || 0
+      return scoreB - scoreA
+    })
+  }, [items, updatingScores.size, stableSortedItems])
 
   // Get items sorted for backlog view (by backlog_position if set, otherwise by score)
   const backlogViewItems = isManualOrder
@@ -1556,6 +1617,7 @@ export default function SessionPage() {
                     onScoreUpdate={handleScoreUpdate}
                     updatingScores={updatingScores}
                     highlightedItemId={highlightedItemId || undefined}
+                    recentlyMovedItemId={recentlyEditedId}
                     weightedCriteria={session.weighted_criteria}
                   />
                 </div>

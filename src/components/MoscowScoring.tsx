@@ -32,7 +32,7 @@ export default function MoscowScoring({ category, onChange, isUpdating }: Moscow
 
         {isUpdating && (
           <span className="text-xs text-amber-600 font-medium animate-pulse mt-5">
-            Updating...
+            Reordering...
           </span>
         )}
       </div>

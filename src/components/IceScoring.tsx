@@ -89,7 +89,7 @@ export default function IceScoring({ impact, confidence, ease, onChange, isUpdat
             <span className="text-lg font-bold text-indigo-600">{score}</span>
             {isUpdating && (
               <span className="text-xs text-amber-600 font-medium animate-pulse">
-                Updating...
+                Reordering...
               </span>
             )}
           </div>

@@ -43,12 +43,12 @@ describe('MoscowScoring', () => {
   it('displays updating indicator when isUpdating is true', () => {
     render(<MoscowScoring {...defaultProps} isUpdating={true} />)
 
-    expect(screen.getByText(/updating/i)).toBeInTheDocument()
+    expect(screen.getByText(/reordering/i)).toBeInTheDocument()
   })
 
   it('does not display updating indicator when isUpdating is false', () => {
     render(<MoscowScoring {...defaultProps} isUpdating={false} />)
 
-    expect(screen.queryByText(/updating/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/reordering/i)).not.toBeInTheDocument()
   })
 })

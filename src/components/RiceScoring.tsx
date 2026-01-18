@@ -122,7 +122,7 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             <span className="text-lg font-bold text-indigo-600">{score}</span>
             {isUpdating && (
               <span className="text-xs text-amber-600 font-medium animate-pulse">
-                Updating...
+                Reordering...
               </span>
             )}
           </div>

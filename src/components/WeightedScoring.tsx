@@ -38,7 +38,7 @@ export default function WeightedScoring({
         </span>
         {isUpdating && (
           <span className="text-xs text-amber-600 font-medium animate-pulse">
-            Updating...
+            Reordering...
           </span>
         )}
       </div>

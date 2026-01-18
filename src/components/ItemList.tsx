@@ -21,10 +21,11 @@ interface ItemListProps {
   onScoreUpdate?: (itemId: string, scores: RiceScores | IceScores | ValueEffortScores | MoscowScores | WeightedScores) => void
   updatingScores?: Set<string>
   highlightedItemId?: string
+  recentlyMovedItemId?: string | null
   weightedCriteria?: WeightedCriterionData[]
 }
 
-export default function ItemList({ items, framework, onEdit, onDelete, onScoreUpdate, updatingScores, highlightedItemId, weightedCriteria = [] }: ItemListProps) {
+export default function ItemList({ items, framework, onEdit, onDelete, onScoreUpdate, updatingScores, highlightedItemId, recentlyMovedItemId, weightedCriteria = [] }: ItemListProps) {
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
@@ -92,13 +93,19 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
   }, {} as Record<MoscowCategory, ItemWithScore[]>)
 
   // Render a single item card
-  const renderItemCard = (item: ItemWithScore) => (
+  const renderItemCard = (item: ItemWithScore) => {
+    const isRecentlyMoved = recentlyMovedItemId === item.id
+    const isHighlighted = highlightedItemId === item.id
+
+    return (
     <article
       key={item.id}
       id={`item-${item.id}`}
-      className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition-all ${
-        highlightedItemId === item.id
+      className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition-all duration-500 ${
+        isHighlighted
           ? 'border-indigo-500 ring-2 ring-indigo-200'
+          : isRecentlyMoved
+          ? 'border-amber-400 bg-amber-50 ring-2 ring-amber-200'
           : 'border-gray-200'
       }`}
     >
@@ -191,7 +198,7 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
         />
       )}
     </article>
-  )
+  )}
 
   // For MoSCoW, render grouped by category
   if (framework === 'moscow') {

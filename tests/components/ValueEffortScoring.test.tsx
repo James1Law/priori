@@ -74,7 +74,7 @@ describe('ValueEffortScoring', () => {
   it('displays updating indicator when isUpdating is true', () => {
     render(<ValueEffortScoring {...defaultProps} isUpdating={true} />)
 
-    expect(screen.getByText(/updating/i)).toBeInTheDocument()
+    expect(screen.getByText(/reordering/i)).toBeInTheDocument()
   })
 
   it('shows correct quadrant for Big Bets', () => {
