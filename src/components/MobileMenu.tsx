@@ -71,7 +71,7 @@ export default function MobileMenu({
   if (!isOpen) return null
 
   const showFrameworkSection = view === 'scoring'
-  const canExport = itemCount > 0 && view !== 'roadmap'
+  const canExport = itemCount > 0 && view === 'scoring'
 
   return (
     <div
