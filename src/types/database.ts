@@ -1,6 +1,6 @@
 export type Framework = 'rice' | 'ice' | 'value_effort' | 'moscow' | 'weighted'
 
-export type ViewMode = 'scoring' | 'backlog' | 'roadmap'
+export type ViewMode = 'scoring' | 'estimates' | 'backlog' | 'roadmap'
 
 export interface Session {
   id: string
@@ -11,6 +11,9 @@ export interface Session {
   weighted_criteria?: WeightedCriterionData[]
   cutoff_position: number | null
   cutoff_label: string | null
+  // Planning Poker state
+  current_estimation_item_id: string | null
+  estimation_revealed: boolean
   created_at: string
   updated_at: string
 }
@@ -37,6 +40,8 @@ export interface Item {
   roadmap_start_quadrant: number | null
   roadmap_end_quadrant: number | null
   roadmap_row: number
+  // Planning Poker estimate
+  story_points: number | null
 }
 
 export interface RoadmapPeriod {
@@ -58,4 +63,13 @@ export interface Score {
   framework: string
   criteria: Record<string, unknown>
   calculated_score: number
+}
+
+export interface EstimationVote {
+  id: string
+  item_id: string
+  session_id: string
+  participant_name: string
+  vote: number | null // Fibonacci value, -1 = ?, -2 = coffee, null = not voted
+  created_at: string
 }

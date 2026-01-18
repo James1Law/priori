@@ -53,8 +53,9 @@ test.describe('Backlog View', () => {
   test('displays score badges', async ({ page }) => {
     await page.click('button:has-text("Backlog")')
 
-    // Should show ICE scores in the backlog view
-    await expect(page.locator('text=ICE:').first()).toBeVisible()
+    // Should show ICE scores in the backlog view (desktop badges are visible)
+    // Use :visible pseudo-selector to find only visible badges
+    await expect(page.locator('text=ICE:').locator('visible=true').first()).toBeVisible()
   })
 
   test('shows drag handles', async ({ page }) => {
@@ -148,7 +149,8 @@ test.describe('Framework Switching with Scores', () => {
     await expect(page.locator('text=Prioritised Backlog (2)')).toBeVisible()
 
     // Both items should show RICE scores (not dashes)
-    const riceBadges = page.locator('text=RICE:')
+    // Use visible filter since badges appear twice (mobile hidden + desktop visible)
+    const riceBadges = page.locator('text=RICE:').locator('visible=true')
     await expect(riceBadges.first()).toBeVisible()
     expect(await riceBadges.count()).toBe(2)
 
@@ -156,12 +158,12 @@ test.describe('Framework Switching with Scores', () => {
     await page.selectOption('select', 'ice')
 
     // Wait for scores to update - both items should now show ICE scores
-    await expect(page.locator('text=ICE:').first()).toBeVisible({ timeout: 10000 })
-    const iceBadges = page.locator('text=ICE:')
+    const iceBadges = page.locator('text=ICE:').locator('visible=true')
+    await expect(iceBadges.first()).toBeVisible({ timeout: 10000 })
     expect(await iceBadges.count()).toBe(2)
 
     // No dashes should be visible in the score badges
-    const dashBadges = page.locator('article').locator('text=—')
+    const dashBadges = page.locator('article').locator('text=—').locator('visible=true')
     expect(await dashBadges.count()).toBe(0)
   })
 
@@ -188,18 +190,21 @@ test.describe('Framework Switching with Scores', () => {
     await page.click('button:has-text("Backlog")')
     await expect(page.locator('text=Prioritised Backlog (3)')).toBeVisible()
 
-    // All should have ICE scores
-    await expect(page.locator('text=ICE:').first()).toBeVisible()
-    expect(await page.locator('text=ICE:').count()).toBe(3)
+    // All should have ICE scores (use visible filter for desktop badges)
+    const iceBadges = page.locator('text=ICE:').locator('visible=true')
+    await expect(iceBadges.first()).toBeVisible()
+    expect(await iceBadges.count()).toBe(3)
 
     // Switch to Value vs Effort
     await page.selectOption('select', 'value_effort')
-    await expect(page.locator('text=V/E:').first()).toBeVisible({ timeout: 10000 })
-    expect(await page.locator('text=V/E:').count()).toBe(3)
+    const veBadges = page.locator('text=V/E:').locator('visible=true')
+    await expect(veBadges.first()).toBeVisible({ timeout: 10000 })
+    expect(await veBadges.count()).toBe(3)
 
     // Switch to RICE
     await page.selectOption('select', 'rice')
-    await expect(page.locator('text=RICE:').first()).toBeVisible({ timeout: 10000 })
-    expect(await page.locator('text=RICE:').count()).toBe(3)
+    const riceBadges = page.locator('text=RICE:').locator('visible=true')
+    await expect(riceBadges.first()).toBeVisible({ timeout: 10000 })
+    expect(await riceBadges.count()).toBe(3)
   })
 })

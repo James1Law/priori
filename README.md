@@ -1,6 +1,6 @@
 # Priori
 
-> **Live at [priori.work](https://priori.work)** | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
+> **Live at **[**priory.work**](https://priory.work) | [GitHub](https://github.com/James1Law/priori) | Deployed on Vercel
 
 A lightweight, collaborative product prioritisation web app. No authentication required - just share a URL and start prioritising together.
 
@@ -32,6 +32,16 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **4-Quadrant Grid**: Each period is divided into 4 quadrants for finer positioning
 - **Items Sorted by Position**: Sidebar shows items in timeline order
 
+### Planning Poker (Estimation)
+- **Estimates View**: Dedicated tab for collaborative story point estimation
+- **Fibonacci Cards**: 0, 1, 2, 3, 5, 8, 13, 21 plus ? (uncertain) and ☕ (coffee break)
+- **Hidden Voting**: Votes are hidden until the facilitator reveals them
+- **Real-time Sync**: All participants see the same current item being estimated
+- **Consensus Indicator**: Visual feedback when team votes align or differ
+- **Accept & Re-vote**: Accept estimates or trigger a re-vote for discussion
+- **Queue Management**: Track progress through estimation queue with completion state
+- **Story Points in Backlog**: Estimated items display their SP in the backlog view
+
 ### Export & Sharing
 - **CSV Export**: Download prioritised items as spreadsheet
 - **Copy URL**: Quick sharing with one click
@@ -53,7 +63,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Unit Testing**: Vitest + React Testing Library (232 tests)
+- **Unit Testing**: Vitest + React Testing Library (360 tests)
 - **E2E Testing**: Playwright
 - **Hosting**: Vercel (auto-deploys from main)
 
@@ -99,6 +109,7 @@ Run the SQL migration scripts in order:
 - `supabase/005_add_backlog_position.sql` - Manual ordering
 - `supabase/006_add_roadmap_support.sql` - Roadmap periods
 - `supabase/007_add_quadrant_columns.sql` - Quadrant positioning
+- `supabase/008_add_planning_poker_support.sql` - Planning Poker tables
 
 See `supabase/README.md` for detailed instructions.
 

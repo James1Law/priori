@@ -5,11 +5,11 @@ This folder contains SQL migration scripts for setting up the Priori database in
 ## Setup Instructions
 
 1. **Go to your Supabase project dashboard**
-   - Navigate to your Supabase project at https://supabase.com/dashboard
+  - Navigate to your Supabase project at https://supabase.com/dashboard
 
 2. **Open the SQL Editor**
-   - Click on "SQL Editor" in the left sidebar
-   - Click "New Query"
+  - Click on "SQL Editor" in the left sidebar
+  - Click "New Query"
 
 3. **Run the migration scripts in order:**
 

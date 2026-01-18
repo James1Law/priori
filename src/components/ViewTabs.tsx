@@ -13,6 +13,7 @@ interface Tab {
 
 const tabs: Tab[] = [
   { value: 'scoring', label: 'Scoring' },
+  { value: 'estimates', label: 'Estimates' },
   { value: 'backlog', label: 'Backlog' },
   { value: 'roadmap', label: 'Roadmap', desktopOnly: true },
 ]

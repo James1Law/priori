@@ -211,8 +211,113 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] Ghost preview when dragging items onto roadmap
   - [x] Orphaned item handling when periods deleted
   - [x] Mobile placeholder (desktop-only feature)
+- [ ] Phase 9 (Planning Poker & Team Chat) - IN PROGRESS
+  - [x] 9.1a Database Schema & View Tab (Step 1)
+  - [x] 9.1b Estimation Queue (Step 2)
+  - [x] 9.1c Card Selection UI (Step 3)
+  - [x] 9.1d Current Item Display (Step 4)
+  - [x] 9.1e Participant Votes Display (Step 5)
+  - [x] 9.1f Reveal Mechanism (Step 6)
+  - [x] 9.1g Accept & Next Flow (Step 7)
+  - [x] 9.1h Queue Progress & Completion (Step 8)
+  - [x] 9.1i Backlog Integration (Step 9)
+  - [x] 9.1j Mobile Optimisation (Step 10)
+  - [x] 9.1k Real-time Edge Cases (Step 11)
+  - [ ] 9.2 Team Chat (Steps 1-10)
 
-## Recent Changes (Phase 8 - Roadmap View)
+## Recent Changes (Phase 9 - Planning Poker & Chat)
+
+### Planning Poker Foundation (Step 1 - Complete)
+- **Database Schema**: Added `estimation_votes` table, `story_points` column on items, estimation state columns on sessions
+- **View Navigation**: Added "Estimates" tab between Scoring and Backlog
+- **Mobile Support**: Estimates tab added to mobile bottom bar
+- **Placeholder View**: EstimatesView component with placeholder UI
+
+### Estimation Queue (Step 2 - Complete)
+- **EstimationQueue Component**: Displays items in a queue for estimation
+- **Status Indicators**: Shows pending, in_progress, and completed states
+- **Story Points Badge**: Shows SP badge for completed items
+- **Start Estimation Button**: Initiates estimation session
+- **Progress Tracking**: Shows "X of Y estimated" counter with progress bar
+- **Queue Navigation**: Click items to select for estimation
+- **Completion Message**: Shows when all items are estimated
+
+### Card Selection UI (Step 3 - Complete)
+- **EstimationCards Component**: Fibonacci card selection grid
+- **Fibonacci Sequence**: Cards for 0, 1, 2, 3, 5, 8, 13, 21
+- **Special Cards**: ? (uncertain) and ☕ (coffee break)
+- **Selection Highlight**: Selected card shows indigo background with checkmark
+- **Selection Feedback**: Text feedback showing selected value
+- **Mobile Layout**: 4x3 grid on mobile, 5x2 on larger screens
+- **Accessibility**: aria-pressed and aria-label for screen readers
+
+### Current Item Display (Step 4 - Complete)
+- **CurrentEstimationItem Component**: Shows the item being estimated
+- **Now Estimating Badge**: Visual indicator of current item
+- **Item Details**: Title and description displayed prominently
+- **Previous Estimate Badge**: Shows "X SP (previously estimated)" when re-estimating
+- **Real-time Sync**: Current item synced across all participants via Supabase Realtime
+
+### Participant Votes Display (Step 5 - Complete)
+- **ParticipantVotes Component**: Shows voting status for all participants
+- **Card States**: Waiting (dashed), voted (face-down), revealed (value shown)
+- **Vote Counter**: "X of Y voted" indicator
+- **useEstimationVotes Hook**: Real-time subscription to votes with optimistic updates
+- **User Highlight**: Current user's card shows ring indicator
+- **Vote Submission**: Cards save votes to database with real-time sync
+
+### Reveal Mechanism (Step 6 - Complete)
+- **EstimationResults Component**: Handles reveal button and consensus display
+- **Reveal Votes Button**: Enabled when at least 1 vote, triggers reveal for all participants
+- **Real-time Sync**: Reveal state synced via `estimation_revealed` on session
+- **Consensus Indicator**: Shows "Consensus!", "Close - discuss briefly", or "No consensus - discuss"
+- **Outlier Detection**: Highlights participants whose votes differ significantly from majority
+- **Consensus Logic**: >50% same vote = consensus, votes within 1 Fibonacci step = close
+
+### Accept & Next Flow (Step 7 - Complete)
+- **Accept Button**: Shows "Accept X SP" with suggested value from consensus
+- **Save Story Points**: Saves to item.story_points on accept
+- **Auto-advance**: Moves to next unestimated item after accept
+- **Re-vote Button**: Clears votes and resets revealed state for new round
+- **Skip Button**: Move to next item without saving estimate
+- **Vote Cleanup**: Clears votes for current item on accept/revote
+
+### Queue Progress & Completion (Step 8 - Complete)
+- **Checkmark Status**: Completed items show green checkmark badge
+- **Progress Counter**: Shows "X of Y estimated" with visual progress bar
+- **Completion Message**: "All items estimated!" when queue is done
+- **Re-estimation**: Click any completed item to re-estimate it
+
+### Backlog Integration (Step 9 - Complete)
+- **Story Points Badge**: BacklogList displays "X SP" badge for items with estimates
+- **Emerald Styling**: Distinct green badge differentiates from indigo score badge
+
+### Mobile Optimisation (Step 10 - Complete)
+- **Estimates Tab**: MobileBottomBar includes Estimates tab
+- **Card Grid**: 4-column on mobile, 5-column on larger screens
+- **Participant Votes**: Responsive 2-column grid on mobile
+- **Action Buttons**: flex-wrap for proper mobile stacking
+- **Touch Targets**: Cards use aspect-[3/4] for touch-friendly sizing
+
+### Real-time Edge Cases (Step 11 - Complete)
+- **Late Joiner**: Session state (current_estimation_item_id, estimation_revealed) synced via realtime
+- **Participant Leaving**: Vote persists in database, card disappears from view
+- **Simultaneous Reveals**: Database handles idempotent update, all clients sync
+- **Optimistic Updates**: Implemented in useEstimationVotes for responsive UX
+
+### Database Changes (Phase 9)
+- `supabase/008_add_planning_poker_support.sql` - Planning Poker tables and columns
+
+### Key Components (Phase 9)
+- `src/components/EstimatesView.tsx` - Planning Poker view with queue and item display
+- `src/components/EstimationQueue.tsx` - Item queue with status and progress
+- `src/components/EstimationCards.tsx` - Fibonacci card selection with special cards
+- `src/components/CurrentEstimationItem.tsx` - Current item being estimated
+- `src/components/ParticipantVotes.tsx` - Participant voting status display
+- `src/components/EstimationResults.tsx` - Reveal button and consensus indicator
+- `src/hooks/useEstimationVotes.ts` - Vote CRUD with real-time sync
+
+## Previous Changes (Phase 8 - Roadmap View)
 
 ### Roadmap View
 - **Custom Time Periods**: Users define named periods (default: Now, Next, Later)
@@ -236,7 +341,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Live Site**: https://priori.work
 - **GitHub**: https://github.com/James1Law/priori
 - **Hosting**: Vercel (auto-deploys from main)
-- **Unit Tests**: 232 passing (Vitest)
+- **Unit Tests**: 353 passing (Vitest)
 - **E2E Tests**: Playwright (session, backlog, cutoff, roadmap, mobile)
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
@@ -266,4 +371,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Performance Monitoring**: Add analytics for load times and interactions
 
 ---
-*Last updated: 2026-01-16 - Phase 8 (Roadmap View with 4-quadrant system) complete*
+*Last updated: 2026-01-18 - Phase 9 (Planning Poker) Step 11 complete - Real-time Edge Cases*

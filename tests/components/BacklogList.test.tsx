@@ -126,9 +126,10 @@ describe('BacklogList', () => {
 
   it('displays score badge with RICE format', () => {
     render(<BacklogList {...defaultProps} framework="rice" />)
-    expect(screen.getByText('RICE: 300')).toBeInTheDocument()
-    expect(screen.getByText('RICE: 160')).toBeInTheDocument()
-    expect(screen.getByText('RICE: 25')).toBeInTheDocument()
+    // Badges appear twice (mobile + desktop), so use getAllByText
+    expect(screen.getAllByText('RICE: 300').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('RICE: 160').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('RICE: 25').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays score badge with ICE format', () => {
@@ -145,7 +146,7 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={iceItems} framework="ice" />)
-    expect(screen.getByText('ICE: 7.0')).toBeInTheDocument()
+    expect(screen.getAllByText('ICE: 7.0').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays score badge with Value/Effort format', () => {
@@ -162,7 +163,7 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={veItems} framework="value_effort" />)
-    expect(screen.getByText('V/E: 2.7')).toBeInTheDocument()
+    expect(screen.getAllByText('V/E: 2.7').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays MoSCoW category as score', () => {
@@ -179,7 +180,7 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={moscowItems} framework="moscow" />)
-    expect(screen.getByText('Must')).toBeInTheDocument()
+    expect(screen.getAllByText('Must').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays weighted score format', () => {
@@ -196,7 +197,7 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={weightedItems} framework="weighted" />)
-    expect(screen.getByText('Score: 7.50')).toBeInTheDocument()
+    expect(screen.getAllByText('Score: 7.50').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays dash when item has no score', () => {
@@ -212,7 +213,8 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={noScoreItems} />)
-    expect(screen.getByText('—')).toBeInTheDocument()
+    // Dash appears twice (mobile + desktop)
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(1)
   })
 
   it('calls onEdit when edit button clicked', () => {
@@ -250,7 +252,7 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={zeroScoreItems} />)
-    expect(screen.getByText('RICE: 0')).toBeInTheDocument()
+    expect(screen.getAllByText('RICE: 0').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows Score order indicator when not in manual order', () => {
@@ -398,5 +400,44 @@ describe('BacklogList', () => {
     fireEvent.blur(input)
 
     expect(onCutoffLabelChange).toHaveBeenCalledWith('MVP')
+  })
+
+  // Story points tests
+  it('displays story points badge when item has story_points', () => {
+    const itemsWithSP: ItemWithScore[] = [
+      {
+        ...mockItems[0],
+        story_points: 5,
+      },
+    ]
+    render(<BacklogList {...defaultProps} items={itemsWithSP} />)
+    // Badge appears twice (mobile + desktop), so use getAllByText
+    const badges = screen.getAllByText('5 SP')
+    expect(badges.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('does not display story points badge when item has no story_points', () => {
+    const itemsWithoutSP: ItemWithScore[] = [
+      {
+        ...mockItems[0],
+        story_points: null,
+      },
+    ]
+    render(<BacklogList {...defaultProps} items={itemsWithoutSP} />)
+    expect(screen.queryByText(/\d+ SP/)).not.toBeInTheDocument()
+  })
+
+  it('displays story points for multiple items', () => {
+    const itemsWithSP: ItemWithScore[] = [
+      { ...mockItems[0], story_points: 3 },
+      { ...mockItems[1], story_points: 8 },
+      { ...mockItems[2], story_points: null },
+    ]
+    render(<BacklogList {...defaultProps} items={itemsWithSP} />)
+    // Badges appear twice each (mobile + desktop)
+    const badges3SP = screen.getAllByText('3 SP')
+    const badges8SP = screen.getAllByText('8 SP')
+    expect(badges3SP.length).toBeGreaterThanOrEqual(1)
+    expect(badges8SP.length).toBeGreaterThanOrEqual(1)
   })
 })

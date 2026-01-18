@@ -4,10 +4,11 @@ import ViewTabs from '../../src/components/ViewTabs'
 import type { ViewMode } from '../../src/types/database'
 
 describe('ViewTabs', () => {
-  it('renders Scoring, Backlog, and Roadmap tabs', () => {
+  it('renders Scoring, Estimates, Backlog, and Roadmap tabs', () => {
     render(<ViewTabs value="scoring" onChange={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: /scoring/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /estimates/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /roadmap/i })).toBeInTheDocument()
   })
@@ -52,8 +53,8 @@ describe('ViewTabs', () => {
     expect(onChange).toHaveBeenCalledWith('scoring')
   })
 
-  it('works with both view modes', () => {
-    const views: ViewMode[] = ['scoring', 'backlog']
+  it('works with all view modes', () => {
+    const views: ViewMode[] = ['scoring', 'estimates', 'backlog', 'roadmap']
 
     views.forEach(view => {
       const onChange = vi.fn()
@@ -99,5 +100,22 @@ describe('ViewTabs', () => {
     fireEvent.click(roadmapTab)
 
     expect(onChange).toHaveBeenCalledWith('roadmap')
+  })
+
+  it('highlights estimates tab when selected', () => {
+    render(<ViewTabs value="estimates" onChange={vi.fn()} />)
+
+    const estimatesTab = screen.getByRole('button', { name: /estimates/i })
+    expect(estimatesTab).toHaveClass('border-indigo-500')
+  })
+
+  it('calls onChange when clicking estimates tab', () => {
+    const onChange = vi.fn()
+    render(<ViewTabs value="scoring" onChange={onChange} />)
+
+    const estimatesTab = screen.getByRole('button', { name: /estimates/i })
+    fireEvent.click(estimatesTab)
+
+    expect(onChange).toHaveBeenCalledWith('estimates')
   })
 })

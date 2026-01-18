@@ -1,0 +1,200 @@
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
+import type { EstimationVote } from '../types/database'
+
+interface UseEstimationVotesReturn {
+  votes: EstimationVote[]
+  loading: boolean
+  error: string | null
+  submitVote: (vote: number | null) => Promise<void>
+  clearVotes: () => Promise<void>
+}
+
+export function useEstimationVotes(
+  sessionId: string | null,
+  itemId: string | null,
+  participantName: string | null
+): UseEstimationVotesReturn {
+  const [votes, setVotes] = useState<EstimationVote[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch votes for the current item
+  const fetchVotes = useCallback(async () => {
+    if (!sessionId || !itemId) {
+      setVotes([])
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('estimation_votes')
+        .select('*')
+        .eq('item_id', itemId)
+
+      if (fetchError) {
+        throw fetchError
+      }
+
+      setVotes((data as EstimationVote[]) || [])
+    } catch (err) {
+      console.error('Error fetching estimation votes:', err)
+      setError('Failed to load votes')
+    } finally {
+      setLoading(false)
+    }
+  }, [sessionId, itemId])
+
+  useEffect(() => {
+    setLoading(true)
+    fetchVotes()
+  }, [fetchVotes])
+
+  // Set up realtime subscription for votes
+  useEffect(() => {
+    if (!sessionId || !itemId) return
+
+    const channel = supabase
+      .channel(`estimation_votes:item_id=eq.${itemId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'estimation_votes',
+          filter: `item_id=eq.${itemId}`,
+        },
+        (payload) => {
+          const newVote = payload.new as EstimationVote
+          setVotes((prev) => {
+            // Don't add if already exists
+            if (prev.some((v) => v.id === newVote.id)) {
+              return prev
+            }
+            return [...prev, newVote]
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'estimation_votes',
+          filter: `item_id=eq.${itemId}`,
+        },
+        (payload) => {
+          const updatedVote = payload.new as EstimationVote
+          setVotes((prev) =>
+            prev.map((v) => (v.id === updatedVote.id ? updatedVote : v))
+          )
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'estimation_votes',
+          filter: `item_id=eq.${itemId}`,
+        },
+        (payload) => {
+          const deletedVote = payload.old as EstimationVote
+          setVotes((prev) => prev.filter((v) => v.id !== deletedVote.id))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [sessionId, itemId])
+
+  // Submit or update a vote
+  const submitVote = useCallback(
+    async (vote: number | null) => {
+      if (!sessionId || !itemId || !participantName) return
+
+      try {
+        // Check if a vote already exists for this participant/item
+        const existingVote = votes.find(
+          (v) => v.participant_name === participantName
+        )
+
+        if (existingVote) {
+          // Update existing vote
+          const { error: updateError } = await supabase
+            .from('estimation_votes')
+            .update({ vote } as never)
+            .eq('id', existingVote.id)
+
+          if (updateError) {
+            throw updateError
+          }
+
+          // Optimistic update
+          setVotes((prev) =>
+            prev.map((v) =>
+              v.id === existingVote.id ? { ...v, vote } : v
+            )
+          )
+        } else {
+          // Create new vote
+          const { data, error: insertError } = await supabase
+            .from('estimation_votes')
+            .insert([
+              {
+                session_id: sessionId,
+                item_id: itemId,
+                participant_name: participantName,
+                vote,
+              } as never,
+            ])
+            .select()
+            .single()
+
+          if (insertError) {
+            throw insertError
+          }
+
+          // Optimistic update
+          setVotes((prev) => [...prev, data as EstimationVote])
+        }
+      } catch (err) {
+        console.error('Error submitting vote:', err)
+        setError('Failed to submit vote')
+      }
+    },
+    [sessionId, itemId, participantName, votes]
+  )
+
+  // Clear all votes for the current item (used after accepting estimate)
+  const clearVotes = useCallback(async () => {
+    if (!itemId) return
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('estimation_votes')
+        .delete()
+        .eq('item_id', itemId)
+
+      if (deleteError) {
+        throw deleteError
+      }
+
+      setVotes([])
+    } catch (err) {
+      console.error('Error clearing votes:', err)
+      setError('Failed to clear votes')
+    }
+  }, [itemId])
+
+  return {
+    votes,
+    loading,
+    error,
+    submitVote,
+    clearVotes,
+  }
+}

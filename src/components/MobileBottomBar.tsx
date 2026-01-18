@@ -25,8 +25,9 @@ interface ViewOption {
 
 const VIEWS: ViewOption[] = [
   { value: 'scoring', label: 'Scoring' },
+  { value: 'estimates', label: 'Estimates' },
   { value: 'backlog', label: 'Backlog' },
-  { value: 'roadmap', label: 'Roadmap' },
+  { value: 'roadmap', label: 'Roadmap', desktopOnly: true },
 ]
 
 export default function MobileBottomBar({

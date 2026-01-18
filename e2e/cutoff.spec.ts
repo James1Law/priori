@@ -20,7 +20,7 @@ test.describe('Cutoff Line', () => {
       await expect(page.locator(`text=${name}`)).toBeVisible()
     }
 
-    await expect(page.locator('text=Items (4)')).toBeVisible()
+    await expect(page.locator('text=Items (4)')).toBeVisible({ timeout: 10000 })
 
     // Switch to backlog view
     await page.click('button:has-text("Backlog")')

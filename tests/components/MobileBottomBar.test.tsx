@@ -121,7 +121,10 @@ describe('MobileBottomBar', () => {
     render(<MobileBottomBar {...defaultProps} />)
 
     expect(screen.getByRole('button', { name: /scoring/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /estimates/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
+    // Roadmap is desktop-only, shown as disabled div
+    expect(screen.getByText(/roadmap/i)).toBeInTheDocument()
   })
 
   it('highlights scoring button when view is scoring', () => {
@@ -156,11 +159,33 @@ describe('MobileBottomBar', () => {
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
 
-  it('shows add input in both views', () => {
+  it('shows add input in scoring and backlog views', () => {
     const { rerender } = render(<MobileBottomBar {...defaultProps} view="scoring" />)
     expect(screen.getByPlaceholderText(/add new item/i)).toBeInTheDocument()
 
     rerender(<MobileBottomBar {...defaultProps} view="backlog" />)
     expect(screen.getByPlaceholderText(/add new item/i)).toBeInTheDocument()
+  })
+
+  it('highlights estimates button when view is estimates', () => {
+    render(<MobileBottomBar {...defaultProps} view="estimates" />)
+
+    const estimatesBtn = screen.getByRole('button', { name: /estimates/i })
+    expect(estimatesBtn).toHaveClass('bg-indigo-600')
+  })
+
+  it('calls onViewChange when clicking estimates button', () => {
+    const onViewChange = vi.fn()
+    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
+
+    const estimatesBtn = screen.getByRole('button', { name: /estimates/i })
+    fireEvent.click(estimatesBtn)
+
+    expect(onViewChange).toHaveBeenCalledWith('estimates')
+  })
+
+  it('does not show add input in estimates view', () => {
+    render(<MobileBottomBar {...defaultProps} view="estimates" />)
+    expect(screen.queryByPlaceholderText(/add new item/i)).not.toBeInTheDocument()
   })
 })

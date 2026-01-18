@@ -9,6 +9,7 @@ import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import BacklogList from '../components/BacklogList'
+import EstimatesView from '../components/EstimatesView'
 import RoadmapMobilePlaceholder from '../components/RoadmapMobilePlaceholder'
 import ItemEditModal from '../components/ItemEditModal'
 import FrameworkSelector from '../components/FrameworkSelector'
@@ -80,7 +81,7 @@ export default function SessionPage() {
 
   // Participant name and presence
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
-  const { participantCount } = usePresence(session?.id || null, participantName)
+  const { participants, participantCount } = usePresence(session?.id || null, participantName)
 
   // Roadmap periods
   const {
@@ -902,6 +903,107 @@ export default function SessionPage() {
     setEditingSessionName(true)
   }
 
+  // Handle changing the current estimation item (for Planning Poker)
+  const handleCurrentEstimationItemChange = async (itemId: string | null) => {
+    if (!session) return
+
+    // Optimistically update local state (also reset revealed state when changing items)
+    setSession({ ...session, current_estimation_item_id: itemId, estimation_revealed: false })
+
+    // Persist to database (syncs to all participants via Realtime)
+    const { error } = await supabase
+      .from('sessions')
+      .update({ current_estimation_item_id: itemId, estimation_revealed: false } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error updating current estimation item:', error)
+      // Revert on error
+      setSession({ ...session })
+    }
+  }
+
+  // Handle revealing votes (for Planning Poker)
+  const handleRevealVotes = async () => {
+    if (!session) return
+
+    // Optimistically update local state
+    setSession({ ...session, estimation_revealed: true })
+
+    // Persist to database (syncs to all participants via Realtime)
+    const { error } = await supabase
+      .from('sessions')
+      .update({ estimation_revealed: true } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error revealing votes:', error)
+      // Revert on error
+      setSession({ ...session })
+    }
+  }
+
+  // Handle accepting an estimate (for Planning Poker)
+  const handleAcceptEstimate = async (itemId: string, storyPoints: number) => {
+    if (!session) return
+
+    // Optimistically update local items state
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, story_points: storyPoints } : item
+      )
+    )
+
+    // Save story points to database
+    const { error: itemError } = await supabase
+      .from('items')
+      .update({ story_points: storyPoints } as never)
+      .eq('id', itemId)
+
+    if (itemError) {
+      console.error('Error saving story points:', itemError)
+      // Revert on error - refetch items
+      return
+    }
+
+    // Clear votes for the item
+    const { error: votesError } = await supabase
+      .from('estimation_votes')
+      .delete()
+      .eq('item_id', itemId)
+
+    if (votesError) {
+      console.error('Error clearing votes:', votesError)
+    }
+  }
+
+  // Handle re-voting (for Planning Poker)
+  const handleRevote = async () => {
+    if (!session || !session.current_estimation_item_id) return
+
+    // Clear votes for current item
+    const { error: votesError } = await supabase
+      .from('estimation_votes')
+      .delete()
+      .eq('item_id', session.current_estimation_item_id)
+
+    if (votesError) {
+      console.error('Error clearing votes:', votesError)
+    }
+
+    // Reset revealed state
+    setSession({ ...session, estimation_revealed: false })
+
+    const { error: sessionError } = await supabase
+      .from('sessions')
+      .update({ estimation_revealed: false } as never)
+      .eq('id', session.id)
+
+    if (sessionError) {
+      console.error('Error resetting revealed state:', sessionError)
+    }
+  }
+
   // Helper to calculate score based on framework
   const calculateScore = (scores: Record<string, number | string | WeightedItemScores>, framework: Framework, criteria?: WeightedCriterionData[]): number => {
     if (framework === 'rice') {
@@ -1350,6 +1452,24 @@ export default function SessionPage() {
                   />
                 </div>
               </>
+            )}
+
+            {/* Estimates View (Planning Poker) */}
+            {session.view === 'estimates' && (
+              <div className="bg-white rounded-lg shadow">
+                <EstimatesView
+                  items={items}
+                  sessionId={session.id}
+                  participantName={participantName}
+                  participants={participants}
+                  currentEstimationItemId={session.current_estimation_item_id ?? null}
+                  estimationRevealed={session.estimation_revealed ?? false}
+                  onCurrentItemChange={handleCurrentEstimationItemChange}
+                  onReveal={handleRevealVotes}
+                  onAccept={handleAcceptEstimate}
+                  onRevote={handleRevote}
+                />
+              </div>
             )}
 
             {/* Backlog View */}

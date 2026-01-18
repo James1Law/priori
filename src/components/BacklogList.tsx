@@ -107,8 +107,9 @@ function SortableItem({ item, index, framework, isOutOfScope, onEdit, onDelete }
         {index + 1}
       </div>
 
-      {/* Content */}
+      {/* Content and badges wrapper */}
       <div className="flex-1 min-w-0">
+        {/* Title row */}
         <div className="flex items-center gap-2">
           <h3 className="font-medium text-gray-900 truncate">
             {item.title}
@@ -120,14 +121,33 @@ function SortableItem({ item, index, framework, isOutOfScope, onEdit, onDelete }
           )}
         </div>
         {item.description && (
-          <p className="text-sm text-gray-500 truncate mt-0.5">
+          <p className="text-sm text-gray-500 truncate mt-0.5 hidden sm:block">
             {item.description}
           </p>
         )}
+
+        {/* Badges row - visible on mobile, hidden on desktop */}
+        <div className="flex items-center gap-2 mt-1.5 sm:hidden">
+          {item.story_points !== null && item.story_points !== undefined && (
+            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
+              {item.story_points} SP
+            </span>
+          )}
+          <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+            {formatScore(item, framework)}
+          </span>
+        </div>
       </div>
 
-      {/* Score badge */}
-      <div className="flex-shrink-0 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium">
+      {/* Story points badge - desktop only */}
+      {item.story_points !== null && item.story_points !== undefined && (
+        <div className="hidden sm:block flex-shrink-0 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md text-sm font-medium">
+          {item.story_points} SP
+        </div>
+      )}
+
+      {/* Score badge - desktop only */}
+      <div className="hidden sm:block flex-shrink-0 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium">
         {formatScore(item, framework)}
       </div>
 

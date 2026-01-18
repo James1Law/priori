@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Planning Poker & Chat Feature Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    .font-display {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-triangle {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 14px solid white;
+    }
+
+    .session-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Participant indicator with chat toggle */
+    .participant-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .participant-indicator:hover {
+      background: #e5e7eb;
+    }
+
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    .chat-icon {
+      width: 18px;
+      height: 18px;
+      color: #6b7280;
+    }
+
+    .unread-badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 0.125rem 0.375rem;
+      border-radius: 999px;
+      margin-left: 0.25rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    /* View Tabs */
+    .view-tabs {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      max-width: 1280px;
+      margin: 1rem auto 0;
+      border-radius: 0.5rem 0.5rem 0 0;
+      overflow: hidden;
+    }
+
+    .tabs-nav {
+      display: flex;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6b7280;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    .tab.active {
+      color: #4f46e5;
+      border-bottom-color: #4f46e5;
+    }
+
+    .tab.new-badge::after {
+      content: "NEW";
+      font-size: 0.6rem;
+      font-weight: 700;
+      background: #4f46e5;
+      color: white;
+      padding: 0.125rem 0.375rem;
+      border-radius: 999px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    /* Main Layout */
+    .main-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 2rem;
+    }
+
+    .main-container.with-chat {
+      grid-template-columns: 1fr 2fr 320px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    /* Item List */
+    .item-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .item-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .item-desc {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .item-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .estimate-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .estimate-badge.pending {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    /* ============================================
+       PLANNING POKER VIEW
+       ============================================ */
+    .poker-container {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.25rem;
+    }
+
+    .poker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .poker-item-info {
+      flex: 1;
+    }
+
+    .poker-item-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .poker-item-desc {
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .poker-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Card Selection */
+    .card-selection {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .card-selection-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 0.75rem;
+    }
+
+    .poker-cards {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .poker-card {
+      width: 52px;
+      height: 72px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .poker-card:hover {
+      border-color: #a5b4fc;
+      transform: translateY(-4px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .poker-card.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    .poker-card.special {
+      font-size: 0.875rem;
+    }
+
+    /* Participant Votes */
+    .votes-section {
+      margin-bottom: 1rem;
+    }
+
+    .votes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .votes-title {
+      font-weight: 600;
+    }
+
+    .votes-status {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .participant-votes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .participant-vote {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .vote-card {
+      width: 44px;
+      height: 58px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+    }
+
+    .vote-card.hidden {
+      background: linear-gradient(135deg, #374151, #4b5563);
+    }
+
+    .vote-card.hidden::before {
+      content: "?";
+    }
+
+    .vote-card.waiting {
+      background: #f3f4f6;
+      border: 2px dashed #d1d5db;
+      color: transparent;
+      box-shadow: none;
+    }
+
+    .vote-card.waiting::before {
+      content: "...";
+      color: #9ca3af;
+      font-size: 0.875rem;
+    }
+
+    .participant-name {
+      font-size: 0.75rem;
+      color: #6b7280;
+      max-width: 60px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Results */
+    .results-banner {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      border: 1px solid #a7f3d0;
+      border-radius: 0.5rem;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .results-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .consensus-badge {
+      background: #10b981;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .results-text {
+      color: #065f46;
+    }
+
+    .results-text strong {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .results-text span {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+
+    /* Item Queue */
+    .queue-section {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 1rem;
+    }
+
+    .queue-title {
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .queue-count {
+      background: #e5e7eb;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.375rem 0.75rem;
+      background: #f9fafb;
+      border-radius: 0.375rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .queue-item.current {
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+    }
+
+    .queue-number {
+      width: 22px;
+      height: 22px;
+      background: #e5e7eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #6b7280;
+      flex-shrink: 0;
+    }
+
+    .queue-item.current .queue-number {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .queue-item.completed .queue-number {
+      background: #10b981;
+      color: white;
+    }
+
+    .queue-item-title {
+      flex: 1;
+      font-size: 0.875rem;
+    }
+
+    .queue-item-estimate {
+      font-size: 0.75rem;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .queue-item-estimate.pending {
+      color: #9ca3af;
+    }
+
+    /* ============================================
+       CHAT PANEL
+       ============================================ */
+    .chat-panel {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      position: sticky;
+      top: 1rem;
+    }
+
+    .chat-header {
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .close-chat {
+      width: 28px;
+      height: 28px;
+      background: #f3f4f6;
+      border: none;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+    }
+
+    .close-chat:hover {
+      background: #e5e7eb;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .message {
+      max-width: 85%;
+    }
+
+    .message.own {
+      align-self: flex-end;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .message-author {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #4f46e5;
+    }
+
+    .message.own .message-author {
+      color: #6b7280;
+    }
+
+    .message-time {
+      font-size: 0.65rem;
+      color: #9ca3af;
+    }
+
+    .message-content {
+      background: #f3f4f6;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    .message.own .message-content {
+      background: #eef2ff;
+    }
+
+    .system-message {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      padding: 0.5rem;
+    }
+
+    .chat-input {
+      padding: 1rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .chat-input input:focus {
+      border-color: #a5b4fc;
+      box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.2);
+    }
+
+    .chat-input button {
+      padding: 0.625rem 1rem;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .chat-input button:hover {
+      background: #4338ca;
+    }
+
+    /* ============================================
+       SECTION DIVIDER
+       ============================================ */
+    .section-divider {
+      text-align: center;
+      padding: 3rem 0;
+      border-top: 3px dashed #e5e7eb;
+      margin-top: 3rem;
+      background: #f9fafb;
+    }
+
+    .section-divider h2 {
+      font-size: 1.5rem;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-divider p {
+      color: #6b7280;
+    }
+
+    /* Alternative Layout - Backlog with estimates */
+    .backlog-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .backlog-rank {
+      width: 28px;
+      height: 28px;
+      background: #f3f4f6;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .backlog-content {
+      flex: 1;
+    }
+
+    .backlog-title {
+      font-weight: 600;
+      margin-bottom: 0.125rem;
+    }
+
+    .backlog-meta {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .backlog-metrics {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      background: #f9fafb;
+      border-radius: 0.375rem;
+    }
+
+    .metric-value {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .metric-label {
+      font-size: 0.65rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+    }
+
+    .metric.score .metric-value {
+      color: #4f46e5;
+    }
+
+    .metric.estimate .metric-value {
+      color: #0891b2;
+    }
+
+    /* Info boxes */
+    .info-box {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1.5rem 0;
+      font-size: 0.875rem;
+      color: #92400e;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ============================================
+       MOBILE MOCKUPS
+       ============================================ */
+    .mobile-showcase {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .mobile-frame {
+      width: 375px;
+      height: 812px;
+      background: #1a1a1a;
+      border-radius: 50px;
+      padding: 14px;
+      box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 3px #2d2d2d,
+        inset 0 0 0 4px #000;
+      position: relative;
+    }
+
+    .mobile-frame::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 34px;
+      background: #000;
+      border-radius: 0 0 24px 24px;
+      z-index: 10;
+    }
+
+    /* Dynamic Island pill */
+    .mobile-frame::after {
+      content: "";
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      height: 24px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 11;
+    }
+
+    .mobile-screen {
+      width: 100%;
+      height: 100%;
+      background: #f9fafb;
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mobile-label {
+      text-align: center;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .mobile-sublabel {
+      text-align: center;
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    /* Mobile Header */
+    .mobile-header {
+      background: white;
+      padding: 3.75rem 1rem 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .mobile-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mobile-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mobile-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-logo-triangle {
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid white;
+    }
+
+    .mobile-session-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .mobile-session-slug {
+      font-size: 0.7rem;
+      color: #9ca3af;
+    }
+
+    .mobile-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mobile-header-btn {
+      padding: 0.375rem 0.625rem;
+      background: #f3f4f6;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .mobile-header-btn.primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .mobile-participant-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.5rem;
+      background: #f3f4f6;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      color: #374151;
+    }
+
+    .mobile-participant-badge .online-dot {
+      width: 6px;
+      height: 6px;
+    }
+
+    /* Combined participant + chat button (like desktop) */
+    .mobile-participant-chat-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.625rem;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+      position: relative;
+    }
+
+    .mobile-participant-chat-btn .online-dot {
+      width: 6px;
+      height: 6px;
+    }
+
+    .mobile-participant-chat-btn .participant-count {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .mobile-participant-chat-btn .unread-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+    }
+
+    /* Legacy single chat button - kept for backwards compat */
+    .mobile-chat-btn {
+      width: 36px;
+      height: 36px;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .mobile-chat-btn .unread-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+    }
+
+    /* Mobile Bottom Bar with View Tabs */
+    .mobile-bottom-bar-full {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      padding-bottom: calc(env(safe-area-inset-bottom, 12px));
+      border-radius: 0 0 38px 38px;
+    }
+
+    .mobile-view-tabs {
+      display: flex;
+      padding: 0.75rem 1rem 0.5rem;
+      gap: 0.25rem;
+    }
+
+    .mobile-view-tab {
+      flex: 1;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #6b7280;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+    }
+
+    .mobile-view-tab.active {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .mobile-add-form {
+      display: flex;
+      padding: 0.5rem 1rem 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .mobile-add-input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .mobile-add-btn {
+      padding: 0.5rem 1rem;
+      background: #e5e7eb;
+      color: #9ca3af;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    /* Legacy view selector - keep for backwards compat */
+    .mobile-view-selector {
+      background: white;
+      padding: 0.5rem;
+      display: flex;
+      gap: 0.25rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .mobile-view-btn {
+      flex: 1;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6b7280;
+      background: transparent;
+      border-radius: 0.375rem;
+    }
+
+    .mobile-view-btn.active {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    /* Mobile Poker Content */
+    .mobile-poker-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      padding-bottom: 5rem;
+    }
+
+    .mobile-current-item {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .mobile-item-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin-bottom: 0.25rem;
+    }
+
+    .mobile-item-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .mobile-item-desc {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    /* Mobile Card Grid */
+    .mobile-card-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .mobile-poker-card {
+      aspect-ratio: 2/3;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .mobile-poker-card.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    /* Mobile Team Votes */
+    .mobile-votes-section {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .mobile-votes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .mobile-votes-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .mobile-votes-status {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .mobile-votes-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .mobile-vote-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .mobile-vote-card {
+      width: 36px;
+      height: 48px;
+      background: linear-gradient(135deg, #374151, #4b5563);
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+    }
+
+    .mobile-vote-card.waiting {
+      background: #f3f4f6;
+      border: 2px dashed #d1d5db;
+    }
+
+    .mobile-vote-name {
+      font-size: 0.6rem;
+      color: #6b7280;
+      max-width: 50px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Mobile Bottom Action Bar */
+    .mobile-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem;
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 20px));
+      display: flex;
+      gap: 0.5rem;
+      border-radius: 0 0 38px 38px;
+    }
+
+    .mobile-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-align: center;
+      border: none;
+    }
+
+    .mobile-btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .mobile-btn-primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    /* Mobile Chat Overlay */
+    .mobile-chat-overlay {
+      position: absolute;
+      inset: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      border-radius: 38px;
+      z-index: 20;
+    }
+
+    .mobile-chat-header {
+      background: white;
+      padding: 3.75rem 1rem 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mobile-chat-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mobile-chat-close {
+      width: 32px;
+      height: 32px;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+    }
+
+    .mobile-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .mobile-message {
+      max-width: 85%;
+    }
+
+    .mobile-message.own {
+      align-self: flex-end;
+    }
+
+    .mobile-message-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .mobile-message-author {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #4f46e5;
+    }
+
+    .mobile-message.own .mobile-message-author {
+      color: #6b7280;
+    }
+
+    .mobile-message-time {
+      font-size: 0.6rem;
+      color: #9ca3af;
+    }
+
+    .mobile-message-content {
+      background: #f3f4f6;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .mobile-message.own .mobile-message-content {
+      background: #eef2ff;
+    }
+
+    .mobile-chat-input-area {
+      padding: 0.75rem 1rem;
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 20px));
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.5rem;
+      border-radius: 0 0 38px 38px;
+    }
+
+    .mobile-chat-input {
+      flex: 1;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 1.5rem;
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .mobile-chat-send {
+      width: 40px;
+      height: 40px;
+      background: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    /* Mobile Queue */
+    .mobile-queue {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .mobile-queue-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .mobile-queue-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0;
+      font-size: 0.75rem;
+    }
+
+    .mobile-queue-num {
+      width: 18px;
+      height: 18px;
+      background: #e5e7eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    .mobile-queue-item.current .mobile-queue-num {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .mobile-queue-item.completed .mobile-queue-num {
+      background: #10b981;
+      color: white;
+    }
+
+    .mobile-queue-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mobile-queue-est {
+      font-size: 0.65rem;
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .mobile-queue-est.pending {
+      color: #9ca3af;
+    }
+
+    /* Mobile System Message */
+    .mobile-system-message {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      padding: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-triangle"></div>
+      </div>
+      <h1 class="session-title font-display">Sprint 24 Planning</h1>
+    </div>
+    <div class="header-right">
+      <div class="participant-indicator" title="Click to open chat">
+        <span class="online-dot"></span>
+        <span>4 participants</span>
+        <svg class="chat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        <span class="unread-badge">2</span>
+      </div>
+      <button class="btn btn-secondary">Export CSV</button>
+      <button class="btn btn-secondary">Copy URL</button>
+      <button class="btn btn-primary">New</button>
+    </div>
+  </header>
+
+  <!-- View Tabs -->
+  <div class="view-tabs">
+    <nav class="tabs-nav">
+      <div class="tab">Scoring</div>
+      <div class="tab active new-badge">Estimates</div>
+      <div class="tab">Backlog</div>
+      <div class="tab">Roadmap</div>
+    </nav>
+  </div>
+
+  <!-- Main Content with Chat -->
+  <div class="main-container with-chat">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h3 class="section-title font-display">Items to Estimate</h3>
+
+      <div class="item-card">
+        <div class="item-title">User authentication flow</div>
+        <div class="item-desc">Implement OAuth 2.0 with Google and GitHub</div>
+        <div class="item-meta">
+          <span class="estimate-badge">8 SP</span>
+          <span>Estimated</span>
+        </div>
+      </div>
+
+      <div class="item-card" style="border-color: #a5b4fc; background: #fafbff;">
+        <div class="item-title">Dashboard redesign</div>
+        <div class="item-desc">New layout with widgets and customisation</div>
+        <div class="item-meta">
+          <span class="estimate-badge pending">In Progress</span>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-title">API rate limiting</div>
+        <div class="item-desc">Add throttling to prevent abuse</div>
+        <div class="item-meta">
+          <span style="color: #9ca3af;">Not estimated</span>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-title">Export to PDF</div>
+        <div class="item-desc">Generate formatted reports</div>
+        <div class="item-meta">
+          <span style="color: #9ca3af;">Not estimated</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Planning Poker Main View -->
+    <main class="poker-container">
+      <div class="poker-header">
+        <div class="poker-item-info">
+          <h2 class="poker-item-title font-display">Dashboard redesign</h2>
+          <p class="poker-item-desc">New layout with customisable widgets and drag-and-drop support</p>
+        </div>
+        <div class="poker-controls">
+          <button class="btn btn-secondary">Skip Item</button>
+          <button class="btn btn-primary">Reveal Votes</button>
+        </div>
+      </div>
+
+      <!-- Card Selection -->
+      <div class="card-selection">
+        <div class="card-selection-label">Select your estimate:</div>
+        <div class="poker-cards">
+          <div class="poker-card">0</div>
+          <div class="poker-card">1</div>
+          <div class="poker-card">2</div>
+          <div class="poker-card">3</div>
+          <div class="poker-card selected">5</div>
+          <div class="poker-card">8</div>
+          <div class="poker-card">13</div>
+          <div class="poker-card">21</div>
+          <div class="poker-card special">?</div>
+          <div class="poker-card special">☕</div>
+        </div>
+      </div>
+
+      <!-- Participant Votes (Hidden) -->
+      <div class="votes-section">
+        <div class="votes-header">
+          <span class="votes-title">Team Votes</span>
+          <span class="votes-status">3 of 4 voted</span>
+        </div>
+        <div class="participant-votes">
+          <div class="participant-vote">
+            <div class="vote-card hidden"></div>
+            <span class="participant-name">Sarah K.</span>
+          </div>
+          <div class="participant-vote">
+            <div class="vote-card hidden"></div>
+            <span class="participant-name">James L.</span>
+          </div>
+          <div class="participant-vote">
+            <div class="vote-card hidden"></div>
+            <span class="participant-name">Mike R.</span>
+          </div>
+          <div class="participant-vote">
+            <div class="vote-card waiting"></div>
+            <span class="participant-name">Emma T.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results (shown after reveal) -->
+      <div class="results-banner" style="display: none;">
+        <div class="results-left">
+          <div class="consensus-badge">5</div>
+          <div class="results-text">
+            <strong>Consensus reached!</strong>
+            <span>3 of 4 voted for 5 points</span>
+          </div>
+        </div>
+        <button class="btn btn-primary">Accept & Next</button>
+      </div>
+
+      <!-- Queue -->
+      <div class="queue-section">
+        <h3 class="queue-title">
+          Estimation Queue
+          <span class="queue-count">4 items</span>
+        </h3>
+        <div class="queue-item completed">
+          <span class="queue-number">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+          </span>
+          <span class="queue-item-title">User authentication flow</span>
+          <span class="queue-item-estimate">8 SP</span>
+        </div>
+        <div class="queue-item current">
+          <span class="queue-number">2</span>
+          <span class="queue-item-title">Dashboard redesign</span>
+          <span class="queue-item-estimate pending">Voting...</span>
+        </div>
+        <div class="queue-item">
+          <span class="queue-number">3</span>
+          <span class="queue-item-title">API rate limiting</span>
+          <span class="queue-item-estimate pending">Pending</span>
+        </div>
+        <div class="queue-item">
+          <span class="queue-number">4</span>
+          <span class="queue-item-title">Export to PDF</span>
+          <span class="queue-item-estimate pending">Pending</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Chat Panel -->
+    <aside class="chat-panel">
+      <div class="chat-header">
+        <span class="chat-title">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+          Team Chat
+        </span>
+        <button class="close-chat" title="Close chat">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="chat-messages">
+        <div class="system-message">
+          Sarah K. joined the session
+        </div>
+
+        <div class="message">
+          <div class="message-header">
+            <span class="message-author">Sarah K.</span>
+            <span class="message-time">2:34 PM</span>
+          </div>
+          <div class="message-content">
+            For the dashboard redesign, are we including the mobile responsive version in this estimate?
+          </div>
+        </div>
+
+        <div class="message">
+          <div class="message-header">
+            <span class="message-author">Mike R.</span>
+            <span class="message-time">2:35 PM</span>
+          </div>
+          <div class="message-content">
+            Good question. I was assuming desktop-only for MVP, mobile would be a separate ticket
+          </div>
+        </div>
+
+        <div class="message own">
+          <div class="message-header">
+            <span class="message-author">You</span>
+            <span class="message-time">2:36 PM</span>
+          </div>
+          <div class="message-content">
+            Agreed, let's keep it desktop only. That's why I'm going with 5 instead of 8
+          </div>
+        </div>
+
+        <div class="system-message">
+          Emma T. is typing...
+        </div>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" placeholder="Type a message..." />
+        <button>Send</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Section Divider -->
+  <div class="section-divider">
+    <h2 class="font-display">Alternative View: Backlog with Estimates</h2>
+    <p>How estimates integrate with the prioritised backlog</p>
+  </div>
+
+  <!-- Backlog View with Estimates -->
+  <div class="main-container" style="grid-template-columns: 1fr;">
+    <div style="background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem;">
+      <h2 class="section-title font-display" style="margin-bottom: 1.5rem;">Prioritised Backlog (8 items)</h2>
+
+      <div class="info-box">
+        <strong>💡 Estimates now available</strong>
+        Story point estimates from Planning Poker are shown alongside priority scores. Use both metrics to plan your roadmap capacity.
+      </div>
+
+      <div class="backlog-item">
+        <div class="backlog-rank">1</div>
+        <div class="backlog-content">
+          <div class="backlog-title">User authentication flow</div>
+          <div class="backlog-meta">OAuth 2.0 with Google and GitHub</div>
+        </div>
+        <div class="backlog-metrics">
+          <div class="metric score">
+            <span class="metric-value">156</span>
+            <span class="metric-label">Score</span>
+          </div>
+          <div class="metric estimate">
+            <span class="metric-value">8 SP</span>
+            <span class="metric-label">Estimate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="backlog-item">
+        <div class="backlog-rank">2</div>
+        <div class="backlog-content">
+          <div class="backlog-title">Dashboard redesign</div>
+          <div class="backlog-meta">New layout with customisable widgets</div>
+        </div>
+        <div class="backlog-metrics">
+          <div class="metric score">
+            <span class="metric-value">142</span>
+            <span class="metric-label">Score</span>
+          </div>
+          <div class="metric estimate">
+            <span class="metric-value">5 SP</span>
+            <span class="metric-label">Estimate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="backlog-item">
+        <div class="backlog-rank">3</div>
+        <div class="backlog-content">
+          <div class="backlog-title">API rate limiting</div>
+          <div class="backlog-meta">Add throttling to prevent abuse</div>
+        </div>
+        <div class="backlog-metrics">
+          <div class="metric score">
+            <span class="metric-value">128</span>
+            <span class="metric-label">Score</span>
+          </div>
+          <div class="metric estimate">
+            <span class="metric-value">3 SP</span>
+            <span class="metric-label">Estimate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cutoff line -->
+      <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; margin: 0.5rem 0;">
+        <div style="flex: 1; height: 2px; background: linear-gradient(90deg, transparent, #ef4444, transparent);"></div>
+        <span style="color: #ef4444; font-size: 0.75rem; font-weight: 600;">SPRINT CUTOFF — 16 SP capacity</span>
+        <div style="flex: 1; height: 2px; background: linear-gradient(90deg, transparent, #ef4444, transparent);"></div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.6;">
+        <div class="backlog-rank">4</div>
+        <div class="backlog-content">
+          <div class="backlog-title">Export to PDF</div>
+          <div class="backlog-meta">Generate formatted reports</div>
+        </div>
+        <div class="backlog-metrics">
+          <div class="metric score">
+            <span class="metric-value">98</span>
+            <span class="metric-label">Score</span>
+          </div>
+          <div class="metric estimate">
+            <span class="metric-value">5 SP</span>
+            <span class="metric-label">Estimate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Section Divider -->
+  <div class="section-divider">
+    <h2 class="font-display">Mobile Experience</h2>
+    <p>Planning Poker and Chat optimised for on-the-go participation</p>
+  </div>
+
+  <!-- Mobile Mockups -->
+  <div class="mobile-showcase">
+
+    <!-- Mobile Planning Poker -->
+    <div>
+      <div class="mobile-frame">
+        <div class="mobile-screen">
+          <!-- Header (matching actual app) -->
+          <div class="mobile-header">
+            <div class="mobile-header-row">
+              <div class="mobile-header-left">
+                <div class="mobile-logo">
+                  <div class="mobile-logo-triangle"></div>
+                </div>
+                <div>
+                  <div class="mobile-session-title font-display">Sprint 24</div>
+                  <div class="mobile-session-slug">Session: m5jgf1</div>
+                </div>
+              </div>
+            </div>
+            <div class="mobile-header-row">
+              <!-- Combined participant + chat button (like desktop) -->
+              <div class="mobile-participant-chat-btn">
+                <span class="online-dot"></span>
+                <span class="participant-count">4</span>
+                <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <span class="unread-badge">2</span>
+              </div>
+              <div class="mobile-header-right">
+                <span class="mobile-header-btn">Export</span>
+                <span class="mobile-header-btn">Clear</span>
+                <span class="mobile-header-btn">Copy</span>
+                <span class="mobile-header-btn primary">New</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Poker Content -->
+          <div class="mobile-poker-content" style="padding-bottom: 8rem;">
+            <!-- Current Item -->
+            <div class="mobile-current-item">
+              <div class="mobile-item-label">Now estimating</div>
+              <div class="mobile-item-title font-display">Dashboard redesign</div>
+              <div class="mobile-item-desc">New layout with customisable widgets</div>
+            </div>
+
+            <!-- Card Grid -->
+            <div class="mobile-card-grid">
+              <div class="mobile-poker-card">0</div>
+              <div class="mobile-poker-card">1</div>
+              <div class="mobile-poker-card">2</div>
+              <div class="mobile-poker-card">3</div>
+              <div class="mobile-poker-card selected">5</div>
+              <div class="mobile-poker-card">8</div>
+              <div class="mobile-poker-card">13</div>
+              <div class="mobile-poker-card">21</div>
+              <div class="mobile-poker-card">?</div>
+              <div class="mobile-poker-card">☕</div>
+            </div>
+
+            <!-- Team Votes -->
+            <div class="mobile-votes-section">
+              <div class="mobile-votes-header">
+                <span class="mobile-votes-title">Team Votes</span>
+                <span class="mobile-votes-status">3 of 4 voted</span>
+              </div>
+              <div class="mobile-votes-grid">
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card">?</div>
+                  <span class="mobile-vote-name">Sarah K.</span>
+                </div>
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card">?</div>
+                  <span class="mobile-vote-name">James L.</span>
+                </div>
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card">?</div>
+                  <span class="mobile-vote-name">Mike R.</span>
+                </div>
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card waiting"></div>
+                  <span class="mobile-vote-name">Emma T.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Queue -->
+            <div class="mobile-queue">
+              <div class="mobile-queue-title">Up Next</div>
+              <div class="mobile-queue-item completed">
+                <span class="mobile-queue-num">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </span>
+                <span class="mobile-queue-name">User authentication</span>
+                <span class="mobile-queue-est">8 SP</span>
+              </div>
+              <div class="mobile-queue-item current">
+                <span class="mobile-queue-num">2</span>
+                <span class="mobile-queue-name">Dashboard redesign</span>
+                <span class="mobile-queue-est pending">...</span>
+              </div>
+              <div class="mobile-queue-item">
+                <span class="mobile-queue-num">3</span>
+                <span class="mobile-queue-name">API rate limiting</span>
+                <span class="mobile-queue-est pending">—</span>
+              </div>
+            </div>
+
+            <!-- Reveal Button (inline) -->
+            <button class="mobile-btn mobile-btn-primary" style="width: 100%; margin-top: 1rem;">Reveal Votes</button>
+          </div>
+
+          <!-- Bottom Bar with View Tabs (matching actual app) -->
+          <div class="mobile-bottom-bar-full">
+            <div class="mobile-view-tabs">
+              <div class="mobile-view-tab">Scoring</div>
+              <div class="mobile-view-tab active">Estimates</div>
+              <div class="mobile-view-tab">Backlog</div>
+              <div class="mobile-view-tab">Roadmap</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mobile-label">Planning Poker (Mobile)</p>
+      <p class="mobile-sublabel">View tabs at bottom, matching existing app</p>
+    </div>
+
+    <!-- Mobile Chat -->
+    <div>
+      <div class="mobile-frame">
+        <div class="mobile-screen">
+          <!-- Chat Overlay -->
+          <div class="mobile-chat-overlay">
+            <div class="mobile-chat-header">
+              <span class="mobile-chat-title font-display">
+                <svg width="20" height="20" fill="none" stroke="#4f46e5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                Team Chat
+              </span>
+              <div class="mobile-chat-close">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="mobile-chat-messages">
+              <div class="mobile-system-message">
+                Sarah K. joined the session
+              </div>
+
+              <div class="mobile-message">
+                <div class="mobile-message-header">
+                  <span class="mobile-message-author">Sarah K.</span>
+                  <span class="mobile-message-time">2:34 PM</span>
+                </div>
+                <div class="mobile-message-content">
+                  For the dashboard redesign, are we including mobile responsive?
+                </div>
+              </div>
+
+              <div class="mobile-message">
+                <div class="mobile-message-header">
+                  <span class="mobile-message-author">Mike R.</span>
+                  <span class="mobile-message-time">2:35 PM</span>
+                </div>
+                <div class="mobile-message-content">
+                  Good question. I was thinking desktop-only for MVP
+                </div>
+              </div>
+
+              <div class="mobile-message own">
+                <div class="mobile-message-header">
+                  <span class="mobile-message-author">You</span>
+                  <span class="mobile-message-time">2:36 PM</span>
+                </div>
+                <div class="mobile-message-content">
+                  Agreed! That's why I'm going with 5 instead of 8
+                </div>
+              </div>
+
+              <div class="mobile-message">
+                <div class="mobile-message-header">
+                  <span class="mobile-message-author">Sarah K.</span>
+                  <span class="mobile-message-time">2:37 PM</span>
+                </div>
+                <div class="mobile-message-content">
+                  Makes sense. Should we add a separate ticket for mobile?
+                </div>
+              </div>
+
+              <div class="mobile-system-message">
+                Emma T. is typing...
+              </div>
+            </div>
+
+            <div class="mobile-chat-input-area">
+              <input type="text" class="mobile-chat-input" placeholder="Type a message..." />
+              <div class="mobile-chat-send">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mobile-label">Chat (Full-Screen Modal)</p>
+      <p class="mobile-sublabel">Opens from chat icon in header</p>
+    </div>
+
+    <!-- Mobile Votes Revealed -->
+    <div>
+      <div class="mobile-frame">
+        <div class="mobile-screen">
+          <!-- Header (matching actual app) -->
+          <div class="mobile-header">
+            <div class="mobile-header-row">
+              <div class="mobile-header-left">
+                <div class="mobile-logo">
+                  <div class="mobile-logo-triangle"></div>
+                </div>
+                <div>
+                  <div class="mobile-session-title font-display">Sprint 24</div>
+                  <div class="mobile-session-slug">Session: m5jgf1</div>
+                </div>
+              </div>
+            </div>
+            <div class="mobile-header-row">
+              <!-- Combined participant + chat button (like desktop) -->
+              <div class="mobile-participant-chat-btn">
+                <span class="online-dot"></span>
+                <span class="participant-count">4</span>
+                <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+              </div>
+              <div class="mobile-header-right">
+                <span class="mobile-header-btn">Export</span>
+                <span class="mobile-header-btn">Clear</span>
+                <span class="mobile-header-btn">Copy</span>
+                <span class="mobile-header-btn primary">New</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Content -->
+          <div class="mobile-poker-content" style="padding-bottom: 8rem;">
+            <!-- Consensus Banner -->
+            <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 1px solid #a7f3d0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; text-align: center;">
+              <div style="font-size: 2.5rem; font-weight: 700; color: #10b981; margin-bottom: 0.25rem;">5</div>
+              <div style="font-weight: 600; color: #065f46;">Consensus!</div>
+              <div style="font-size: 0.75rem; color: #047857;">3 of 4 voted for 5 points</div>
+            </div>
+
+            <!-- Item that was estimated -->
+            <div class="mobile-current-item">
+              <div class="mobile-item-label">Just estimated</div>
+              <div class="mobile-item-title font-display">Dashboard redesign</div>
+              <div class="mobile-item-desc">New layout with customisable widgets</div>
+            </div>
+
+            <!-- Revealed Votes -->
+            <div class="mobile-votes-section">
+              <div class="mobile-votes-header">
+                <span class="mobile-votes-title">Votes Revealed</span>
+              </div>
+              <div class="mobile-votes-grid">
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card" style="background: linear-gradient(135deg, #4f46e5, #6366f1);">5</div>
+                  <span class="mobile-vote-name">Sarah K.</span>
+                </div>
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card" style="background: linear-gradient(135deg, #4f46e5, #6366f1);">5</div>
+                  <span class="mobile-vote-name">James L.</span>
+                </div>
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card" style="background: linear-gradient(135deg, #4f46e5, #6366f1);">5</div>
+                  <span class="mobile-vote-name">Mike R.</span>
+                </div>
+                <div class="mobile-vote-item">
+                  <div class="mobile-vote-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">8</div>
+                  <span class="mobile-vote-name">Emma T.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Queue -->
+            <div class="mobile-queue">
+              <div class="mobile-queue-title">Up Next</div>
+              <div class="mobile-queue-item completed">
+                <span class="mobile-queue-num">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </span>
+                <span class="mobile-queue-name">User authentication</span>
+                <span class="mobile-queue-est">8 SP</span>
+              </div>
+              <div class="mobile-queue-item completed">
+                <span class="mobile-queue-num">
+                  <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </span>
+                <span class="mobile-queue-name">Dashboard redesign</span>
+                <span class="mobile-queue-est">5 SP</span>
+              </div>
+              <div class="mobile-queue-item current">
+                <span class="mobile-queue-num">3</span>
+                <span class="mobile-queue-name">API rate limiting</span>
+                <span class="mobile-queue-est pending">Next</span>
+              </div>
+            </div>
+
+            <!-- Action Buttons (inline) -->
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+              <button class="mobile-btn mobile-btn-secondary" style="flex: 1;">Re-vote</button>
+              <button class="mobile-btn mobile-btn-primary" style="flex: 1;">Accept & Next</button>
+            </div>
+          </div>
+
+          <!-- Bottom Bar with View Tabs (matching actual app) -->
+          <div class="mobile-bottom-bar-full">
+            <div class="mobile-view-tabs">
+              <div class="mobile-view-tab">Scoring</div>
+              <div class="mobile-view-tab active">Estimates</div>
+              <div class="mobile-view-tab">Backlog</div>
+              <div class="mobile-view-tab">Roadmap</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mobile-label">Votes Revealed</p>
+      <p class="mobile-sublabel">Consensus achieved, ready for next item</p>
+    </div>
+
+  </div>
+
+  <!-- Design Notes -->
+  <div style="max-width: 1280px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 0.5rem;">
+    <h2 class="font-display" style="margin-bottom: 1rem;">Design Notes</h2>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #4f46e5;">Planning Poker View</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Position:</strong> New tab between "Scoring" and "Backlog"</li>
+      <li><strong>Flow:</strong> Scoring → Estimates → Backlog → Roadmap</li>
+      <li><strong>Fibonacci sequence:</strong> 0, 1, 2, 3, 5, 8, 13, 21 plus ? (uncertain) and ☕ (break)</li>
+      <li><strong>Hidden votes:</strong> Cards are face-down until all participants vote or facilitator reveals</li>
+      <li><strong>Consensus:</strong> When revealed, highlights agreement or shows distribution for discussion</li>
+      <li><strong>Queue:</strong> Work through items one-by-one; can skip or reorder</li>
+      <li><strong>Integration:</strong> Estimates stored per-item and shown in Backlog/Roadmap views</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #4f46e5;">Chat Feature</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Access:</strong> Click participant count indicator to toggle chat panel</li>
+      <li><strong>Position:</strong> Right sidebar, collapsible</li>
+      <li><strong>Persistence:</strong> Messages stored in Supabase, synced via Realtime</li>
+      <li><strong>Notifications:</strong> Unread badge when new messages arrive (chat closed)</li>
+      <li><strong>Context:</strong> Particularly useful during Planning Poker for discussing estimates</li>
+      <li><strong>Mobile:</strong> Full-screen modal overlay on mobile devices</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #4f46e5;">Mobile Experience</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Planning Poker:</strong> Fully functional on mobile — 5x2 card grid optimised for thumb reach</li>
+      <li><strong>View Selector:</strong> Compact 4-tab selector (Score, Estimate, Backlog, Map) replaces desktop tabs</li>
+      <li><strong>Chat:</strong> Opens as full-screen modal overlay with native keyboard handling</li>
+      <li><strong>Bottom Bar:</strong> Primary actions (Skip, Reveal, Accept) in fixed bottom bar for easy access</li>
+      <li><strong>Team Votes:</strong> Compact horizontal layout showing all participants</li>
+      <li><strong>Item Queue:</strong> Collapsible "Up Next" section showing estimation progress</li>
+      <li><strong>Real-time:</strong> Same Supabase Realtime sync — votes and chat update instantly across devices</li>
+      <li><strong>Use Case:</strong> Join sprint planning from anywhere — commute, coffee shop, working from home</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #4f46e5;">Database Changes Required</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><code>items.story_points</code> — Integer, nullable (estimate value)</li>
+      <li><code>items.estimation_status</code> — Enum: 'pending', 'in_progress', 'completed'</li>
+      <li><code>estimation_votes</code> — Table for storing individual participant votes</li>
+      <li><code>messages</code> — Table: id, session_id, participant_name, text, created_at</li>
+      <li><code>sessions.estimation_mode</code> — Boolean to enable/disable estimation feature</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #4f46e5;">Implementation Complexity</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Planning Poker:</strong> Medium-high — new view, voting logic, reveal/consensus UI, real-time sync</li>
+      <li><strong>Chat:</strong> Medium — leverages existing Realtime infrastructure, new table + component</li>
+      <li><strong>Integration:</strong> Low — displaying estimates in existing views is straightforward</li>
+    </ul>
+  </div>
+
+</body>
+</html>
