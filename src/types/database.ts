@@ -73,3 +73,14 @@ export interface EstimationVote {
   vote: number | null // Fibonacci value, -1 = ?, -2 = coffee, null = not voted
   created_at: string
 }
+
+export type MessageType = 'user' | 'system'
+
+export interface Message {
+  id: string
+  session_id: string
+  participant_name: string
+  content: string
+  message_type: MessageType
+  created_at: string
+}

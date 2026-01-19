@@ -20,9 +20,13 @@ import SlideInPanel from '../components/SlideInPanel'
 import FAB from '../components/FAB'
 import BottomSheet from '../components/BottomSheet'
 import MobileMenu from '../components/MobileMenu'
+import ChatPanel from '../components/ChatPanel'
+import MobileChatModal from '../components/MobileChatModal'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 import { useRoadmapPeriods } from '../hooks/useRoadmapPeriods'
+import { useMessages } from '../hooks/useMessages'
+import { useUnreadCount } from '../hooks/useUnreadCount'
 
 // Lazy load components that are only used for specific frameworks/views
 const ValueEffortMatrix = lazy(() => import('../components/ValueEffortMatrix'))
@@ -72,6 +76,7 @@ export default function SessionPage() {
   const [isAddPanelOpen, setIsAddPanelOpen] = useState(false)
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   const [notification, setNotification] = useState<{
     title: string
     message: string
@@ -91,7 +96,24 @@ export default function SessionPage() {
 
   // Participant name and presence
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
-  const { participants, participantCount } = usePresence(session?.id || null, participantName)
+
+  // Chat messages and unread count
+  const { messages, loading: messagesLoading, sendMessage, sendSystemMessage } = useMessages(session?.id || null, participantName)
+  const { unreadCount } = useUnreadCount(session?.id || null, messages, isChatOpen)
+
+  // Presence with join/leave callbacks for system messages
+  const { participants, participantCount } = usePresence(
+    session?.id || null,
+    participantName,
+    useMemo(() => ({
+      onJoin: (name: string) => {
+        sendSystemMessage(`${name} joined the session`)
+      },
+      onLeave: (name: string) => {
+        sendSystemMessage(`${name} left the session`)
+      },
+    }), [sendSystemMessage])
+  )
 
   // Roadmap periods
   const {
@@ -1414,12 +1436,36 @@ export default function SessionPage() {
 
             {/* Right: Participant indicator + Actions */}
             <div className="flex items-center gap-3">
-              {/* Participant indicator */}
+              {/* Participant indicator with chat toggle */}
               {participantCount > 0 && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 pr-2 border-r border-gray-200">
+                <button
+                  onClick={() => setIsChatOpen(!isChatOpen)}
+                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 pr-2 border-r border-gray-200 transition-colors relative"
+                  title="Open team chat"
+                >
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <span>{participantCount} {participantCount === 1 ? 'participant' : 'participants'}</span>
-                </div>
+                  <span>{participantCount}</span>
+                  <span className="relative">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-medium text-white bg-red-500 rounded-full">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </span>
+                </button>
               )}
 
               {/* Session actions */}
@@ -1429,8 +1475,8 @@ export default function SessionPage() {
                   framework: session.framework,
                   sessionName: session.name || session.slug,
                 })}
-                disabled={items.length === 0 || localView === 'roadmap'}
-                title={localView === 'roadmap' ? 'Switch to Scoring or Backlog view to export' : undefined}
+                disabled={items.length === 0 || localView !== 'scoring'}
+                title={localView !== 'scoring' ? 'Switch to Scoring view to export' : undefined}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Export CSV
@@ -1507,12 +1553,36 @@ export default function SessionPage() {
                 )}
             </div>
             <div className="flex items-center gap-2 relative">
-              {/* Participant count - compact on mobile */}
+              {/* Participant count with chat icon - compact on mobile */}
               {participantCount > 0 && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  title="Open team chat"
+                >
                   <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                   <span>{participantCount}</span>
-                </div>
+                  <span className="relative">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-medium text-white bg-red-500 rounded-full">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </span>
+                </button>
               )}
               {/* Kebab menu button */}
               <button
@@ -1761,6 +1831,30 @@ export default function SessionPage() {
           onCancel={() => setNotification(null)}
         />
       )}
+
+      {/* Chat panel (desktop only) */}
+      <div className={`hidden lg:block fixed right-0 top-0 h-full z-40 transition-transform duration-300 ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <ChatPanel
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          sessionId={session.id}
+          currentUser={participantName || 'Anonymous'}
+          messages={messages}
+          loading={messagesLoading}
+          onSendMessage={sendMessage}
+        />
+      </div>
+
+      {/* Mobile chat modal */}
+      <MobileChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        sessionId={session.id}
+        currentUser={participantName || 'Anonymous'}
+        messages={messages}
+        loading={messagesLoading}
+        onSendMessage={sendMessage}
+      />
 
       {/* Add Item slide-in panel (desktop only) */}
       <SlideInPanel

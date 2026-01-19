@@ -211,7 +211,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] Ghost preview when dragging items onto roadmap
   - [x] Orphaned item handling when periods deleted
   - [x] Mobile placeholder (desktop-only feature)
-- [ ] Phase 9 (Planning Poker & Team Chat) - IN PROGRESS
+- [x] Phase 9 (Planning Poker & Team Chat) - COMPLETE
   - [x] 9.1a Database Schema & View Tab (Step 1)
   - [x] 9.1b Estimation Queue (Step 2)
   - [x] 9.1c Card Selection UI (Step 3)
@@ -223,9 +223,32 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 9.1i Backlog Integration (Step 9)
   - [x] 9.1j Mobile Optimisation (Step 10)
   - [x] 9.1k Real-time Edge Cases (Step 11)
-  - [ ] 9.2 Team Chat (Steps 1-10)
+  - [x] 9.2 Team Chat (Steps 1-12)
 
-## Recent Changes (UX Enhancement PRD)
+## Recent Changes (Phase 9 - Team Chat)
+
+### Team Chat Feature (Complete)
+- **Chat Panel**: 320px right sidebar on desktop, full-screen modal on mobile
+- **Message Types**: User messages and system messages (join/leave)
+- **Real-time Sync**: Messages sync instantly across all participants via Supabase Realtime
+- **Unread Badge**: Red badge shows unread count, clears when chat opens
+- **Typing Indicators**: Shows "X is typing..." using Supabase Presence
+- **System Messages**: Debounced join/leave notifications prevent spam on page refresh
+
+### New Components (Team Chat)
+- `src/components/ChatPanel.tsx` - Desktop chat sidebar
+- `src/components/ChatMessage.tsx` - Individual message display
+- `src/components/MobileChatModal.tsx` - Full-screen mobile chat
+
+### New Hooks (Team Chat)
+- `src/hooks/useMessages.ts` - Message CRUD with real-time subscription
+- `src/hooks/useUnreadCount.ts` - Unread badge logic with localStorage
+- `src/hooks/useTypingIndicator.ts` - Typing state via Presence
+
+### Database Changes (Team Chat)
+- `supabase/011_add_chat_support.sql` - Messages table with RLS and Realtime
+
+## Previous Changes (UX Enhancement PRD)
 
 ### Desktop UI Redesign
 - **Consolidated Header**: Logo, session name, participant count, Copy/Export/New buttons in single row
@@ -404,4 +427,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Performance Monitoring**: Add analytics for load times and interactions
 
 ---
-*Last updated: 2026-01-18 - UX Enhancement PRD complete - Desktop/Mobile UI redesign*
+*Last updated: 2026-01-19 - Phase 9 complete: Planning Poker and Team Chat*
