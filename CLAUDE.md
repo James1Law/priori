@@ -224,8 +224,32 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 9.1j Mobile Optimisation (Step 10)
   - [x] 9.1k Real-time Edge Cases (Step 11)
   - [x] 9.2 Team Chat (Steps 1-12)
+- [x] Phase 10 (Landing Page Redesign) - COMPLETE
+  - [x] 10.1 Hero Section Update (new subtitle, removed features checklist)
+  - [x] 10.2 Features Grid (6 feature cards in 2-column grid)
+  - [x] 10.3 Supported Frameworks Bar (badge pills with hover states)
+  - [x] 10.4 How It Works Section (4 numbered steps with connecting line)
+  - [x] 10.5 Final CTA Section (bottom call-to-action)
 
-## Recent Changes (Phase 9 - Team Chat)
+## Recent Changes (Phase 10 - Landing Page Redesign)
+
+### Landing Page Redesign (Complete)
+- **Updated Hero**: New subtitle "Score, estimate, plan and ship together in real-time"
+- **Features Grid**: 6 feature cards showcasing Scoring Frameworks, Planning Poker, Backlog Management, Visual Roadmap, Team Chat, Real-Time Collaboration
+- **Frameworks Bar**: Badge pills for RICE, ICE, Value vs Effort, MoSCoW, Weighted Scoring
+- **How It Works**: 4-step guide with numbered circles and connecting line
+- **Final CTA**: Bottom section with "Ready to Prioritise Smarter?" and second Create New Session button
+- **Spacing Refinements**: Balanced gaps above/below Get Started card
+
+### New Components (Landing Page)
+- `src/components/FeatureCard.tsx` - Reusable feature card with icon, title, description
+
+### Design Reference
+- PRD: `docs/PRD-landing-page-redesign.md`
+- Desktop mockup: `plans/landing-page-redesign.mockup.html`
+- Mobile mockup: `plans/landing-page-redesign-mobile.mockup.html`
+
+## Previous Changes (Phase 9 - Team Chat)
 
 ### Team Chat Feature (Complete)
 - **Chat Panel**: 320px right sidebar on desktop, full-screen modal on mobile
@@ -397,7 +421,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Live Site**: https://priori.work
 - **GitHub**: https://github.com/James1Law/priori
 - **Hosting**: Vercel (auto-deploys from main)
-- **Unit Tests**: 350 passing (Vitest)
+- **Unit Tests**: 409 passing (Vitest)
 - **E2E Tests**: 31 passing (Playwright - session, backlog, cutoff, mobile)
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
@@ -427,4 +451,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Performance Monitoring**: Add analytics for load times and interactions
 
 ---
-*Last updated: 2026-01-19 - Phase 9 complete: Planning Poker and Team Chat*
+*Last updated: 2026-01-21 - Phase 10 complete: Landing Page Redesign*

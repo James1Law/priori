@@ -10,6 +10,7 @@ describe('App', () => {
 
   it('renders the Create Session button', () => {
     render(<App />)
-    expect(screen.getByText('Create New Session')).toBeInTheDocument()
+    const buttons = screen.getAllByText('Create New Session')
+    expect(buttons.length).toBeGreaterThanOrEqual(1)
   })
 })

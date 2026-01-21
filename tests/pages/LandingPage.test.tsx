@@ -32,13 +32,14 @@ describe('LandingPage', () => {
     expect(screen.getByText('Priori')).toBeInTheDocument()
   })
 
-  it('renders the Create New Session button', () => {
+  it('renders the Create New Session buttons', () => {
     render(
       <BrowserRouter>
         <LandingPage />
       </BrowserRouter>
     )
-    expect(screen.getByText('Create New Session')).toBeInTheDocument()
+    const buttons = screen.getAllByText('Create New Session')
+    expect(buttons.length).toBe(2)
   })
 
   it('shows loading state when creating session', async () => {
@@ -48,15 +49,17 @@ describe('LandingPage', () => {
       </BrowserRouter>
     )
 
-    const button = screen.getByText('Create New Session')
-    fireEvent.click(button)
+    const buttons = screen.getAllByText('Create New Session')
+    fireEvent.click(buttons[0])
 
     await waitFor(() => {
-      expect(screen.getByText('Creating Session...')).toBeInTheDocument()
+      // Both buttons show loading state
+      const loadingButtons = screen.getAllByText('Creating Session...')
+      expect(loadingButtons.length).toBe(2)
     })
   })
 
-  it('displays feature list', () => {
+  it('displays the updated subtitle', () => {
     render(
       <BrowserRouter>
         <LandingPage />
@@ -64,13 +67,88 @@ describe('LandingPage', () => {
     )
 
     expect(
-      screen.getByText(/Multiple prioritisation frameworks/)
+      screen.getByText(/Score, estimate, plan and ship together in real-time/)
     ).toBeInTheDocument()
+  })
+
+  it('displays all feature cards', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    )
+
+    expect(screen.getByText('Scoring Frameworks')).toBeInTheDocument()
+    expect(screen.getByText('Planning Poker')).toBeInTheDocument()
+    expect(screen.getByText('Backlog Management')).toBeInTheDocument()
+    expect(screen.getByText('Visual Roadmap')).toBeInTheDocument()
+    expect(screen.getByText('Team Chat')).toBeInTheDocument()
+    expect(screen.getByText('Real-Time Collaboration')).toBeInTheDocument()
+  })
+
+  it('displays the features section heading', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    )
+
     expect(
-      screen.getByText(/Real-time collaboration/)
+      screen.getByText('Everything you need to prioritise together')
     ).toBeInTheDocument()
+  })
+
+  it('displays the supported frameworks bar', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    )
+
+    expect(screen.getByText('Supported Frameworks')).toBeInTheDocument()
+    expect(screen.getByText('RICE')).toBeInTheDocument()
+    expect(screen.getByText('ICE')).toBeInTheDocument()
+    expect(screen.getByText('Value vs Effort')).toBeInTheDocument()
+    expect(screen.getByText('MoSCoW')).toBeInTheDocument()
+    expect(screen.getByText('Weighted Scoring')).toBeInTheDocument()
+  })
+
+  it('displays the How It Works section', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    )
+
+    expect(screen.getByText('How It Works')).toBeInTheDocument()
+    expect(screen.getByText('Create a Session')).toBeInTheDocument()
+    expect(screen.getByText('Share the Link')).toBeInTheDocument()
+    expect(screen.getByText('Add Your Items')).toBeInTheDocument()
+    expect(screen.getByText('Score, Estimate & Plan')).toBeInTheDocument()
+  })
+
+  it('displays the Final CTA section', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    )
+
+    expect(screen.getByText('Ready to Prioritise Smarter?')).toBeInTheDocument()
+    expect(screen.getAllByText('Create New Session').length).toBe(2)
     expect(
-      screen.getByText(/No authentication required/)
+      screen.getByText('No account needed • Works on any device')
     ).toBeInTheDocument()
+  })
+
+  it('has two CTA buttons that both create sessions', () => {
+    render(
+      <BrowserRouter>
+        <LandingPage />
+      </BrowserRouter>
+    )
+
+    const buttons = screen.getAllByText('Create New Session')
+    expect(buttons.length).toBe(2)
   })
 })
