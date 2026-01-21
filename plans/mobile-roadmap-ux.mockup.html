@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori Mobile Roadmap UX Design</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8fafc;
+      padding: 40px;
+      color: #1e293b;
+    }
+    h1 { font-family: 'Poppins', sans-serif; font-size: 28px; margin-bottom: 8px; }
+    h2 { font-family: 'Poppins', sans-serif; font-size: 20px; margin-bottom: 24px; color: #475569; }
+    h3 { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .section { margin-bottom: 56px; }
+
+    /* Comparison Grid */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .comparison-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .comparison-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-current { color: #dc2626; }
+    .status-proposed { color: #16a34a; }
+
+    /* Phone Frame */
+    .phone-frame {
+      background: #1e293b;
+      border-radius: 32px;
+      padding: 12px;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .phone-screen {
+      background: #f8fafc;
+      border-radius: 24px;
+      overflow: hidden;
+      height: 500px;
+      position: relative;
+    }
+
+    .phone-header {
+      background: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .phone-logo {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-logo::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-bottom: 11px solid white;
+    }
+
+    .phone-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: #1e293b;
+    }
+
+    .phone-header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .participant-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .online-dot {
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    .chat-icon {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .menu-dots {
+      color: #64748b;
+      font-size: 16px;
+    }
+
+    .view-title-bar {
+      background: white;
+      padding: 12px 16px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .phone-content {
+      padding: 12px;
+      height: calc(100% - 140px);
+      overflow-y: auto;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 16px 0;
+    }
+
+    .nav-tab {
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .nav-tab.active {
+      background: #4f46e5;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* Period Cards */
+    .period-card {
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .period-header {
+      background: #f1f5f9;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .period-edit-icon {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    .period-content {
+      padding: 8px;
+      min-height: 40px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent calc(25% - 0.5px),
+        #e2e8f0 calc(25% - 0.5px),
+        #e2e8f0 calc(25% + 0.5px)
+      );
+    }
+
+    .item-bar {
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 10px;
+      font-weight: 500;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .item-bar:last-child { margin-bottom: 0; }
+
+    .item-bar.cyan { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+    .item-bar.indigo { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+    .item-bar.amber { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .item-bar.emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .item-bar.rose { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); }
+
+    .full-width { width: 100%; }
+    .three-quarters { width: 75%; }
+    .half { width: 50%; }
+    .quarter { width: 25%; }
+    .ml-quarter { margin-left: 25%; }
+    .ml-half { margin-left: 50%; }
+
+    /* Selected state */
+    .item-bar.selected {
+      box-shadow: 0 0 0 2px #4f46e5;
+    }
+
+    .resize-handle {
+      width: 8px;
+      height: 20px;
+      background: white;
+      border-radius: 2px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    /* Empty period */
+    .empty-period {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+    }
+
+    .empty-text {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .add-item-btn {
+      font-size: 10px;
+      color: #6b7280;
+      padding: 6px 12px;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+    }
+
+    /* Add Period Button */
+    .add-period-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px;
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    /* FAB */
+    .fab {
+      position: absolute;
+      bottom: 56px;
+      right: 12px;
+      width: 40px;
+      height: 40px;
+      background: #4f46e5;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Desktop comparison */
+    .desktop-frame {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 8px;
+      margin: 0 auto;
+    }
+
+    .desktop-screen {
+      background: #f8fafc;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 300px;
+    }
+
+    .desktop-header {
+      background: white;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .desktop-logo {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .desktop-logo::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 9px solid white;
+    }
+
+    .desktop-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      color: #1e293b;
+    }
+
+    .desktop-tabs {
+      background: white;
+      display: flex;
+      gap: 24px;
+      padding: 0 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .desktop-tab {
+      padding: 12px 0;
+      font-size: 12px;
+      color: #64748b;
+      border-bottom: 2px solid transparent;
+    }
+
+    .desktop-tab.active {
+      color: #4f46e5;
+      border-bottom-color: #4f46e5;
+      font-weight: 500;
+    }
+
+    .desktop-roadmap {
+      padding: 16px;
+    }
+
+    .desktop-periods {
+      display: flex;
+      gap: 8px;
+    }
+
+    .desktop-period {
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .desktop-period-header {
+      background: #f1f5f9;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .desktop-period-content {
+      padding: 8px;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .desktop-item {
+      height: 24px;
+      border-radius: 4px;
+      font-size: 9px;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+    }
+
+    /* Options Grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .option-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .option-card.recommended {
+      border: 2px solid #4f46e5;
+      position: relative;
+    }
+
+    .recommended-badge {
+      position: absolute;
+      top: -10px;
+      right: 16px;
+      background: #4f46e5;
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    .option-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .option-desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    /* Mini Phone for Options */
+    .mini-phone {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 8px;
+      max-width: 180px;
+      margin: 0 auto 16px;
+    }
+
+    .mini-screen {
+      background: #f8fafc;
+      border-radius: 14px;
+      overflow: hidden;
+      height: 260px;
+      position: relative;
+    }
+
+    .mini-header {
+      background: white;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .mini-logo {
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mini-logo::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 7px solid white;
+    }
+
+    .mini-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .mini-view-title {
+      background: white;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .mini-content {
+      padding: 8px;
+      height: calc(100% - 90px);
+      overflow: hidden;
+    }
+
+    .mini-period {
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .mini-period-header {
+      background: #f1f5f9;
+      padding: 4px 8px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+    }
+
+    .mini-period-content {
+      padding: 6px;
+      min-height: 24px;
+    }
+
+    .mini-item {
+      height: 20px;
+      border-radius: 4px;
+      font-size: 8px;
+      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      margin-bottom: 3px;
+    }
+
+    .mini-item:last-child { margin-bottom: 0; }
+
+    .mini-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 0 10px 0;
+    }
+
+    .mini-tab {
+      font-size: 8px;
+      color: #64748b;
+      padding: 4px 8px;
+      border-radius: 10px;
+    }
+
+    .mini-tab.active {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .mini-fab {
+      position: absolute;
+      bottom: 42px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      background: #4f46e5;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    }
+
+    /* Pros/Cons */
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .pros, .cons {
+      font-size: 12px;
+    }
+
+    .pros-title, .cons-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 11px;
+    }
+
+    .pros-title { color: #16a34a; }
+    .cons-title { color: #dc2626; }
+
+    .pros li, .cons li {
+      margin-bottom: 4px;
+      color: #475569;
+      margin-left: 16px;
+    }
+
+    /* Bottom Sheet */
+    .bottom-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+
+    .sheet-handle {
+      width: 32px;
+      height: 4px;
+      background: #d1d5db;
+      border-radius: 2px;
+      margin: 10px auto;
+    }
+
+    .sheet-header {
+      padding: 0 16px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .sheet-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sheet-subtitle {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .sheet-list {
+      padding: 8px 0;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .sheet-item {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sheet-item-color {
+      width: 3px;
+      height: 28px;
+      border-radius: 2px;
+    }
+
+    .sheet-item-info {
+      flex: 1;
+    }
+
+    .sheet-item-title {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .sheet-item-meta {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .sheet-item-score {
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      width: calc(100% - 32px);
+      max-width: 220px;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 14px 14px 10px;
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .modal-subtitle {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .modal-body {
+      padding: 0 14px 14px;
+    }
+
+    .modal-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .modal-actions {
+      padding: 10px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .modal-btn {
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .modal-btn.primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .modal-btn.secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .modal-btn.danger {
+      background: white;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .modal-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 4px 0;
+    }
+
+    .modal-info {
+      font-size: 9px;
+      color: #64748b;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    /* Edit hint */
+    .edit-hint {
+      position: absolute;
+      bottom: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+      border-radius: 16px;
+      padding: 32px;
+    }
+
+    .summary-card h4 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card p {
+      color: #475569;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .summary-points {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .summary-point {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .summary-point h5 {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .summary-point p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0;
+    }
+
+    /* Interaction states grid */
+    .states-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .state-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .state-card h5 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .state-card .state-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    /* Quadrant labels */
+    .quadrant-labels {
+      display: flex;
+      padding: 2px 8px;
+    }
+
+    .quadrant-label {
+      flex: 1;
+      text-align: center;
+      font-size: 8px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Priori Mobile Roadmap UX</h1>
+  <h2>Enabling roadmap viewing and editing on mobile devices</h2>
+
+  <!-- Current Problem Section -->
+  <div class="section">
+    <h3>The Challenge</h3>
+    <div class="comparison-grid">
+      <div class="comparison-card">
+        <h4><span class="status-current">Current: Desktop Only</span></h4>
+        <div class="desktop-frame">
+          <div class="desktop-screen">
+            <div class="desktop-header">
+              <div class="desktop-logo"></div>
+              <span class="desktop-title">Q1 Planning</span>
+            </div>
+            <div class="desktop-tabs">
+              <div class="desktop-tab">Scoring</div>
+              <div class="desktop-tab">Estimates</div>
+              <div class="desktop-tab">Backlog</div>
+              <div class="desktop-tab active">Roadmap</div>
+            </div>
+            <div class="desktop-roadmap">
+              <div class="desktop-periods">
+                <div class="desktop-period">
+                  <div class="desktop-period-header">NOW</div>
+                  <div class="desktop-period-content">
+                    <div class="desktop-item" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">User Auth</div>
+                    <div class="desktop-item" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); width: 75%;">Dashboard</div>
+                  </div>
+                </div>
+                <div class="desktop-period">
+                  <div class="desktop-period-header">NEXT</div>
+                  <div class="desktop-period-content">
+                    <div class="desktop-item" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); width: 25%;">Dashboard</div>
+                    <div class="desktop-item" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">API Limiting</div>
+                  </div>
+                </div>
+                <div class="desktop-period">
+                  <div class="desktop-period-header">LATER</div>
+                  <div class="desktop-period-content">
+                    <div class="desktop-item" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Mobile v2</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 16px;">
+          <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+            The desktop roadmap works well with its horizontal timeline and drag-and-drop. But on mobile, the horizontal layout doesn't fit and touch interactions are challenging.
+          </p>
+        </div>
+      </div>
+
+      <div class="comparison-card">
+        <h4><span class="status-current">Current Mobile: Placeholder</span></h4>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-header">
+              <div class="phone-logo"></div>
+              <span class="phone-title">Q1 Planning</span>
+              <div class="phone-header-right">
+                <div class="participant-badge">
+                  <span class="online-dot"></span>
+                  <span>3</span>
+                </div>
+                <span class="chat-icon">💬</span>
+                <span class="menu-dots">⋮</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(100% - 108px); padding: 24px; text-align: center;">
+              <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <span style="font-size: 28px;">📅</span>
+              </div>
+              <div style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; margin-bottom: 8px;">Roadmap View</div>
+              <div style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+                The Roadmap view is optimised for desktop screens. Open this session on a computer to plan your timeline.
+              </div>
+              <div style="background: #f0fdf4; border-radius: 8px; padding: 12px 16px;">
+                <span style="font-size: 12px; color: #16a34a;"><strong>Tip:</strong> Scoring and Backlog views work great on mobile!</span>
+              </div>
+            </div>
+            <div class="bottom-nav">
+              <span class="nav-tab">Scoring</span>
+              <span class="nav-tab">Estimates</span>
+              <span class="nav-tab">Backlog</span>
+              <span class="nav-tab active">Roadmap</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 16px;">
+          <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+            <strong>Problem:</strong> Mobile users can't view or edit their roadmap at all. They must switch to desktop to see what's planned.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Solution Section -->
+  <div class="section">
+    <h3>Proposed Solution: Vertical Stacked Timeline</h3>
+    <div class="comparison-grid">
+      <div class="comparison-card">
+        <h4><span class="status-proposed">New Mobile Roadmap</span></h4>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-header">
+              <div class="phone-logo"></div>
+              <span class="phone-title">Q1 Planning</span>
+              <div class="phone-header-right">
+                <div class="participant-badge">
+                  <span class="online-dot"></span>
+                  <span>3</span>
+                </div>
+                <span class="chat-icon">💬</span>
+                <span class="menu-dots">⋮</span>
+              </div>
+            </div>
+            <div class="view-title-bar">Roadmap</div>
+            <div class="phone-content">
+              <div class="period-card">
+                <div class="period-header">
+                  <span>NOW</span>
+                  <span class="period-edit-icon">✎</span>
+                </div>
+                <div class="period-content">
+                  <div class="item-bar cyan full-width">User Authentication</div>
+                  <div class="item-bar indigo three-quarters">Dashboard Redesign →</div>
+                </div>
+              </div>
+
+              <div class="period-card">
+                <div class="period-header">
+                  <span>NEXT</span>
+                  <span class="period-edit-icon">✎</span>
+                </div>
+                <div class="period-content">
+                  <div class="item-bar indigo quarter">← Dashboard</div>
+                  <div class="item-bar amber full-width">API Rate Limiting</div>
+                  <div class="item-bar emerald half ml-half">Mobile App v2 →</div>
+                </div>
+              </div>
+
+              <div class="period-card">
+                <div class="period-header">
+                  <span>LATER</span>
+                  <span class="period-edit-icon">✎</span>
+                </div>
+                <div class="period-content">
+                  <div class="item-bar emerald three-quarters">← Mobile App v2</div>
+                  <div class="item-bar rose half">Analytics</div>
+                </div>
+              </div>
+
+              <div class="add-period-btn">+ Add Period</div>
+
+              <!-- Unscheduled Items Section -->
+              <div style="margin-top: 12px;">
+                <div style="font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; padding-left: 2px;">Unscheduled Items (2)</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="background: white; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 3px; height: 24px; border-radius: 2px; background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);"></div>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-size: 11px; font-weight: 500;">Dark Mode Support</div>
+                      <div style="font-size: 9px; color: #64748b;">Theming feature</div>
+                    </div>
+                    <span style="background: #eef2ff; color: #4f46e5; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;">6.8</span>
+                  </div>
+                  <div style="background: white; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 3px; height: 24px; border-radius: 2px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);"></div>
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="font-size: 11px; font-weight: 500;">Export to PDF</div>
+                    </div>
+                    <span style="background: #eef2ff; color: #4f46e5; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600;">5.2</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="fab">+</div>
+            <div class="bottom-nav">
+              <span class="nav-tab">Scoring</span>
+              <span class="nav-tab">Estimates</span>
+              <span class="nav-tab">Backlog</span>
+              <span class="nav-tab active">Roadmap</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="comparison-card">
+        <h4><span class="status-proposed">Key Design Decisions</span></h4>
+        <div style="padding: 16px; background: #f8fafc; border-radius: 12px;">
+          <div style="margin-bottom: 20px;">
+            <h5 style="font-size: 14px; margin-bottom: 8px;">1. Vertical Stacking</h5>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+              Instead of a horizontal timeline, periods stack vertically. This matches mobile's natural scroll direction and gives each period full screen width.
+            </p>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h5 style="font-size: 14px; margin-bottom: 8px;">2. Position = Bar Width</h5>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+              An item's position within a period is shown by its bar width and offset. Full width = entire period. Half width at right = second half of period.
+            </p>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h5 style="font-size: 14px; margin-bottom: 8px;">3. Overflow Indicators</h5>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+              Items spanning multiple periods show arrows (→ ←) to indicate continuation. The item appears in each period section it spans.
+            </p>
+          </div>
+          <div>
+            <h5 style="font-size: 14px; margin-bottom: 8px;">4. Touch-Friendly Editing</h5>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
+              Tap to select, then drag handles to resize. No complex gestures needed. Moving is achieved by shrinking one side and extending the other.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interaction States -->
+  <div class="section">
+    <h3>Interaction States</h3>
+    <div class="states-grid">
+      <!-- State 1: Viewing -->
+      <div class="state-card">
+        <h5>1. Viewing</h5>
+        <p class="state-desc">Default state showing all periods and items</p>
+        <div class="mini-phone">
+          <div class="mini-screen">
+            <div class="mini-header">
+              <div class="mini-logo"></div>
+              <span class="mini-title">Q1 Planning</span>
+            </div>
+            <div class="mini-view-title">Roadmap</div>
+            <div class="mini-content">
+              <div class="mini-period">
+                <div class="mini-period-header">NOW</div>
+                <div class="mini-period-content">
+                  <div class="mini-item" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">User Auth</div>
+                </div>
+              </div>
+              <div class="mini-period">
+                <div class="mini-period-header">NEXT</div>
+                <div class="mini-period-content">
+                  <div class="mini-item" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">API Limiting</div>
+                </div>
+              </div>
+              <div class="mini-period">
+                <div class="mini-period-header">LATER</div>
+                <div class="mini-period-content">
+                  <div class="mini-item" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Mobile v2</div>
+                </div>
+              </div>
+            </div>
+            <div class="mini-fab">+</div>
+            <div class="mini-nav">
+              <span class="mini-tab">Scoring</span>
+              <span class="mini-tab">Estimates</span>
+              <span class="mini-tab">Backlog</span>
+              <span class="mini-tab active">Roadmap</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 2: Resizing -->
+      <div class="state-card">
+        <h5>2. Resizing Item</h5>
+        <p class="state-desc">Tap item to select, drag handles to resize</p>
+        <div class="mini-phone">
+          <div class="mini-screen">
+            <div class="mini-header">
+              <div class="mini-logo"></div>
+              <span class="mini-title">Q1 Planning</span>
+            </div>
+            <div class="mini-view-title">Roadmap</div>
+            <div class="mini-content">
+              <div class="mini-period">
+                <div class="mini-period-header">NOW</div>
+                <div class="mini-period-content">
+                  <div class="mini-item selected" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); width: 75%; box-shadow: 0 0 0 2px #4f46e5; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="resize-handle" style="width: 6px; height: 14px;"></div>
+                    <span>User Auth</span>
+                    <div class="resize-handle" style="width: 6px; height: 14px;"></div>
+                  </div>
+                </div>
+                <div class="quadrant-labels">
+                  <span class="quadrant-label">Q1</span>
+                  <span class="quadrant-label">Q2</span>
+                  <span class="quadrant-label">Q3</span>
+                  <span class="quadrant-label">Q4</span>
+                </div>
+              </div>
+              <div class="mini-period">
+                <div class="mini-period-header">NEXT</div>
+                <div class="mini-period-content">
+                  <div class="mini-item" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">API Limiting</div>
+                </div>
+              </div>
+            </div>
+            <div class="edit-hint">Drag handles to resize</div>
+            <div class="mini-nav">
+              <span class="mini-tab">Scoring</span>
+              <span class="mini-tab">Estimates</span>
+              <span class="mini-tab">Backlog</span>
+              <span class="mini-tab active">Roadmap</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 3: Adding Item -->
+      <div class="state-card">
+        <h5>3. Adding Item</h5>
+        <p class="state-desc">Tap unscheduled item, then pick period</p>
+        <div class="mini-phone">
+          <div class="mini-screen">
+            <div class="mini-header">
+              <div class="mini-logo"></div>
+              <span class="mini-title">Q1 Planning</span>
+            </div>
+            <div class="mini-view-title">Roadmap</div>
+            <div class="mini-content" style="opacity: 0.4;">
+              <div class="mini-period">
+                <div class="mini-period-header">NOW</div>
+                <div class="mini-period-content">
+                  <div class="mini-item" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">User Auth</div>
+                </div>
+              </div>
+            </div>
+            <div class="bottom-sheet" style="height: 160px;">
+              <div class="sheet-handle"></div>
+              <div class="sheet-header">
+                <div class="sheet-title">Add Item to Period</div>
+                <div class="sheet-subtitle">Select a period</div>
+              </div>
+              <div class="sheet-list">
+                <div class="sheet-item">
+                  <div style="width: 24px; height: 24px; background: #eef2ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #4f46e5;">1</div>
+                  <div class="sheet-item-info">
+                    <div class="sheet-item-title">Now</div>
+                  </div>
+                </div>
+                <div class="sheet-item">
+                  <div style="width: 24px; height: 24px; background: #eef2ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #4f46e5;">2</div>
+                  <div class="sheet-item-info">
+                    <div class="sheet-item-title">Next</div>
+                  </div>
+                </div>
+                <div class="sheet-item">
+                  <div style="width: 24px; height: 24px; background: #eef2ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #4f46e5;">3</div>
+                  <div class="sheet-item-info">
+                    <div class="sheet-item-title">Later</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- State 4: Edit Period -->
+      <div class="state-card">
+        <h5>4. Edit Period</h5>
+        <p class="state-desc">Tap period header to rename or delete</p>
+        <div class="mini-phone">
+          <div class="mini-screen">
+            <div class="mini-header">
+              <div class="mini-logo"></div>
+              <span class="mini-title">Q1 Planning</span>
+            </div>
+            <div class="mini-view-title">Roadmap</div>
+            <div class="mini-content" style="opacity: 0.3;">
+              <div class="mini-period">
+                <div class="mini-period-header">NOW</div>
+              </div>
+            </div>
+            <div class="modal-overlay">
+              <div class="modal">
+                <div class="modal-header">
+                  <div class="modal-title">Edit Period</div>
+                  <div class="modal-subtitle">Rename or delete</div>
+                </div>
+                <div class="modal-body">
+                  <div class="modal-label">Period Name</div>
+                  <input type="text" class="modal-input" value="Next">
+                </div>
+                <div class="modal-actions">
+                  <div class="modal-btn primary">Save</div>
+                  <div class="modal-btn secondary">Cancel</div>
+                  <div class="modal-divider"></div>
+                  <div class="modal-info">1 item scheduled</div>
+                  <div class="modal-btn danger">Delete Period</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Implementation Summary -->
+  <div class="section">
+    <h3>Implementation Summary</h3>
+    <div class="summary-card">
+      <h4>Vertical Stacked Timeline for Mobile</h4>
+      <p>
+        This design transforms the horizontal desktop roadmap into a mobile-friendly vertical layout while preserving full editing capability. The key insight is that <strong>position within a period can be represented by bar width and offset</strong> rather than requiring horizontal space.
+      </p>
+      <div class="summary-points">
+        <div class="summary-point">
+          <h5>Full Editing Support</h5>
+          <p>Users can resize items by tapping to select and dragging handles. Moving is achieved by adjusting both edges.</p>
+        </div>
+        <div class="summary-point">
+          <h5>Period Management</h5>
+          <p>Add periods at bottom, tap headers to rename or delete. Same capabilities as desktop.</p>
+        </div>
+        <div class="summary-point">
+          <h5>Add Items</h5>
+          <p>Unscheduled items shown at bottom. Tap one to select period. FAB adds new items (consistent with other views).</p>
+        </div>
+        <div class="summary-point">
+          <h5>Visual Continuity</h5>
+          <p>Items spanning periods show overflow indicators. Users can scroll to see the full extent.</p>
+        </div>
+      </div>
+      <p style="margin-top: 24px;">
+        <strong>No features removed:</strong> Everything possible on desktop is possible on mobile, just with touch-optimised interactions.
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>

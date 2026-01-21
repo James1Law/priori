@@ -10,7 +10,7 @@ import ItemForm from '../components/ItemForm'
 import ItemList from '../components/ItemList'
 import BacklogList from '../components/BacklogList'
 import EstimatesView from '../components/EstimatesView'
-import RoadmapMobilePlaceholder from '../components/RoadmapMobilePlaceholder'
+import MobileRoadmapView from '../components/MobileRoadmapView'
 import ItemEditModal from '../components/ItemEditModal'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
@@ -1760,9 +1760,17 @@ export default function SessionPage() {
                   </Suspense>
                 </div>
 
-                {/* Mobile: Placeholder directing to desktop */}
+                {/* Mobile: Vertical stacked roadmap */}
                 <div className="lg:hidden">
-                  <RoadmapMobilePlaceholder />
+                  <MobileRoadmapView
+                    periods={roadmapPeriods}
+                    items={items}
+                    loading={roadmapPeriodsLoading}
+                    onScheduleItem={handleScheduleItem}
+                    onAddPeriod={addRoadmapPeriod}
+                    onUpdatePeriod={updateRoadmapPeriod}
+                    onDeletePeriod={handleDeletePeriod}
+                  />
                 </div>
               </div>
             )}
@@ -1878,6 +1886,7 @@ export default function SessionPage() {
           }}
         />
       </SlideInPanel>
+
     </div>
   )
 }

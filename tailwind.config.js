@@ -25,6 +25,15 @@ export default {
         display: ['Poppins', 'system-ui', 'sans-serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
       },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(-50%) scale(0.9)' },
+          '100%': { opacity: '1', transform: 'translateY(-50%) scale(1)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 150ms ease-out',
+      },
     },
   },
   plugins: [],

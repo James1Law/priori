@@ -230,8 +230,36 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
   - [x] 10.3 Supported Frameworks Bar (badge pills with hover states)
   - [x] 10.4 How It Works Section (4 numbered steps with connecting line)
   - [x] 10.5 Final CTA Section (bottom call-to-action)
+- [x] Phase 11 (Mobile Roadmap View) - COMPLETE
+  - [x] 11.1 Vertical Timeline Layout (stacked period cards)
+  - [x] 11.2 Item Scheduling (FAB + unscheduled items picker)
+  - [x] 11.3 Item Resizing (tap-to-select + drag handles)
+  - [x] 11.4 Period Management (add/rename/delete periods)
+  - [x] 11.5 Polish & Accessibility (animations, ARIA labels)
 
-## Recent Changes (Phase 10 - Landing Page Redesign)
+## Recent Changes (Phase 11 - Mobile Roadmap View)
+
+### Mobile Roadmap View (Complete)
+- **Vertical Timeline**: Stacked period cards replacing horizontal desktop layout
+- **Item Bars**: Gradient-coloured bars showing scheduled items with quadrant positioning
+- **Item Selection**: Tap to select, shows resize handles on selected item
+- **Drag-to-Resize**: Touch-friendly handles to extend/shrink items across quadrants and periods
+- **Unscheduled Items**: Bottom section lists items not yet scheduled with tap-to-assign flow
+- **Period Management**: Tap period header to rename/delete, Add Period button at bottom
+- **Empty State**: Friendly "No periods yet" message with Add Period CTA
+- **Accessibility**: Full ARIA labels, keyboard support, motion-reduce preference
+
+### New Components (Mobile Roadmap)
+- `src/components/MobileRoadmapView.tsx` - Main mobile roadmap with period cards and item bars
+- `src/components/UnscheduledItemsPicker.tsx` - Bottom sheet for selecting items to schedule
+- `src/components/PeriodSelector.tsx` - Period selection modal for scheduling flow
+- `src/components/PeriodEditModal.tsx` - Modal for renaming/deleting periods
+
+### Design Reference
+- PRD: `docs/PRD-mobile-roadmap.md`
+- Mockup: `plans/mobile-roadmap-ux.mockup.html`
+
+## Previous Changes (Phase 10 - Landing Page Redesign)
 
 ### Landing Page Redesign (Complete)
 - **Updated Hero**: New subtitle "Score, estimate, plan and ship together in real-time"
@@ -421,7 +449,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Live Site**: https://priori.work
 - **GitHub**: https://github.com/James1Law/priori
 - **Hosting**: Vercel (auto-deploys from main)
-- **Unit Tests**: 409 passing (Vitest)
+- **Unit Tests**: 453 passing (Vitest)
 - **E2E Tests**: 31 passing (Playwright - session, backlog, cutoff, mobile)
 - **Database**: Supabase (configured with RLS + Realtime)
 - **Language**: UK English spelling
@@ -429,7 +457,6 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 ## Future Feature Ideas
 
 ### High Priority (Based on User Feedback)
-- Further mobile UX refinements based on user testing feedback
 - Weighted criteria editor for mobile (currently desktop-only)
 
 ### Potential Enhancements
@@ -451,4 +478,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
 - **Performance Monitoring**: Add analytics for load times and interactions
 
 ---
-*Last updated: 2026-01-21 - Phase 10 complete: Landing Page Redesign*
+*Last updated: 2026-01-21 - Phase 11 complete: Mobile Roadmap View*
