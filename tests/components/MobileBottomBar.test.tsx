@@ -4,45 +4,23 @@ import MobileBottomBar from '../../src/components/MobileBottomBar'
 
 describe('MobileBottomBar', () => {
   const defaultProps = {
-    framework: 'rice' as const,
-    view: 'scoring' as const,
-    onFrameworkChange: vi.fn(),
+    view: 'list' as const,
     onViewChange: vi.fn(),
-    onAddItem: vi.fn(),
   }
-
-  // Note: After the UX enhancement, MobileBottomBar only contains view tabs.
-  // Framework selector and add form were moved to MobileMenu and FAB/BottomSheet.
 
   // View toggle tests
   it('renders view toggle buttons', () => {
     render(<MobileBottomBar {...defaultProps} />)
 
-    expect(screen.getByRole('button', { name: /scoring/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /estimates/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /roadmap/i })).toBeInTheDocument()
   })
 
-  it('highlights scoring button when view is scoring', () => {
-    render(<MobileBottomBar {...defaultProps} view="scoring" />)
+  it('highlights list button when view is list', () => {
+    render(<MobileBottomBar {...defaultProps} view="list" />)
 
-    const scoringBtn = screen.getByRole('button', { name: /scoring/i })
-    expect(scoringBtn).toHaveClass('bg-indigo-600')
-  })
-
-  it('highlights backlog button when view is backlog', () => {
-    render(<MobileBottomBar {...defaultProps} view="backlog" />)
-
-    const backlogBtn = screen.getByRole('button', { name: /backlog/i })
-    expect(backlogBtn).toHaveClass('bg-indigo-600')
-  })
-
-  it('highlights estimates button when view is estimates', () => {
-    render(<MobileBottomBar {...defaultProps} view="estimates" />)
-
-    const estimatesBtn = screen.getByRole('button', { name: /estimates/i })
-    expect(estimatesBtn).toHaveClass('bg-indigo-600')
+    const listBtn = screen.getByRole('button', { name: /list/i })
+    expect(listBtn).toHaveClass('bg-indigo-600')
   })
 
   it('highlights roadmap button when view is roadmap', () => {
@@ -50,26 +28,6 @@ describe('MobileBottomBar', () => {
 
     const roadmapBtn = screen.getByRole('button', { name: /roadmap/i })
     expect(roadmapBtn).toHaveClass('bg-indigo-600')
-  })
-
-  it('calls onViewChange when clicking backlog button', () => {
-    const onViewChange = vi.fn()
-    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
-
-    const backlogBtn = screen.getByRole('button', { name: /backlog/i })
-    fireEvent.click(backlogBtn)
-
-    expect(onViewChange).toHaveBeenCalledWith('backlog')
-  })
-
-  it('calls onViewChange when clicking estimates button', () => {
-    const onViewChange = vi.fn()
-    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
-
-    const estimatesBtn = screen.getByRole('button', { name: /estimates/i })
-    fireEvent.click(estimatesBtn)
-
-    expect(onViewChange).toHaveBeenCalledWith('estimates')
   })
 
   it('calls onViewChange when clicking roadmap button', () => {
@@ -82,20 +40,31 @@ describe('MobileBottomBar', () => {
     expect(onViewChange).toHaveBeenCalledWith('roadmap')
   })
 
-  it('calls onViewChange when clicking scoring button', () => {
+  it('calls onViewChange when clicking list button', () => {
     const onViewChange = vi.fn()
-    render(<MobileBottomBar {...defaultProps} view="backlog" onViewChange={onViewChange} />)
+    render(<MobileBottomBar {...defaultProps} view="roadmap" onViewChange={onViewChange} />)
 
-    const scoringBtn = screen.getByRole('button', { name: /scoring/i })
-    fireEvent.click(scoringBtn)
+    const listBtn = screen.getByRole('button', { name: /list/i })
+    fireEvent.click(listBtn)
 
-    expect(onViewChange).toHaveBeenCalledWith('scoring')
+    expect(onViewChange).toHaveBeenCalledWith('list')
   })
 
-  it('is hidden on large screens (lg breakpoint)', () => {
+  it('is fixed to bottom of screen', () => {
     render(<MobileBottomBar {...defaultProps} />)
 
-    const container = screen.getByRole('button', { name: /scoring/i }).closest('div[class*="lg:hidden"]')
+    const container = screen.getByRole('button', { name: /list/i }).closest('div[class*="fixed"]')
     expect(container).toBeInTheDocument()
+  })
+
+  it('renders icons alongside labels', () => {
+    render(<MobileBottomBar {...defaultProps} />)
+
+    const listBtn = screen.getByRole('button', { name: /list/i })
+    const roadmapBtn = screen.getByRole('button', { name: /roadmap/i })
+
+    // Check that SVG icons are present
+    expect(listBtn.querySelector('svg')).toBeInTheDocument()
+    expect(roadmapBtn.querySelector('svg')).toBeInTheDocument()
   })
 })

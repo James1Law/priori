@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { calculateRiceScore } from '../lib/rice'
 
 interface RiceScoringProps {
@@ -23,6 +24,48 @@ const CONFIDENCE_OPTIONS = [
   { value: 1, label: 'High (100%)' },
 ]
 
+function useDebouncedInput(propValue: number, onChangeValue: (value: number) => void, delay = 500) {
+  const [localValue, setLocalValue] = useState(String(propValue))
+  const isFocusedRef = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sync from props only when prop changes and input is not focused
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setLocalValue(String(propValue))
+    }
+  }, [propValue])
+
+  const handleChange = useCallback((rawValue: string) => {
+    setLocalValue(rawValue)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      onChangeValue(Number(rawValue) || 0)
+    }, delay)
+  }, [onChangeValue, delay])
+
+  const handleFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = true
+    e.target.select()
+  }, [])
+
+  const handleBlur = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    const numericValue = Number(localValue) || 0
+    onChangeValue(numericValue)
+    // Update local value to the cleaned numeric form, then allow prop sync
+    setLocalValue(String(numericValue))
+    isFocusedRef.current = false
+  }, [localValue, onChangeValue])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
+
+  return { localValue, handleChange, handleFocus, handleBlur }
+}
+
 export default function RiceScoring({ reach, impact, confidence, effort, onChange, isUpdating }: RiceScoringProps) {
   const score = calculateRiceScore({ reach, impact, confidence, effort })
 
@@ -35,6 +78,9 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
       [field]: value,
     })
   }
+
+  const reachInput = useDebouncedInput(reach, (v) => handleChange('reach', v))
+  const effortInput = useDebouncedInput(effort, (v) => handleChange('effort', v))
 
   return (
     <div className="space-y-3 p-3 sm:p-4 bg-gray-50 rounded-lg">
@@ -49,9 +95,10 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            value={reach}
-            onChange={(e) => handleChange('reach', Number(e.target.value) || 0)}
-            onFocus={(e) => e.target.select()}
+            value={reachInput.localValue}
+            onChange={(e) => reachInput.handleChange(e.target.value)}
+            onFocus={reachInput.handleFocus}
+            onBlur={reachInput.handleBlur}
             className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Users/quarter"
           />
@@ -67,9 +114,10 @@ export default function RiceScoring({ reach, impact, confidence, effort, onChang
             type="text"
             inputMode="decimal"
             pattern="[0-9]*\.?[0-9]*"
-            value={effort}
-            onChange={(e) => handleChange('effort', Number(e.target.value) || 0)}
-            onFocus={(e) => e.target.select()}
+            value={effortInput.localValue}
+            onChange={(e) => effortInput.handleChange(e.target.value)}
+            onFocus={effortInput.handleFocus}
+            onBlur={effortInput.handleBlur}
             className="w-full px-2 py-2 sm:py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             placeholder="Person-months"
           />

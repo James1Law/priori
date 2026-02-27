@@ -32,15 +32,6 @@ async function addItemMobile(page: import('@playwright/test').Page, title: strin
   await expect(page.locator(`text=${title}`)).toBeVisible()
 }
 
-// Helper to change framework via MobileMenu (kebab menu)
-async function changeFrameworkMobile(page: import('@playwright/test').Page, frameworkLabel: string) {
-  // Open kebab menu
-  await page.locator('button[aria-label="Open menu"]').click()
-
-  // Click framework option in menu (use getByRole to be specific)
-  await page.getByRole('menuitem', { name: frameworkLabel, exact: true }).click()
-}
-
 test.describe('Mobile Experience', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
@@ -54,32 +45,31 @@ test.describe('Mobile Experience', () => {
   })
 
   test('shows mobile bottom bar with view toggle', async ({ page }) => {
-    // Should show mobile bottom bar with view buttons
-    await expect(page.locator('.fixed.bottom-0 button:has-text("Scoring")')).toBeVisible()
-    await expect(page.locator('.fixed.bottom-0 button:has-text("Backlog")')).toBeVisible()
+    // Should show mobile bottom bar with List and Roadmap buttons
+    await expect(page.locator('.fixed.bottom-0 button:has-text("List")')).toBeVisible()
+    await expect(page.locator('.fixed.bottom-0 button:has-text("Roadmap")')).toBeVisible()
   })
 
   test('switches views using mobile toggle', async ({ page }) => {
-    // Click backlog in mobile bar
-    await page.locator('.fixed.bottom-0 button:has-text("Backlog")').click()
+    // Click roadmap in mobile bar
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
 
-    // Should show backlog view
-    await expect(page.locator('text=Prioritised Backlog')).toBeVisible()
+    // Should show roadmap view (periods or empty state)
+    // The view is shown but might have different content
+    await expect(page.locator('.fixed.bottom-0 button:has-text("Roadmap")')).toHaveClass(/bg-indigo-600/)
+
+    // Switch back to list
+    await page.locator('.fixed.bottom-0 button:has-text("List")').click()
+    await expect(page.locator('.fixed.bottom-0 button:has-text("List")')).toHaveClass(/bg-indigo-600/)
   })
 
   test('add cutoff button visible on mobile without hover', async ({ page }) => {
-    // Switch to backlog
-    await page.locator('.fixed.bottom-0 button:has-text("Backlog")').click()
-
     // Add cutoff buttons should be visible (no hover needed on mobile)
     const addButtons = page.locator('button[aria-label="Add cutoff line here"]')
     await expect(addButtons.first()).toBeVisible()
   })
 
   test('remove cutoff button visible on mobile without hover', async ({ page }) => {
-    // Switch to backlog
-    await page.locator('.fixed.bottom-0 button:has-text("Backlog")').click()
-
     // Add cutoff
     await page.locator('button[aria-label="Add cutoff line here"]').first().click()
 
@@ -102,24 +92,12 @@ test.describe('Mobile Experience', () => {
     await expect(page.locator('text=Mobile item 1')).not.toBeVisible()
   })
 
-  test('framework selector works in mobile menu', async ({ page }) => {
-    // Change to ICE framework via mobile menu
-    await changeFrameworkMobile(page, 'ICE')
-
-    // Should show ICE scoring on items
-    await expect(page.locator('article').locator('label:has-text("Impact")').first()).toBeVisible()
-  })
-
   test('FAB is visible on all views', async ({ page }) => {
-    // FAB should be visible on scoring view
+    // FAB should be visible on list view (default)
     await expect(page.locator('button[aria-label="Add item"]')).toBeVisible()
 
-    // Switch to backlog
-    await page.locator('.fixed.bottom-0 button:has-text("Backlog")').click()
-    await expect(page.locator('button[aria-label="Add item"]')).toBeVisible()
-
-    // Switch to estimates
-    await page.locator('.fixed.bottom-0 button:has-text("Estimates")').click()
+    // Switch to roadmap
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
     await expect(page.locator('button[aria-label="Add item"]')).toBeVisible()
   })
 
@@ -142,17 +120,23 @@ test.describe('Mobile Experience', () => {
     await expect(page.getByRole('menuitem', { name: 'New Session' })).toBeVisible()
   })
 
-  test('framework badge shows current framework on scoring view', async ({ page }) => {
-    // Mobile framework badge is below header and shows current framework
-    // The badge is a button that opens the mobile menu
-    const frameworkBadge = page.locator('button:has-text("RICE")').filter({ has: page.locator('svg') })
-    await expect(frameworkBadge.first()).toBeVisible()
+  test('can open filter bottom sheet on mobile', async ({ page }) => {
+    // The Filters button opens a bottom sheet with filter options
+    const filtersButton = page.locator('button:has-text("Filters")')
+    await expect(filtersButton).toBeVisible()
+    await filtersButton.click()
 
-    // Change to ICE via mobile menu
-    await changeFrameworkMobile(page, 'ICE')
+    // Should show filter options in bottom sheet
+    await expect(page.locator('.fixed.bottom-0 >> text=Status')).toBeVisible()
+  })
 
-    // Badge should update to show ICE
-    const iceBadge = page.locator('button:has-text("ICE")').filter({ has: page.locator('svg') })
-    await expect(iceBadge.first()).toBeVisible()
+  test('can change item status on mobile', async ({ page }) => {
+    // Status badge should be visible (use first() for mobile version)
+    const statusBadge = page.locator('article button:has-text("To Do")').first()
+    await expect(statusBadge).toBeVisible()
+
+    // Click to cycle status
+    await statusBadge.click()
+    await expect(page.locator('article button:has-text("In Progress")').first()).toBeVisible()
   })
 })

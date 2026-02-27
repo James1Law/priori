@@ -1,0 +1,2668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Backlog-Centric Redesign Exploration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    .font-display {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* ============================================
+       SECTION HEADERS
+       ============================================ */
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    .concept-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .concept-header p {
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .section-divider {
+      text-align: center;
+      padding: 2rem;
+      border-top: 3px dashed #e5e7eb;
+      margin-top: 3rem;
+      background: #f3f4f6;
+    }
+
+    .section-divider h2 {
+      font-size: 1.5rem;
+      color: #374151;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-divider p {
+      color: #6b7280;
+    }
+
+    .scenario-label {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ============================================
+       HEADER
+       ============================================ */
+    .header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-triangle {
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 14px solid white;
+    }
+
+    .session-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .participant-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-primary {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    /* ============================================
+       MAIN LAYOUT - BACKLOG CENTRIC
+       ============================================ */
+    .main-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      min-width: 240px;
+    }
+
+    .search-box input {
+      border: none;
+      outline: none;
+      font-size: 0.875rem;
+      width: 100%;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .filter-chip:hover {
+      background: #f9fafb;
+    }
+
+    .filter-chip.active {
+      background: #eef2ff;
+      border-color: #a5b4fc;
+      color: #4f46e5;
+    }
+
+    .view-toggle {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 0.5rem;
+      padding: 0.25rem;
+    }
+
+    .view-toggle-btn {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #6b7280;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .view-toggle-btn.active {
+      background: white;
+      color: #111827;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* ============================================
+       ACTION BAR (appears when items selected)
+       ============================================ */
+    .action-bar {
+      background: #1f2937;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: slideIn 0.2s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .action-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .action-bar-count {
+      font-weight: 600;
+    }
+
+    .action-bar-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .action-btn {
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      border-radius: 0.375rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .action-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .action-btn.primary {
+      background: #4f46e5;
+      border-color: #4f46e5;
+    }
+
+    .clear-selection {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ============================================
+       BACKLOG LIST
+       ============================================ */
+    .backlog-panel {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .backlog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .backlog-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .backlog-count {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    /* List Header */
+    .list-header {
+      display: grid;
+      grid-template-columns: 40px 40px 1fr auto auto auto auto auto;
+      gap: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Backlog Item */
+    .backlog-item {
+      display: grid;
+      grid-template-columns: 40px 40px 1fr auto auto auto auto auto;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .backlog-item:hover {
+      background: #fafbff;
+    }
+
+    .backlog-item.selected {
+      background: #eef2ff;
+    }
+
+    .item-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .item-checkbox.checked {
+      background: #4f46e5;
+      border-color: #4f46e5;
+    }
+
+    .item-checkbox.checked::after {
+      content: "✓";
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .item-rank {
+      width: 28px;
+      height: 28px;
+      background: #f3f4f6;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .item-content {
+      min-width: 0;
+    }
+
+    .item-title {
+      font-weight: 600;
+      margin-bottom: 0.125rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-description {
+      font-size: 0.8rem;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Status badge */
+    .status-badge {
+      padding: 0.25rem 0.625rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .status-badge.todo {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .status-badge.in-progress {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-badge.done {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    /* Metric cells */
+    .metric-cell {
+      text-align: center;
+      min-width: 60px;
+    }
+
+    .metric-value {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .metric-value.score {
+      color: #4f46e5;
+    }
+
+    .metric-value.estimate {
+      color: #0891b2;
+    }
+
+    .metric-value.empty {
+      color: #d1d5db;
+    }
+
+    .metric-label {
+      font-size: 0.6rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+    }
+
+    /* Roadmap indicator */
+    .roadmap-indicator {
+      padding: 0.25rem 0.5rem;
+      background: #faf5ff;
+      border: 1px solid #e9d5ff;
+      border-radius: 0.25rem;
+      font-size: 0.7rem;
+      color: #7c3aed;
+      white-space: nowrap;
+    }
+
+    .roadmap-indicator.empty {
+      background: transparent;
+      border: 1px dashed #e5e7eb;
+      color: #d1d5db;
+    }
+
+    /* More menu */
+    .more-menu {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      color: #9ca3af;
+      cursor: pointer;
+    }
+
+    .more-menu:hover {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    /* Cutoff line */
+    .cutoff-line {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1.5rem;
+      cursor: grab;
+    }
+
+    .cutoff-line-visual {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ef4444, transparent);
+    }
+
+    .cutoff-label {
+      color: #ef4444;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      padding: 0.25rem 0.75rem;
+      background: #fef2f2;
+      border-radius: 999px;
+    }
+
+    /* Add item row */
+    .add-item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .add-item-row:hover {
+      background: #f9fafb;
+      color: #4f46e5;
+    }
+
+    /* ============================================
+       ITEM DRAWER (right panel)
+       ============================================ */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 100;
+    }
+
+    .item-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 420px;
+      height: 100vh;
+      background: white;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+      animation: slideInRight 0.2s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    .drawer-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .drawer-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .drawer-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      color: #6b7280;
+    }
+
+    .drawer-close:hover {
+      background: #f3f4f6;
+    }
+
+    .drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .drawer-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .drawer-section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+
+    .drawer-description {
+      color: #4b5563;
+      line-height: 1.6;
+    }
+
+    .drawer-metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .drawer-metric {
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 0.5rem;
+    }
+
+    .drawer-metric-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .drawer-metric-value.score {
+      color: #4f46e5;
+    }
+
+    .drawer-metric-value.estimate {
+      color: #0891b2;
+    }
+
+    .drawer-metric-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    /* RICE breakdown */
+    .rice-breakdown {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .rice-item {
+      text-align: center;
+      padding: 0.75rem;
+      background: #f9fafb;
+      border-radius: 0.375rem;
+    }
+
+    .rice-item-value {
+      font-weight: 700;
+      color: #4f46e5;
+    }
+
+    .rice-item-label {
+      font-size: 0.65rem;
+      color: #9ca3af;
+      margin-top: 0.25rem;
+    }
+
+    .drawer-status-selector {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .status-option {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .status-option:hover {
+      background: #f9fafb;
+    }
+
+    .status-option.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    .drawer-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    /* ============================================
+       ROADMAP OPTIONS COMPARISON
+       ============================================ */
+    .comparison-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .option-card {
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .option-header {
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .option-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .option-subtitle {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .option-content {
+      padding: 1.5rem;
+    }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .pros, .cons {
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .pros {
+      background: #ecfdf5;
+    }
+
+    .cons {
+      background: #fef2f2;
+    }
+
+    .pros h4, .cons h4 {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .pros h4 {
+      color: #065f46;
+    }
+
+    .cons h4 {
+      color: #991b1b;
+    }
+
+    .pros ul, .cons ul {
+      list-style: none;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .pros li::before {
+      content: "✓ ";
+      color: #10b981;
+    }
+
+    .cons li::before {
+      content: "✗ ";
+      color: #ef4444;
+    }
+
+    /* ============================================
+       BREADCRUMB NAVIGATION
+       ============================================ */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 2rem;
+      background: #fef3c7;
+      border-bottom: 1px solid #fcd34d;
+      font-size: 0.875rem;
+    }
+
+    .breadcrumb-link {
+      color: #92400e;
+      cursor: pointer;
+    }
+
+    .breadcrumb-link:hover {
+      text-decoration: underline;
+    }
+
+    .breadcrumb-separator {
+      color: #d97706;
+    }
+
+    .breadcrumb-current {
+      font-weight: 600;
+      color: #78350f;
+    }
+
+    /* ============================================
+       ESTIMATION MODE (full screen flow)
+       ============================================ */
+    .estimation-flow {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .estimation-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .estimation-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .progress-step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .progress-step.completed {
+      background: #10b981;
+      color: white;
+    }
+
+    .progress-step.current {
+      background: #4f46e5;
+      color: white;
+    }
+
+    .progress-step.pending {
+      background: #e5e7eb;
+      color: #9ca3af;
+    }
+
+    .progress-connector {
+      width: 40px;
+      height: 2px;
+      background: #e5e7eb;
+    }
+
+    .progress-connector.completed {
+      background: #10b981;
+    }
+
+    .estimation-item-card {
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .estimation-item-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .estimation-item-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .estimation-item-desc {
+      color: #6b7280;
+    }
+
+    .poker-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+      max-width: 400px;
+      margin: 0 auto 2rem;
+    }
+
+    .poker-card {
+      aspect-ratio: 2/3;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .poker-card:hover {
+      border-color: #a5b4fc;
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .poker-card.selected {
+      border-color: #4f46e5;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    /* ============================================
+       ROADMAP MOCKUP - OPTION A (Action-based)
+       ============================================ */
+    .mini-roadmap {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .mini-roadmap-header {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .period-col {
+      flex: 1;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    .mini-roadmap-body {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .period-lane {
+      flex: 1;
+      min-height: 120px;
+      background: #f9fafb;
+      border: 2px dashed #e5e7eb;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+    }
+
+    .period-lane.drop-target {
+      border-color: #a5b4fc;
+      background: #eef2ff;
+    }
+
+    .roadmap-item-chip {
+      background: linear-gradient(135deg, #818cf8, #6366f1);
+      color: white;
+      padding: 0.375rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ============================================
+       INFO BOX
+       ============================================ */
+    .info-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      font-size: 0.875rem;
+      color: #1e40af;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ============================================
+       MOBILE SHOWCASE
+       ============================================ */
+    .mobile-showcase {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .mobile-frame {
+      width: 375px;
+      height: 812px;
+      background: #1a1a1a;
+      border-radius: 50px;
+      padding: 14px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .mobile-frame::before {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 34px;
+      background: #000;
+      border-radius: 0 0 24px 24px;
+      z-index: 10;
+    }
+
+    .mobile-frame::after {
+      content: "";
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      height: 24px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 11;
+    }
+
+    .mobile-screen {
+      width: 100%;
+      height: 100%;
+      background: #f9fafb;
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mobile-label {
+      text-align: center;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .mobile-sublabel {
+      text-align: center;
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    /* Mobile header */
+    .m-header {
+      background: white;
+      padding: 3.75rem 1rem 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .m-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .m-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .m-logo-tri {
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid white;
+    }
+
+    .m-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* Mobile action bar */
+    .m-action-bar {
+      background: #1f2937;
+      color: white;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+
+    .m-action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .m-action-btn {
+      padding: 0.375rem 0.625rem;
+      background: rgba(255,255,255,0.15);
+      border-radius: 0.25rem;
+      font-size: 0.7rem;
+      color: white;
+    }
+
+    /* Mobile backlog */
+    .m-backlog {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.75rem;
+    }
+
+    .m-backlog-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: white;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .m-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .m-checkbox.checked {
+      background: #4f46e5;
+      border-color: #4f46e5;
+    }
+
+    .m-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .m-item-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .m-item-meta {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .m-badge {
+      font-size: 0.65rem;
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+    }
+
+    .m-badge.score {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    .m-badge.estimate {
+      background: #ecfeff;
+      color: #0891b2;
+    }
+
+    .m-badge.status {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    /* Mobile bottom bar */
+    .m-bottom-bar {
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem;
+      padding-bottom: calc(0.75rem + 20px);
+      border-radius: 0 0 38px 38px;
+    }
+
+    .m-view-tabs {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .m-tab {
+      flex: 1;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6b7280;
+      background: #f3f4f6;
+      border-radius: 0.375rem;
+    }
+
+    .m-tab.active {
+      background: #4f46e5;
+      color: white;
+    }
+
+    /* Mobile FAB */
+    .m-fab {
+      position: absolute;
+      bottom: 6rem;
+      right: 1.5rem;
+      width: 56px;
+      height: 56px;
+      background: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+      color: white;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Concept Header -->
+  <div class="concept-header">
+    <h1 class="font-display">Backlog-Centric Redesign</h1>
+    <p>Exploring a new UX model where the Backlog is the core view, and Scoring, Estimates, and Roadmap are actions/features you apply to items.</p>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 1: Backlog Home View
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Core View</span>
+    <h2 class="font-display">The Backlog is Home</h2>
+    <p>All items live here. Columns appear dynamically based on what data exists.</p>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-triangle"></div>
+      </div>
+      <h1 class="session-title font-display">Sprint 24 Planning</h1>
+    </div>
+    <div class="header-right">
+      <div class="participant-indicator">
+        <span class="online-dot"></span>
+        <span>4 participants</span>
+      </div>
+      <button class="btn btn-secondary">Copy URL</button>
+      <button class="btn btn-secondary">Export</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <svg width="16" height="16" fill="none" stroke="#9ca3af" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" placeholder="Search items..." />
+        </div>
+        <div class="filter-chip">
+          <span>Status</span>
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        <div class="filter-chip active">
+          Has Estimate
+        </div>
+        <div class="filter-chip">
+          On Roadmap
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="view-toggle">
+          <button class="view-toggle-btn active">List</button>
+          <button class="view-toggle-btn">Roadmap</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backlog Panel -->
+    <div class="backlog-panel">
+      <div class="backlog-header">
+        <h2 class="backlog-title font-display">Product Backlog</h2>
+        <span class="backlog-count">8 items</span>
+      </div>
+
+      <!-- List Header -->
+      <div class="list-header">
+        <span></span>
+        <span>#</span>
+        <span>Item</span>
+        <span>Status</span>
+        <span>Score</span>
+        <span>Estimate</span>
+        <span>Roadmap</span>
+        <span></span>
+      </div>
+
+      <!-- Items -->
+      <div class="backlog-item">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">1</div>
+        <div class="item-content">
+          <div class="item-title">User authentication flow</div>
+          <div class="item-description">OAuth 2.0 with Google and GitHub providers</div>
+        </div>
+        <span class="status-badge in-progress">In Progress</span>
+        <div class="metric-cell">
+          <div class="metric-value score">156</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">8 SP</div>
+        </div>
+        <span class="roadmap-indicator">Now</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">2</div>
+        <div class="item-content">
+          <div class="item-title">Dashboard redesign</div>
+          <div class="item-description">New layout with customisable widgets</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">142</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">5 SP</div>
+        </div>
+        <span class="roadmap-indicator">Now</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">3</div>
+        <div class="item-content">
+          <div class="item-title">API rate limiting</div>
+          <div class="item-description">Add throttling to prevent abuse</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">128</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">3 SP</div>
+        </div>
+        <span class="roadmap-indicator">Next</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <!-- Cutoff Line -->
+      <div class="cutoff-line">
+        <div class="cutoff-line-visual"></div>
+        <span class="cutoff-label">Sprint Cutoff — 16 SP</span>
+        <div class="cutoff-line-visual"></div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.6;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">4</div>
+        <div class="item-content">
+          <div class="item-title">Export to PDF</div>
+          <div class="item-description">Generate formatted reports</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">98</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value empty">—</div>
+        </div>
+        <span class="roadmap-indicator empty">—</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.6;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">5</div>
+        <div class="item-content">
+          <div class="item-title">Dark mode support</div>
+          <div class="item-description">System-aware theme switching</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value empty">—</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value empty">—</div>
+        </div>
+        <span class="roadmap-indicator empty">—</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <!-- Add Item -->
+      <div class="add-item-row">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Add item...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 2: Multi-select + Action Bar
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Selection Mode</span>
+    <h2 class="font-display">Select Items → Take Actions</h2>
+    <p>When items are selected, an action bar appears with contextual actions.</p>
+  </div>
+
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-triangle"></div>
+      </div>
+      <h1 class="session-title font-display">Sprint 24 Planning</h1>
+    </div>
+    <div class="header-right">
+      <div class="participant-indicator">
+        <span class="online-dot"></span>
+        <span>4 participants</span>
+      </div>
+      <button class="btn btn-secondary">Copy URL</button>
+      <button class="btn btn-secondary">Export</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <span class="action-bar-count">3 items selected</span>
+        <button class="clear-selection">Clear selection</button>
+      </div>
+      <div class="action-bar-actions">
+        <button class="action-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Score
+        </button>
+        <button class="action-btn primary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          Estimate (Planning Poker)
+        </button>
+        <button class="action-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Add to Roadmap
+        </button>
+        <button class="action-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+          Set Status
+        </button>
+      </div>
+    </div>
+
+    <!-- Backlog with selected items -->
+    <div class="backlog-panel">
+      <div class="backlog-header">
+        <h2 class="backlog-title font-display">Product Backlog</h2>
+        <span class="backlog-count">8 items</span>
+      </div>
+
+      <div class="list-header">
+        <span></span>
+        <span>#</span>
+        <span>Item</span>
+        <span>Status</span>
+        <span>Score</span>
+        <span>Estimate</span>
+        <span>Roadmap</span>
+        <span></span>
+      </div>
+
+      <div class="backlog-item selected">
+        <div class="item-checkbox checked"></div>
+        <div class="item-rank">1</div>
+        <div class="item-content">
+          <div class="item-title">User authentication flow</div>
+          <div class="item-description">OAuth 2.0 with Google and GitHub providers</div>
+        </div>
+        <span class="status-badge in-progress">In Progress</span>
+        <div class="metric-cell">
+          <div class="metric-value score">156</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">8 SP</div>
+        </div>
+        <span class="roadmap-indicator">Now</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item selected">
+        <div class="item-checkbox checked"></div>
+        <div class="item-rank">2</div>
+        <div class="item-content">
+          <div class="item-title">Dashboard redesign</div>
+          <div class="item-description">New layout with customisable widgets</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">142</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">5 SP</div>
+        </div>
+        <span class="roadmap-indicator">Now</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item selected">
+        <div class="item-checkbox checked"></div>
+        <div class="item-rank">3</div>
+        <div class="item-content">
+          <div class="item-title">API rate limiting</div>
+          <div class="item-description">Add throttling to prevent abuse</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">128</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">3 SP</div>
+        </div>
+        <span class="roadmap-indicator">Next</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="cutoff-line">
+        <div class="cutoff-line-visual"></div>
+        <span class="cutoff-label">Sprint Cutoff — 16 SP</span>
+        <div class="cutoff-line-visual"></div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.6;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">4</div>
+        <div class="item-content">
+          <div class="item-title">Export to PDF</div>
+          <div class="item-description">Generate formatted reports</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">98</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value empty">—</div>
+        </div>
+        <span class="roadmap-indicator empty">—</span>
+        <div class="more-menu">⋮</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 3: Item Drawer
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Detail View</span>
+    <h2 class="font-display">Item Drawer</h2>
+    <p>Click an item to see all details, scores, estimates, and status in a right panel.</p>
+  </div>
+
+  <div style="position: relative; height: 700px; overflow: hidden;">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <div class="logo-triangle"></div>
+        </div>
+        <h1 class="session-title font-display">Sprint 24 Planning</h1>
+      </div>
+      <div class="header-right">
+        <div class="participant-indicator">
+          <span class="online-dot"></span>
+          <span>4 participants</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div class="backlog-panel">
+        <div class="backlog-header">
+          <h2 class="backlog-title font-display">Product Backlog</h2>
+          <span class="backlog-count">8 items</span>
+        </div>
+
+        <div class="list-header">
+          <span></span>
+          <span>#</span>
+          <span>Item</span>
+          <span>Status</span>
+          <span>Score</span>
+          <span>Estimate</span>
+          <span>Roadmap</span>
+          <span></span>
+        </div>
+
+        <div class="backlog-item" style="background: #eef2ff; border-left: 3px solid #4f46e5;">
+          <div class="item-checkbox"></div>
+          <div class="item-rank">1</div>
+          <div class="item-content">
+            <div class="item-title">User authentication flow</div>
+            <div class="item-description">OAuth 2.0 with Google and GitHub providers</div>
+          </div>
+          <span class="status-badge in-progress">In Progress</span>
+          <div class="metric-cell">
+            <div class="metric-value score">156</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-value estimate">8 SP</div>
+          </div>
+          <span class="roadmap-indicator">Now</span>
+          <div class="more-menu">⋮</div>
+        </div>
+
+        <div class="backlog-item">
+          <div class="item-checkbox"></div>
+          <div class="item-rank">2</div>
+          <div class="item-content">
+            <div class="item-title">Dashboard redesign</div>
+            <div class="item-description">New layout with customisable widgets</div>
+          </div>
+          <span class="status-badge todo">To Do</span>
+          <div class="metric-cell">
+            <div class="metric-value score">142</div>
+          </div>
+          <div class="metric-cell">
+            <div class="metric-value estimate">5 SP</div>
+          </div>
+          <span class="roadmap-indicator">Now</span>
+          <div class="more-menu">⋮</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer Overlay (dimmed background) -->
+    <div class="drawer-overlay" style="position: absolute;"></div>
+
+    <!-- Item Drawer -->
+    <div class="item-drawer" style="position: absolute;">
+      <div class="drawer-header">
+        <div>
+          <div class="drawer-title font-display">User authentication flow</div>
+          <span class="status-badge in-progress" style="margin-top: 0.5rem; display: inline-block;">In Progress</span>
+        </div>
+        <div class="drawer-close">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="drawer-content">
+        <div class="drawer-section">
+          <h3 class="drawer-section-title">Description</h3>
+          <p class="drawer-description">Implement secure authentication using OAuth 2.0 protocol with support for Google and GitHub as identity providers. Include proper token handling, refresh logic, and session management.</p>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="drawer-section-title">Metrics</h3>
+          <div class="drawer-metrics-grid">
+            <div class="drawer-metric">
+              <div class="drawer-metric-value score">156</div>
+              <div class="drawer-metric-label">RICE Score</div>
+            </div>
+            <div class="drawer-metric">
+              <div class="drawer-metric-value estimate">8 SP</div>
+              <div class="drawer-metric-label">Story Points</div>
+            </div>
+          </div>
+
+          <div class="rice-breakdown">
+            <div class="rice-item">
+              <div class="rice-item-value">5000</div>
+              <div class="rice-item-label">Reach</div>
+            </div>
+            <div class="rice-item">
+              <div class="rice-item-value">2</div>
+              <div class="rice-item-label">Impact</div>
+            </div>
+            <div class="rice-item">
+              <div class="rice-item-value">80%</div>
+              <div class="rice-item-label">Confidence</div>
+            </div>
+            <div class="rice-item">
+              <div class="rice-item-value">3</div>
+              <div class="rice-item-label">Effort</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="drawer-section-title">Roadmap</h3>
+          <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Scheduled for <strong>Now</strong> period</p>
+        </div>
+
+        <div class="drawer-section">
+          <h3 class="drawer-section-title">Status</h3>
+          <div class="drawer-status-selector">
+            <div class="status-option">To Do</div>
+            <div class="status-option selected">In Progress</div>
+            <div class="status-option">Done</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="btn btn-secondary" style="flex: 1;">Delete</button>
+        <button class="btn btn-primary" style="flex: 1;">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 4: Planning Poker Flow
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Action Flow</span>
+    <h2 class="font-display">Planning Poker (Dedicated Flow)</h2>
+    <p>After selecting items and clicking "Estimate", you enter a focused estimation flow.</p>
+  </div>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <span class="breadcrumb-link">← Backlog</span>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">Estimating 3 items</span>
+  </div>
+
+  <div class="estimation-flow">
+    <!-- Progress -->
+    <div class="estimation-header">
+      <div class="estimation-progress">
+        <div class="progress-step completed">✓</div>
+        <div class="progress-connector completed"></div>
+        <div class="progress-step current">2</div>
+        <div class="progress-connector"></div>
+        <div class="progress-step pending">3</div>
+      </div>
+      <p style="color: #6b7280; font-size: 0.875rem;">Item 2 of 3</p>
+    </div>
+
+    <!-- Current Item -->
+    <div class="estimation-item-card">
+      <div class="estimation-item-label">Now Estimating</div>
+      <h2 class="estimation-item-title font-display">Dashboard redesign</h2>
+      <p class="estimation-item-desc">New layout with customisable widgets and drag-and-drop support</p>
+    </div>
+
+    <!-- Cards -->
+    <div class="poker-cards-grid">
+      <div class="poker-card">0</div>
+      <div class="poker-card">1</div>
+      <div class="poker-card">2</div>
+      <div class="poker-card">3</div>
+      <div class="poker-card selected">5</div>
+      <div class="poker-card">8</div>
+      <div class="poker-card">13</div>
+      <div class="poker-card">21</div>
+      <div class="poker-card">?</div>
+      <div class="poker-card">☕</div>
+    </div>
+
+    <!-- Team Votes -->
+    <div style="background: white; border-radius: 0.5rem; padding: 1.5rem; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">3 of 4 voted</p>
+      <div style="display: flex; justify-content: center; gap: 1rem;">
+        <div style="text-align: center;">
+          <div style="width: 48px; height: 64px; background: linear-gradient(135deg, #374151, #4b5563); border-radius: 0.375rem; margin-bottom: 0.25rem;"></div>
+          <span style="font-size: 0.75rem; color: #6b7280;">Sarah K.</span>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 48px; height: 64px; background: linear-gradient(135deg, #374151, #4b5563); border-radius: 0.375rem; margin-bottom: 0.25rem;"></div>
+          <span style="font-size: 0.75rem; color: #6b7280;">James L.</span>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 48px; height: 64px; background: linear-gradient(135deg, #374151, #4b5563); border-radius: 0.375rem; margin-bottom: 0.25rem;"></div>
+          <span style="font-size: 0.75rem; color: #6b7280;">Mike R.</span>
+        </div>
+        <div style="text-align: center;">
+          <div style="width: 48px; height: 64px; background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 0.375rem; margin-bottom: 0.25rem;"></div>
+          <span style="font-size: 0.75rem; color: #6b7280;">Emma T.</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top: 1.5rem;">Reveal Votes</button>
+    </div>
+  </div>
+
+  <!-- ============================================
+       ROADMAP: VIEW TOGGLE (DECIDED)
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label" style="background: #d1fae5; color: #065f46;">Decision Made</span>
+    <h2 class="font-display">Roadmap as a View Toggle</h2>
+    <p>Switch between List view and Roadmap view of the same items.</p>
+  </div>
+
+  <div class="comparison-container">
+    <div class="option-card" style="border: 2px solid #10b981;">
+      <div class="option-header" style="background: linear-gradient(135deg, #ecfdf5, #d1fae5);">
+        <h3 class="option-title font-display" style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem;">CHOSEN</span>
+          Roadmap as a View Toggle
+        </h3>
+        <p class="option-subtitle">List and Roadmap are two views of the same data</p>
+      </div>
+      <div class="option-content">
+        <p style="color: #4b5563; margin-bottom: 1rem;">A toggle in the toolbar switches between "List" and "Roadmap" views. Both show the same items, just different visualisations. Drag items directly on the timeline to assign periods.</p>
+
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <div style="padding: 0.5rem 1rem; background: white; border: 2px solid #e5e7eb; border-radius: 0.5rem; font-size: 0.875rem;">List</div>
+          <div style="padding: 0.5rem 1rem; background: #eef2ff; border: 2px solid #4f46e5; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #4f46e5;">Roadmap</div>
+        </div>
+
+        <div class="mini-roadmap">
+          <div class="mini-roadmap-header">
+            <div class="period-col">Now</div>
+            <div class="period-col">Next</div>
+            <div class="period-col">Later</div>
+          </div>
+          <div class="mini-roadmap-body">
+            <div class="period-lane">
+              <div class="roadmap-item-chip">User auth</div>
+              <div class="roadmap-item-chip">Dashboard</div>
+            </div>
+            <div class="period-lane">
+              <div class="roadmap-item-chip">API limits</div>
+            </div>
+            <div class="period-lane">
+              <div class="roadmap-item-chip" style="background: #d1d5db;">Export PDF</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 1rem; margin-top: 1rem;">
+          <h4 style="font-size: 0.875rem; font-weight: 600; color: #166534; margin-bottom: 0.5rem;">Why this approach:</h4>
+          <ul style="padding-left: 1.25rem; font-size: 0.85rem; color: #15803d; line-height: 1.6;">
+            <li>Roadmap is inherently visual/spatial - needs drag-and-drop</li>
+            <li>Action bar still works in roadmap view for Score, Estimate, Set Status</li>
+            <li>Period assignment via drag (roadmap view) or dropdown (item drawer)</li>
+            <li>Unscheduled items shown in sidebar within roadmap view</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MOBILE EXPERIENCE
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Mobile</span>
+    <h2 class="font-display">Mobile Backlog Experience</h2>
+    <p>How the backlog-centric model translates to mobile devices.</p>
+  </div>
+
+  <div class="mobile-showcase">
+    <!-- Mobile Backlog -->
+    <div>
+      <div class="mobile-frame">
+        <div class="mobile-screen">
+          <div class="m-header">
+            <div class="m-header-row">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="m-logo">
+                  <div class="m-logo-tri"></div>
+                </div>
+                <span class="m-title font-display">Sprint 24</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.5rem; background: #f3f4f6; border-radius: 0.375rem; font-size: 0.75rem;">
+                  <span class="online-dot" style="width: 6px; height: 6px;"></span>
+                  <span>4</span>
+                </div>
+                <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">⋮</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-backlog">
+            <div class="m-backlog-item">
+              <div class="m-checkbox"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">User authentication flow</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">156</span>
+                  <span class="m-badge estimate">8 SP</span>
+                  <span class="m-badge status">In Progress</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-backlog-item">
+              <div class="m-checkbox"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">Dashboard redesign</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">142</span>
+                  <span class="m-badge estimate">5 SP</span>
+                  <span class="m-badge status">To Do</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-backlog-item">
+              <div class="m-checkbox"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">API rate limiting</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">128</span>
+                  <span class="m-badge estimate">3 SP</span>
+                  <span class="m-badge status">To Do</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cutoff -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+              <div style="flex: 1; height: 2px; background: #ef4444;"></div>
+              <span style="font-size: 0.65rem; color: #ef4444; font-weight: 600;">CUTOFF</span>
+              <div style="flex: 1; height: 2px; background: #ef4444;"></div>
+            </div>
+
+            <div class="m-backlog-item" style="opacity: 0.6;">
+              <div class="m-checkbox"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">Export to PDF</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">98</span>
+                  <span class="m-badge status">To Do</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-backlog-item" style="opacity: 0.6;">
+              <div class="m-checkbox"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">Dark mode support</div>
+                <div class="m-item-meta">
+                  <span class="m-badge status">To Do</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAB -->
+          <div class="m-fab">+</div>
+
+          <div class="m-bottom-bar">
+            <div class="m-view-tabs">
+              <div class="m-tab active">List</div>
+              <div class="m-tab">Roadmap</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mobile-label">Backlog (List View)</p>
+      <p class="mobile-sublabel">Badges show scores, estimates, status</p>
+    </div>
+
+    <!-- Mobile with Selection -->
+    <div>
+      <div class="mobile-frame">
+        <div class="mobile-screen">
+          <div class="m-header">
+            <div class="m-header-row">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div class="m-logo">
+                  <div class="m-logo-tri"></div>
+                </div>
+                <span class="m-title font-display">Sprint 24</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.25rem; padding: 0.375rem 0.5rem; background: #f3f4f6; border-radius: 0.375rem; font-size: 0.75rem;">
+                  <span class="online-dot" style="width: 6px; height: 6px;"></span>
+                  <span>4</span>
+                </div>
+                <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">⋮</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Bar -->
+          <div class="m-action-bar">
+            <span>3 selected</span>
+            <div class="m-action-buttons">
+              <button class="m-action-btn">Score</button>
+              <button class="m-action-btn" style="background: #4f46e5;">Estimate</button>
+            </div>
+          </div>
+
+          <div class="m-backlog">
+            <div class="m-backlog-item" style="background: #eef2ff;">
+              <div class="m-checkbox checked"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">User authentication flow</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">156</span>
+                  <span class="m-badge estimate">8 SP</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-backlog-item" style="background: #eef2ff;">
+              <div class="m-checkbox checked"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">Dashboard redesign</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">142</span>
+                  <span class="m-badge estimate">5 SP</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-backlog-item" style="background: #eef2ff;">
+              <div class="m-checkbox checked"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">API rate limiting</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">128</span>
+                  <span class="m-badge estimate">3 SP</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="m-backlog-item" style="opacity: 0.6;">
+              <div class="m-checkbox"></div>
+              <div class="m-item-content">
+                <div class="m-item-title">Export to PDF</div>
+                <div class="m-item-meta">
+                  <span class="m-badge score">98</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="m-bottom-bar">
+            <div class="m-view-tabs">
+              <div class="m-tab active">List</div>
+              <div class="m-tab">Roadmap</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mobile-label">Selection Mode</p>
+      <p class="mobile-sublabel">Action bar appears with options</p>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 5: Sorting & Multiple Cutoffs
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Advanced Features</span>
+    <h2 class="font-display">Sorting & Multiple Cutoffs</h2>
+    <p>Sort by any column, add multiple cutoff lines for different milestones.</p>
+  </div>
+
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-triangle"></div>
+      </div>
+      <h1 class="session-title font-display">Q1 2026 Planning</h1>
+    </div>
+    <div class="header-right">
+      <div class="participant-indicator">
+        <span class="online-dot"></span>
+        <span>3 participants</span>
+      </div>
+      <button class="btn btn-secondary">Copy URL</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Toolbar with Sort dropdown -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <svg width="16" height="16" fill="none" stroke="#9ca3af" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" placeholder="Search items..." />
+        </div>
+        <!-- Sort dropdown -->
+        <div class="filter-chip active" style="background: #eef2ff; border-color: #a5b4fc;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+          </svg>
+          <span>Sort: Estimate ↑</span>
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        <div class="filter-chip">
+          + Add Cutoff
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="view-toggle">
+          <button class="view-toggle-btn active">List</button>
+          <button class="view-toggle-btn">Roadmap</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backlog with sorting and multiple cutoffs -->
+    <div class="backlog-panel">
+      <div class="backlog-header">
+        <h2 class="backlog-title font-display">Product Backlog</h2>
+        <span class="backlog-count">8 items · 39 SP total</span>
+      </div>
+
+      <!-- Sortable List Header -->
+      <div class="list-header" style="cursor: pointer;">
+        <span></span>
+        <span>#</span>
+        <span>Item</span>
+        <span>Status</span>
+        <span style="display: flex; align-items: center; gap: 0.25rem;">Score <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></span>
+        <span style="display: flex; align-items: center; gap: 0.25rem; color: #4f46e5;">Estimate ↑</span>
+        <span>Period</span>
+        <span></span>
+      </div>
+
+      <!-- Items sorted by estimate (ascending) -->
+      <div class="backlog-item">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">1</div>
+        <div class="item-content">
+          <div class="item-title">API rate limiting</div>
+          <div class="item-description">Add throttling to prevent abuse</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">128</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">3 SP</div>
+        </div>
+        <span class="roadmap-indicator">Now</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">2</div>
+        <div class="item-content">
+          <div class="item-title">Dashboard redesign</div>
+          <div class="item-description">New layout with customisable widgets</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">142</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">5 SP</div>
+        </div>
+        <span class="roadmap-indicator">Now</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <!-- Sprint 1 Cutoff -->
+      <div class="cutoff-line">
+        <div class="cutoff-line-visual"></div>
+        <span class="cutoff-label">Sprint 1 Cutoff — 8 SP</span>
+        <div class="cutoff-line-visual"></div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.85;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">3</div>
+        <div class="item-content">
+          <div class="item-title">Export to PDF</div>
+          <div class="item-description">Generate formatted reports</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">98</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">5 SP</div>
+        </div>
+        <span class="roadmap-indicator">Next</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.85;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">4</div>
+        <div class="item-content">
+          <div class="item-title">User authentication flow</div>
+          <div class="item-description">OAuth 2.0 with Google and GitHub</div>
+        </div>
+        <span class="status-badge in-progress">In Progress</span>
+        <div class="metric-cell">
+          <div class="metric-value score">156</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">8 SP</div>
+        </div>
+        <span class="roadmap-indicator">Next</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <!-- Sprint 2 Cutoff (different color) -->
+      <div class="cutoff-line">
+        <div class="cutoff-line-visual" style="background: linear-gradient(90deg, transparent, #f59e0b, transparent);"></div>
+        <span class="cutoff-label" style="background: #fef3c7; color: #d97706;">Sprint 2 Cutoff — 21 SP</span>
+        <div class="cutoff-line-visual" style="background: linear-gradient(90deg, transparent, #f59e0b, transparent);"></div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.6;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">5</div>
+        <div class="item-content">
+          <div class="item-title">Mobile app notifications</div>
+          <div class="item-description">Push notifications for iOS and Android</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">85</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">13 SP</div>
+        </div>
+        <span class="roadmap-indicator">Later</span>
+        <div class="more-menu">⋮</div>
+      </div>
+
+      <div class="backlog-item" style="opacity: 0.6;">
+        <div class="item-checkbox"></div>
+        <div class="item-rank">6</div>
+        <div class="item-content">
+          <div class="item-title">Analytics dashboard</div>
+          <div class="item-description">Usage metrics and visualisations</div>
+        </div>
+        <span class="status-badge todo">To Do</span>
+        <div class="metric-cell">
+          <div class="metric-value score">72</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-value estimate">21 SP</div>
+        </div>
+        <span class="roadmap-indicator empty">—</span>
+        <div class="more-menu">⋮</div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top: 1rem;">
+      <strong>Sorting Options</strong>
+      Sort by: Manual (drag), Score (high→low), Estimate (low→high or high→low), Status, Period, Title. Click column headers to sort. Manual order is the default and can always be restored.
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 6: Period Labels as Metadata
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Roadmap Integration</span>
+    <h2 class="font-display">Period Labels as Item Metadata</h2>
+    <p>Roadmap periods become labels you can assign to items directly.</p>
+  </div>
+
+  <div class="main-container">
+    <div class="backlog-panel">
+      <div class="backlog-header">
+        <h2 class="backlog-title font-display">Assigning Items to Periods</h2>
+      </div>
+
+      <div style="padding: 1.5rem;">
+        <p style="color: #4b5563; margin-bottom: 1.5rem;">When you create roadmap periods (Now, Next, Later, Q2 2026, etc.), those period names become available as labels. You can assign an item to a period from:</p>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+          <!-- Option 1: Item Drawer -->
+          <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1.25rem;">
+            <h4 style="font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 24px; height: 24px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">1</span>
+              Item Drawer
+            </h4>
+            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem;">Click an item to open drawer, select period from dropdown.</p>
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.75rem;">
+              <div style="font-size: 0.7rem; color: #6b7280; margin-bottom: 0.375rem;">PERIOD</div>
+              <div style="display: flex; gap: 0.375rem; flex-wrap: wrap;">
+                <span style="padding: 0.25rem 0.5rem; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 0.25rem; font-size: 0.75rem; color: #7c3aed;">Now</span>
+                <span style="padding: 0.25rem 0.5rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.75rem; color: #6b7280;">Next</span>
+                <span style="padding: 0.25rem 0.5rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.75rem; color: #6b7280;">Later</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Option 2: Roadmap View -->
+          <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1.25rem;">
+            <h4 style="font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 24px; height: 24px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">2</span>
+              Roadmap View
+            </h4>
+            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem;">Drag items onto periods in the visual roadmap.</p>
+            <div style="background: white; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.5rem; display: flex; gap: 0.375rem;">
+              <div style="flex: 1; background: #eef2ff; border: 2px dashed #a5b4fc; border-radius: 0.25rem; padding: 0.375rem; text-align: center; font-size: 0.65rem; color: #6366f1;">Now</div>
+              <div style="flex: 1; background: #f9fafb; border: 1px dashed #e5e7eb; border-radius: 0.25rem; padding: 0.375rem; text-align: center; font-size: 0.65rem; color: #9ca3af;">Next</div>
+              <div style="flex: 1; background: #f9fafb; border: 1px dashed #e5e7eb; border-radius: 0.25rem; padding: 0.375rem; text-align: center; font-size: 0.65rem; color: #9ca3af;">Later</div>
+            </div>
+          </div>
+
+          <!-- Option 3: Action Bar -->
+          <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1.25rem;">
+            <h4 style="font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 24px; height: 24px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">3</span>
+              Action Bar
+            </h4>
+            <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem;">Select items, click "Add to Roadmap", pick period.</p>
+            <div style="background: #1f2937; border-radius: 0.375rem; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+              <span style="color: white; font-size: 0.75rem;">3 selected</span>
+              <div style="display: flex; gap: 0.25rem;">
+                <span style="padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.15); border-radius: 0.25rem; font-size: 0.65rem; color: white;">+ Now</span>
+                <span style="padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.15); border-radius: 0.25rem; font-size: 0.65rem; color: white;">+ Next</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 1.5rem;">
+          <strong>Period = Label</strong>
+          This unifies the roadmap with the backlog. Items have a "period" field that determines where they appear on the roadmap. You can filter the backlog by period ("Show only Now items") or sort by it.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 7: Multiple Roadmap Views (Future)
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Future Concept</span>
+    <h2 class="font-display">Multiple Roadmap Scenarios</h2>
+    <p>Compare different planning scenarios with the same items.</p>
+  </div>
+
+  <div class="comparison-container">
+    <div class="option-card">
+      <div class="option-header">
+        <h3 class="option-title font-display">Scenario Planning</h3>
+        <p class="option-subtitle">What if we could visualise different orderings of the same work?</p>
+      </div>
+      <div class="option-content">
+        <p style="color: #4b5563; margin-bottom: 1.5rem;">Imagine you have 10 items to deliver. You could create multiple "scenarios" showing different approaches:</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <!-- Scenario A -->
+          <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1.25rem; border: 2px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h4 style="font-weight: 600; color: #4f46e5;">Scenario A: Risk-First</h4>
+              <span style="font-size: 0.7rem; padding: 0.25rem 0.5rem; background: #eef2ff; color: #4f46e5; border-radius: 0.25rem;">Active</span>
+            </div>
+            <p style="font-size: 0.8rem; color: #6b7280; margin-bottom: 1rem;">Tackle high-risk items first, defer quick wins.</p>
+            <div style="display: flex; gap: 0.5rem;">
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 0.25rem;">NOW</div>
+                <div style="background: linear-gradient(135deg, #818cf8, #6366f1); color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem; margin-bottom: 0.25rem;">Auth (8)</div>
+                <div style="background: linear-gradient(135deg, #818cf8, #6366f1); color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem;">Analytics (21)</div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 0.25rem;">NEXT</div>
+                <div style="background: linear-gradient(135deg, #a5b4fc, #818cf8); color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem; margin-bottom: 0.25rem;">Dashboard (5)</div>
+                <div style="background: linear-gradient(135deg, #a5b4fc, #818cf8); color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem;">API (3)</div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 0.25rem;">LATER</div>
+                <div style="background: #d1d5db; color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem;">PDF (5)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scenario B -->
+          <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1.25rem; border: 2px dashed #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h4 style="font-weight: 600; color: #6b7280;">Scenario B: Quick Wins First</h4>
+              <span style="font-size: 0.7rem; padding: 0.25rem 0.5rem; background: #f3f4f6; color: #6b7280; border-radius: 0.25rem;">Draft</span>
+            </div>
+            <p style="font-size: 0.8rem; color: #6b7280; margin-bottom: 1rem;">Ship small items first for momentum.</p>
+            <div style="display: flex; gap: 0.5rem;">
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 0.25rem;">NOW</div>
+                <div style="background: #a5b4fc; color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem; margin-bottom: 0.25rem;">API (3)</div>
+                <div style="background: #a5b4fc; color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem; margin-bottom: 0.25rem;">Dashboard (5)</div>
+                <div style="background: #a5b4fc; color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem;">PDF (5)</div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 0.25rem;">NEXT</div>
+                <div style="background: #c4b5fd; color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem;">Auth (8)</div>
+              </div>
+              <div style="flex: 1; text-align: center;">
+                <div style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 0.25rem;">LATER</div>
+                <div style="background: #d1d5db; color: white; padding: 0.25rem; border-radius: 0.25rem; font-size: 0.65rem;">Analytics (21)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pros-cons" style="margin-top: 1.5rem;">
+          <div class="pros">
+            <h4>Use Cases</h4>
+            <ul>
+              <li>Compare capacity with different team sizes</li>
+              <li>Stakeholder presentations: "Option A vs B"</li>
+              <li>Risk analysis: what happens if X slips?</li>
+              <li>Quarterly planning variations</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>Complexity Concerns</h4>
+            <ul>
+              <li>Adds cognitive load - "which scenario am I in?"</li>
+              <li>Syncing item data across scenarios</li>
+              <li>Could be premium/advanced feature only</li>
+              <li>MVP might not need this</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="info-box" style="margin-top: 1rem;">
+          <strong>Recommendation</strong>
+          Park this for v2. The core backlog-centric model works with a single roadmap. Multiple scenarios could be a premium feature later, or even a separate "What-If Planning" mode.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SCENARIO 8: URL Structure
+       ============================================ -->
+  <div class="section-divider">
+    <span class="scenario-label">Technical</span>
+    <h2 class="font-display">URL Structure & Shareability</h2>
+    <p>Clean URLs for sharing specific views and flows.</p>
+  </div>
+
+  <div class="main-container">
+    <div class="backlog-panel">
+      <div style="padding: 1.5rem;">
+        <h3 style="font-weight: 600; margin-bottom: 1rem;">Proposed URL Structure</h3>
+
+        <div style="background: #1f2937; border-radius: 0.5rem; padding: 1.25rem; font-family: monospace; font-size: 0.875rem; color: #e5e7eb; margin-bottom: 1.5rem;">
+          <div style="margin-bottom: 1rem;">
+            <span style="color: #9ca3af;"># Backlog (home)</span><br>
+            <span style="color: #a5b4fc;">priori.work</span>/session/<span style="color: #fcd34d;">abc123</span>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <span style="color: #9ca3af;"># Roadmap view</span><br>
+            <span style="color: #a5b4fc;">priori.work</span>/session/<span style="color: #fcd34d;">abc123</span><span style="color: #86efac;">/roadmap</span>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <span style="color: #9ca3af;"># Planning Poker (shareable!)</span><br>
+            <span style="color: #a5b4fc;">priori.work</span>/session/<span style="color: #fcd34d;">abc123</span><span style="color: #86efac;">/estimate</span>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <span style="color: #9ca3af;"># Scoring flow</span><br>
+            <span style="color: #a5b4fc;">priori.work</span>/session/<span style="color: #fcd34d;">abc123</span><span style="color: #86efac;">/score</span>
+          </div>
+          <div>
+            <span style="color: #9ca3af;"># Direct link to item</span><br>
+            <span style="color: #a5b4fc;">priori.work</span>/session/<span style="color: #fcd34d;">abc123</span><span style="color: #86efac;">/item/</span><span style="color: #f9a8d4;">xyz789</span>
+          </div>
+        </div>
+
+        <h3 style="font-weight: 600; margin-bottom: 1rem;">Planning Poker Shareability</h3>
+        <p style="color: #4b5563; margin-bottom: 1rem;">The <code>/estimate</code> URL is the key shareable link for collaborative estimation:</p>
+
+        <ul style="padding-left: 1.5rem; color: #4b5563; line-height: 1.8;">
+          <li><strong>Copy URL button</strong> in the estimation flow copies the <code>/estimate</code> URL</li>
+          <li><strong>Late joiners</strong> land on the current item being estimated</li>
+          <li><strong>Session state</strong> (current item, revealed votes) synced via Supabase Realtime</li>
+          <li><strong>No items selected?</strong> Shows "Select items from backlog to start estimation" with link back</li>
+        </ul>
+
+        <div class="info-box" style="margin-top: 1rem;">
+          <strong>Copy URL Experience</strong>
+          When in the estimation flow, the "Copy URL" button specifically copies the <code>/estimate</code> URL. A toast confirms: "Estimation session link copied! Share with your team to vote together."
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       DESIGN NOTES
+       ============================================ -->
+  <div style="max-width: 1280px; margin: 2rem auto; padding: 2rem; background: white; border-radius: 0.5rem;">
+    <h2 class="font-display" style="margin-bottom: 1.5rem;">Design Summary</h2>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #4f46e5;">Core Principles</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Backlog is home:</strong> All items live in a central list that's always accessible</li>
+      <li><strong>Features are actions:</strong> Score, Estimate, Add to Roadmap are things you *do* to selected items</li>
+      <li><strong>Progressive disclosure:</strong> Columns/badges only appear when data exists (no empty "—" everywhere)</li>
+      <li><strong>Item drawer:</strong> Click any item to see full details, scores, estimates, and edit status</li>
+      <li><strong>Dedicated flows:</strong> Actions like Planning Poker open a focused experience with breadcrumb navigation back</li>
+      <li><strong>Shareable URLs:</strong> Each flow has a clean URL (<code>/estimate</code>, <code>/score</code>) for easy collaboration</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #4f46e5;">Key Features</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Sorting:</strong> Sort by any column (Score, Estimate, Status, Period, Title) or manual drag order</li>
+      <li><strong>Multiple cutoffs:</strong> Add multiple cutoff lines for different milestones (Sprint 1, Sprint 2, etc.)</li>
+      <li><strong>Period labels:</strong> Roadmap periods become metadata on items - assign from drawer, action bar, or roadmap view</li>
+      <li><strong>Status tracking:</strong> Simple To Do / In Progress / Done per item</li>
+      <li><strong>Filters:</strong> Filter by status, has estimate, has score, on roadmap, by period</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #4f46e5;">What This Enables</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Flexibility:</strong> Use only the features you need (just scoring? just estimates? both?)</li>
+      <li><strong>Scalability:</strong> Easy to add new actions (Import, Duplicate, Archive, etc.)</li>
+      <li><strong>Collaboration:</strong> Share <code>/estimate</code> URL for Planning Poker sessions with your team</li>
+      <li><strong>Future accounts:</strong> Sessions become "projects" that persist in your account</li>
+      <li><strong>Paywall potential:</strong> Chat, advanced frameworks, team sharing, multiple scenarios could be premium</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #4f46e5;">Decisions Made</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Roadmap:</strong> View toggle (List / Roadmap) - keeps visual drag-and-drop experience</li>
+      <li><strong>Scoring:</strong> Dedicated flow (like estimation) - but collaborative free-for-all, not voting-based</li>
+      <li><strong>Planning Poker:</strong> Late joiners land on current item and can vote immediately</li>
+      <li><strong>Multiple scenarios:</strong> Parked for v2 - adds complexity, could be premium feature</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #4f46e5;">Open Questions</h3>
+    <ul style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563;">
+      <li><strong>Cutoff persistence:</strong> Should cutoffs survive re-sorting, or reset to manual order?</li>
+      <li><strong>Keyboard shortcuts:</strong> How important for power users?</li>
+      <li><strong>Period creation:</strong> Create periods in roadmap view, or also from action bar?</li>
+    </ul>
+
+    <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #4f46e5;">Migration Path</h3>
+    <p style="color: #4b5563; line-height: 1.8;">
+      This is a significant UX change from the current tab-based model. A phased approach could work:
+    </p>
+    <ol style="padding-left: 1.5rem; line-height: 1.8; color: #4b5563; margin-top: 0.5rem;">
+      <li>Add status field and item drawer (minimal disruption)</li>
+      <li>Add multi-select and action bar</li>
+      <li>Add sorting and multiple cutoffs</li>
+      <li>Convert tabs to view toggles (List / Roadmap)</li>
+      <li>Move scoring and estimation into dedicated URL-based flows</li>
+      <li>Add period labels as item metadata</li>
+    </ol>
+  </div>
+
+</body>
+</html>

@@ -77,14 +77,14 @@ describe('BacklogList', () => {
     items: mockItems,
     framework: 'rice' as const,
     isManualOrder: false,
-    cutoffPosition: null as number | null,
-    cutoffLabel: null as string | null,
+    cutoffs: [] as { id: string; session_id: string; position: number; label: string; color: 'red' | 'amber' | 'blue' | 'green'; created_at: string }[],
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     onReorder: vi.fn(),
     onResetOrder: vi.fn(),
-    onCutoffChange: vi.fn(),
-    onCutoffLabelChange: vi.fn(),
+    onAddCutoff: vi.fn(),
+    onUpdateCutoff: vi.fn(),
+    onDeleteCutoff: vi.fn(),
   }
 
   it('renders empty state when no items', () => {
@@ -163,7 +163,9 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={veItems} framework="value_effort" />)
-    expect(screen.getAllByText('V/E: 2.7').length).toBeGreaterThanOrEqual(1)
+    // Value vs Effort now shows quadrant name instead of numeric score
+    // value=8, effort=3 -> high value (>5.5), low effort (<=5.5) -> Quick Wins
+    expect(screen.getAllByText('Quick Wins').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays MoSCoW category as score', () => {
@@ -174,13 +176,14 @@ describe('BacklogList', () => {
           id: 'score-1',
           item_id: '1',
           framework: 'moscow',
-          criteria: { category: 'Must' },
+          criteria: { category: 'must' },
           calculated_score: 4,
         },
       },
     ]
     render(<BacklogList {...defaultProps} items={moscowItems} framework="moscow" />)
-    expect(screen.getAllByText('Must').length).toBeGreaterThanOrEqual(1)
+    // MoSCoW now shows formatted labels: "must" -> "Must Have"
+    expect(screen.getAllByText('Must Have').length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays weighted score format', () => {
@@ -200,7 +203,7 @@ describe('BacklogList', () => {
     expect(screen.getAllByText('Score: 7.50').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('displays dash when item has no score', () => {
+  it('hides score column when no items have scores (progressive disclosure)', () => {
     const noScoreItems: ItemWithScore[] = [
       {
         id: '1',
@@ -213,8 +216,8 @@ describe('BacklogList', () => {
       },
     ]
     render(<BacklogList {...defaultProps} items={noScoreItems} />)
-    // Dash appears twice (mobile + desktop)
-    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(1)
+    // Score column should be hidden entirely when no items have scores
+    expect(screen.queryByText('RICE:')).not.toBeInTheDocument()
   })
 
   it('calls onEdit when edit button clicked', () => {
@@ -255,31 +258,19 @@ describe('BacklogList', () => {
     expect(screen.getAllByText('RICE: 0').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows Score order indicator when not in manual order', () => {
+  it('shows sort dropdown with Score selected when not in manual order', () => {
     render(<BacklogList {...defaultProps} isManualOrder={false} />)
-    expect(screen.getByText('Order: Score')).toBeInTheDocument()
+    const sortSelect = screen.getByLabelText('Sort by:') as HTMLSelectElement
+    expect(sortSelect.value).toBe('score')
   })
 
-  it('shows Manual order indicator when in manual order', () => {
+  it('shows sort dropdown with Manual selected when in manual order', () => {
     render(<BacklogList {...defaultProps} isManualOrder={true} />)
-    expect(screen.getByText('Order: Manual')).toBeInTheDocument()
+    const sortSelect = screen.getByLabelText('Sort by:') as HTMLSelectElement
+    expect(sortSelect.value).toBe('manual')
   })
 
-  it('shows Reset button only when in manual order', () => {
-    const { rerender } = render(<BacklogList {...defaultProps} isManualOrder={false} />)
-    expect(screen.queryByText('Reset to Score')).not.toBeInTheDocument()
-
-    rerender(<BacklogList {...defaultProps} isManualOrder={true} />)
-    expect(screen.getByText('Reset to Score')).toBeInTheDocument()
-  })
-
-  it('calls onResetOrder when Reset button clicked', () => {
-    const onResetOrder = vi.fn()
-    render(<BacklogList {...defaultProps} isManualOrder={true} onResetOrder={onResetOrder} />)
-
-    fireEvent.click(screen.getByText('Reset to Score'))
-    expect(onResetOrder).toHaveBeenCalled()
-  })
+  // Reset order button was removed - users can change sort dropdown to reset order
 
   it('renders drag handles for each item', () => {
     render(<BacklogList {...defaultProps} />)
@@ -288,118 +279,150 @@ describe('BacklogList', () => {
   })
 
   // Cutoff line tests
-  it('shows add cutoff buttons between items when no cutoff set', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={null} />)
+  const createMockCutoff = (id: string, position: number, label: string = 'Cutoff', color: 'red' | 'amber' | 'blue' | 'green' = 'red') => ({
+    id,
+    session_id: 'session-1',
+    position,
+    label,
+    color,
+    created_at: '2024-01-01',
+  })
+
+  it('shows add cutoff buttons between items when no cutoffs', () => {
+    render(<BacklogList {...defaultProps} cutoffs={[]} />)
     const addButtons = screen.getAllByLabelText('Add cutoff line here')
     // Should show between items (2 buttons for 3 items)
     expect(addButtons).toHaveLength(2)
   })
 
-  it('does not show add cutoff buttons when cutoff is set', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={1} />)
-    expect(screen.queryByLabelText('Add cutoff line here')).not.toBeInTheDocument()
+  it('does not show add cutoff buttons at positions where cutoffs exist', () => {
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
+    // Should only have 1 button (at position 2, since position 1 has a cutoff)
+    const addButtons = screen.getAllByLabelText('Add cutoff line here')
+    expect(addButtons).toHaveLength(1)
   })
 
   it('renders cutoff line at correct position', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={1} cutoffLabel="Sprint 1" />)
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
     expect(screen.getByText('Sprint 1')).toBeInTheDocument()
   })
 
-  it('renders default cutoff label when none provided', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={1} cutoffLabel={null} />)
-    expect(screen.getByText('Cutoff')).toBeInTheDocument()
-  })
-
-  it('calls onCutoffChange when add cutoff button clicked', () => {
-    const onCutoffChange = vi.fn()
-    render(<BacklogList {...defaultProps} cutoffPosition={null} onCutoffChange={onCutoffChange} />)
+  it('calls onAddCutoff when add cutoff button clicked', () => {
+    const onAddCutoff = vi.fn()
+    render(<BacklogList {...defaultProps} cutoffs={[]} onAddCutoff={onAddCutoff} />)
 
     const addButtons = screen.getAllByLabelText('Add cutoff line here')
     fireEvent.click(addButtons[0])
-    expect(onCutoffChange).toHaveBeenCalledWith(1)
+    expect(onAddCutoff).toHaveBeenCalledWith(1)
   })
 
-  it('calls onCutoffChange with null when remove cutoff button clicked', () => {
-    const onCutoffChange = vi.fn()
-    render(<BacklogList {...defaultProps} cutoffPosition={1} onCutoffChange={onCutoffChange} />)
+  it('calls onDeleteCutoff when remove cutoff button clicked', () => {
+    const onDeleteCutoff = vi.fn()
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} onDeleteCutoff={onDeleteCutoff} />)
 
     const removeButton = screen.getByLabelText('Remove cutoff line')
     fireEvent.click(removeButton)
-    expect(onCutoffChange).toHaveBeenCalledWith(null)
-  })
-
-  it('applies opacity to items below cutoff line', () => {
-    const { container } = render(<BacklogList {...defaultProps} cutoffPosition={1} />)
-    const articles = container.querySelectorAll('article')
-    // Third Item should be first (highest score), below cutoff
-    // Second and First items should be below cutoff (positions 1 and 2)
-    // Note: items are sorted by score, so order is: Third (300), First (160), Second (25)
-    // With cutoff at position 1, items at index 1 and 2 should be greyed out
-    expect(articles[0]).not.toHaveClass('opacity-50') // Third Item (in scope)
-    expect(articles[1]).toHaveClass('opacity-50') // First Item (out of scope)
-    expect(articles[2]).toHaveClass('opacity-50') // Second Item (out of scope)
+    expect(onDeleteCutoff).toHaveBeenCalledWith('c1')
   })
 
   // Interactive cutoff tests
   it('renders move up/down buttons on cutoff line', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={2} />)
+    const cutoffs = [createMockCutoff('c1', 2, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
     expect(screen.getByLabelText('Move cutoff up')).toBeInTheDocument()
     expect(screen.getByLabelText('Move cutoff down')).toBeInTheDocument()
   })
 
   it('disables move up button when cutoff at top', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={1} />)
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
     const moveUpButton = screen.getByLabelText('Move cutoff up')
     expect(moveUpButton).toBeDisabled()
   })
 
   it('disables move down button when cutoff at last position', () => {
-    // With 3 items, position 3 means cutoff is after all items
-    // The cutoff line should be rendered at position 3, showing all items above it
-    // The "move down" button should be disabled since there's nowhere to move down to
-    render(<BacklogList {...defaultProps} cutoffPosition={3} cutoffLabel="Cutoff" />)
+    const cutoffs = [createMockCutoff('c1', 3, 'Cutoff')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
     const moveDownButton = screen.getByLabelText('Move cutoff down')
     expect(moveDownButton).toBeDisabled()
   })
 
-  it('calls onCutoffChange when move up clicked', () => {
-    const onCutoffChange = vi.fn()
-    render(<BacklogList {...defaultProps} cutoffPosition={2} onCutoffChange={onCutoffChange} />)
+  it('calls onUpdateCutoff when move up clicked', () => {
+    const onUpdateCutoff = vi.fn()
+    const cutoffs = [createMockCutoff('c1', 2, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} onUpdateCutoff={onUpdateCutoff} />)
 
     fireEvent.click(screen.getByLabelText('Move cutoff up'))
-    expect(onCutoffChange).toHaveBeenCalledWith(1)
+    expect(onUpdateCutoff).toHaveBeenCalledWith('c1', { position: 1 })
   })
 
-  it('calls onCutoffChange when move down clicked', () => {
-    const onCutoffChange = vi.fn()
-    render(<BacklogList {...defaultProps} cutoffPosition={2} onCutoffChange={onCutoffChange} />)
+  it('calls onUpdateCutoff when move down clicked', () => {
+    const onUpdateCutoff = vi.fn()
+    const cutoffs = [createMockCutoff('c1', 2, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} onUpdateCutoff={onUpdateCutoff} />)
 
     fireEvent.click(screen.getByLabelText('Move cutoff down'))
-    expect(onCutoffChange).toHaveBeenCalledWith(3)
+    expect(onUpdateCutoff).toHaveBeenCalledWith('c1', { position: 3 })
   })
 
   it('shows edit label button', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={1} cutoffLabel="Sprint 1" />)
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
     expect(screen.getByLabelText('Edit cutoff label')).toBeInTheDocument()
   })
 
   it('shows input when edit label clicked', () => {
-    render(<BacklogList {...defaultProps} cutoffPosition={1} cutoffLabel="Sprint 1" />)
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
 
     fireEvent.click(screen.getByLabelText('Edit cutoff label'))
     expect(screen.getByLabelText('Cutoff label')).toBeInTheDocument()
   })
 
-  it('calls onCutoffLabelChange when label edited', () => {
-    const onCutoffLabelChange = vi.fn()
-    render(<BacklogList {...defaultProps} cutoffPosition={1} cutoffLabel="Sprint 1" onCutoffLabelChange={onCutoffLabelChange} />)
+  it('calls onUpdateCutoff when label edited', () => {
+    const onUpdateCutoff = vi.fn()
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} onUpdateCutoff={onUpdateCutoff} />)
 
     fireEvent.click(screen.getByLabelText('Edit cutoff label'))
     const input = screen.getByLabelText('Cutoff label')
     fireEvent.change(input, { target: { value: 'MVP' } })
     fireEvent.blur(input)
 
-    expect(onCutoffLabelChange).toHaveBeenCalledWith('MVP')
+    expect(onUpdateCutoff).toHaveBeenCalledWith('c1', { label: 'MVP' })
+  })
+
+  // Multiple cutoffs tests
+  it('renders multiple cutoff lines', () => {
+    const cutoffs = [
+      createMockCutoff('c1', 1, 'Sprint 1', 'red'),
+      createMockCutoff('c2', 2, 'Sprint 2', 'blue'),
+    ]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
+    expect(screen.getByText('Sprint 1')).toBeInTheDocument()
+    expect(screen.getByText('Sprint 2')).toBeInTheDocument()
+  })
+
+  it('shows color picker button on cutoff line', () => {
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1', 'red')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} />)
+    expect(screen.getByLabelText('Change cutoff color')).toBeInTheDocument()
+  })
+
+  it('calls onUpdateCutoff when color changed', () => {
+    const onUpdateCutoff = vi.fn()
+    const cutoffs = [createMockCutoff('c1', 1, 'Sprint 1', 'red')]
+    render(<BacklogList {...defaultProps} cutoffs={cutoffs} onUpdateCutoff={onUpdateCutoff} />)
+
+    // Open color picker
+    fireEvent.click(screen.getByLabelText('Change cutoff color'))
+    // Click blue color
+    fireEvent.click(screen.getByLabelText('Set color to blue'))
+
+    expect(onUpdateCutoff).toHaveBeenCalledWith('c1', { color: 'blue' })
   })
 
   // Story points tests
@@ -439,5 +462,171 @@ describe('BacklogList', () => {
     const badges8SP = screen.getAllByText('8 SP')
     expect(badges3SP.length).toBeGreaterThanOrEqual(1)
     expect(badges8SP.length).toBeGreaterThanOrEqual(1)
+  })
+
+  // Selection tests
+  it('renders checkbox for each item', () => {
+    render(<BacklogList {...defaultProps} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item|deselect item/i })
+    expect(checkboxes).toHaveLength(3)
+  })
+
+  it('renders select all checkbox', () => {
+    render(<BacklogList {...defaultProps} />)
+    expect(screen.getByRole('button', { name: /select all|deselect all/i })).toBeInTheDocument()
+  })
+
+  it('selects item when checkbox clicked', () => {
+    render(<BacklogList {...defaultProps} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    // After clicking, button should change to "Deselect item"
+    expect(screen.getByRole('button', { name: /deselect item/i })).toBeInTheDocument()
+  })
+
+  it('shows action bar when item selected', () => {
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    expect(screen.getByText('1 item selected')).toBeInTheDocument()
+    expect(screen.getByText('Clear')).toBeInTheDocument()
+  })
+
+  it('shows plural "items" when multiple selected', () => {
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+    fireEvent.click(checkboxes[1])
+
+    expect(screen.getByText('2 items selected')).toBeInTheDocument()
+  })
+
+  it('clears selection when Clear clicked', () => {
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+    expect(screen.getByText('1 item selected')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Clear'))
+    expect(screen.queryByText('1 item selected')).not.toBeInTheDocument()
+  })
+
+  it('selects all items when select all clicked', () => {
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
+    const selectAllButton = screen.getByRole('button', { name: /select all/i })
+
+    fireEvent.click(selectAllButton)
+
+    expect(screen.getByText('3 items selected')).toBeInTheDocument()
+  })
+
+  it('deselects all items when select all clicked with all selected', () => {
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
+
+    // First select all
+    const selectAllButton = screen.getByRole('button', { name: /select all/i })
+    fireEvent.click(selectAllButton)
+    expect(screen.getByText('3 items selected')).toBeInTheDocument()
+
+    // Then deselect all
+    const deselectAllButton = screen.getByRole('button', { name: /deselect all/i })
+    fireEvent.click(deselectAllButton)
+    expect(screen.queryByText('3 items selected')).not.toBeInTheDocument()
+  })
+
+  it('calls onDeleteMultiple when delete action clicked', () => {
+    const onDeleteMultiple = vi.fn()
+    render(<BacklogList {...defaultProps} onDeleteMultiple={onDeleteMultiple} onStatusChangeMultiple={vi.fn()} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    // Find the Delete button in the action bar (not the individual delete buttons)
+    const deleteButton = screen.getByRole('toolbar').querySelector('button')
+    const actionBarDeleteButton = screen.getByRole('toolbar').querySelectorAll('button')
+    const deleteInToolbar = Array.from(actionBarDeleteButton).find(btn => btn.textContent?.includes('Delete'))
+    fireEvent.click(deleteInToolbar!)
+
+    expect(onDeleteMultiple).toHaveBeenCalled()
+  })
+
+  it('shows Set Status dropdown in action bar', () => {
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    expect(screen.getByRole('button', { name: /set status/i })).toBeInTheDocument()
+  })
+
+  it('calls onStatusChangeMultiple when status option clicked', () => {
+    const onStatusChangeMultiple = vi.fn()
+    render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={onStatusChangeMultiple} />)
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    // Open status dropdown
+    fireEvent.click(screen.getByRole('button', { name: /set status/i }))
+
+    // Click "In Progress" option
+    fireEvent.click(screen.getByRole('option', { name: /in progress/i }))
+
+    expect(onStatusChangeMultiple).toHaveBeenCalledWith(['3'], 'in_progress') // Item '3' is first due to sorting
+  })
+
+  it('shows Assign Period dropdown when periods provided', () => {
+    const periods = [
+      { id: 'p1', session_id: 'session-1', name: 'Now', position: 0, width: 4, created_at: '2024-01-01' },
+      { id: 'p2', session_id: 'session-1', name: 'Next', position: 1, width: 4, created_at: '2024-01-01' },
+    ]
+    render(
+      <BacklogList
+        {...defaultProps}
+        periods={periods}
+        onDeleteMultiple={vi.fn()}
+        onStatusChangeMultiple={vi.fn()}
+        onAssignPeriod={vi.fn()}
+      />
+    )
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    expect(screen.getByRole('button', { name: /assign period/i })).toBeInTheDocument()
+  })
+
+  it('calls onAssignPeriod when period option clicked', () => {
+    const onAssignPeriod = vi.fn()
+    const periods = [
+      { id: 'p1', session_id: 'session-1', name: 'Now', position: 0, width: 4, created_at: '2024-01-01' },
+      { id: 'p2', session_id: 'session-1', name: 'Next', position: 1, width: 4, created_at: '2024-01-01' },
+    ]
+    render(
+      <BacklogList
+        {...defaultProps}
+        periods={periods}
+        onDeleteMultiple={vi.fn()}
+        onStatusChangeMultiple={vi.fn()}
+        onAssignPeriod={onAssignPeriod}
+      />
+    )
+    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+
+    fireEvent.click(checkboxes[0])
+
+    // Open period dropdown
+    fireEvent.click(screen.getByRole('button', { name: /assign period/i }))
+
+    // Click "Next" option
+    fireEvent.click(screen.getByRole('option', { name: 'Next' }))
+
+    expect(onAssignPeriod).toHaveBeenCalledWith(['3'], 1) // Item '3' is first, period position 1
   })
 })

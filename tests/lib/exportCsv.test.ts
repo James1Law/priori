@@ -30,8 +30,8 @@ describe('generateCsvContent', () => {
     const csv = generateCsvContent({ items, framework: 'rice' })
     const lines = csv.split('\n')
 
-    expect(lines[0]).toBe('Rank,Title,Description,Created By,Reach,Impact,Confidence,Effort,RICE Score')
-    expect(lines[1]).toBe('1,Test Item,Test description,Alice,1000,2,0.8,4,400.00')
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By,Reach,Impact,Confidence,Effort,RICE Score')
+    expect(lines[1]).toBe('1,Test Item,Test description,To Do,Alice,1000,2,0.8,4,400.00')
   })
 
   it('generates CSV for ICE framework', () => {
@@ -51,8 +51,8 @@ describe('generateCsvContent', () => {
     const csv = generateCsvContent({ items, framework: 'ice' })
     const lines = csv.split('\n')
 
-    expect(lines[0]).toBe('Rank,Title,Description,Created By,Impact,Confidence,Ease,ICE Score')
-    expect(lines[1]).toBe('1,Test Item,Test description,Alice,8,7,6,7.00')
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By,Impact,Confidence,Ease,ICE Score')
+    expect(lines[1]).toBe('1,Test Item,Test description,To Do,Alice,8,7,6,7.00')
   })
 
   it('generates CSV for Value vs Effort framework', () => {
@@ -72,8 +72,8 @@ describe('generateCsvContent', () => {
     const csv = generateCsvContent({ items, framework: 'value_effort' })
     const lines = csv.split('\n')
 
-    expect(lines[0]).toBe('Rank,Title,Description,Created By,Value,Effort,Quadrant')
-    expect(lines[1]).toBe('1,Test Item,Test description,Alice,8,3,Quick Wins')
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By,Value,Effort,Quadrant')
+    expect(lines[1]).toBe('1,Test Item,Test description,To Do,Alice,8,3,Quick Wins')
   })
 
   it('generates CSV for MoSCoW framework', () => {
@@ -93,8 +93,8 @@ describe('generateCsvContent', () => {
     const csv = generateCsvContent({ items, framework: 'moscow' })
     const lines = csv.split('\n')
 
-    expect(lines[0]).toBe('Rank,Title,Description,Created By,Category')
-    expect(lines[1]).toBe('1,Test Item,Test description,Alice,Must Have')
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By,Category')
+    expect(lines[1]).toBe('1,Test Item,Test description,To Do,Alice,Must Have')
   })
 
   it('generates CSV for Weighted framework', () => {
@@ -114,8 +114,8 @@ describe('generateCsvContent', () => {
     const csv = generateCsvContent({ items, framework: 'weighted' })
     const lines = csv.split('\n')
 
-    expect(lines[0]).toBe('Rank,Title,Description,Created By,Weighted Score')
-    expect(lines[1]).toBe('1,Test Item,Test description,Alice,7.33')
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By,Weighted Score')
+    expect(lines[1]).toBe('1,Test Item,Test description,To Do,Alice,7.33')
   })
 
   it('escapes commas in content', () => {
@@ -153,7 +153,8 @@ describe('generateCsvContent', () => {
     const lines = csv.split('\n')
 
     expect(lines.length).toBe(1) // Header only
-    expect(lines[0]).toBe('Rank,Title,Description,Created By,Reach,Impact,Confidence,Effort,RICE Score')
+    // Empty array has no scores, so only base columns are shown
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By')
   })
 
   it('handles items without scores', () => {
@@ -162,6 +163,8 @@ describe('generateCsvContent', () => {
     const csv = generateCsvContent({ items, framework: 'rice' })
     const lines = csv.split('\n')
 
-    expect(lines[1]).toBe('1,Test Item,Test description,Alice,0,1,0.8,1,0')
+    // Items without scores don't have score columns (progressive disclosure)
+    expect(lines[0]).toBe('Rank,Title,Description,Status,Created By')
+    expect(lines[1]).toBe('1,Test Item,Test description,To Do,Alice')
   })
 })

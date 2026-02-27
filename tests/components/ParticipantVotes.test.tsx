@@ -81,33 +81,36 @@ describe('ParticipantVotes', () => {
       expect(screen.getByText('Alice (you)')).toBeInTheDocument()
     })
 
-    it('shows waiting state (dashed border) for participants who have not voted', () => {
+    it('shows waiting state (clock icon) for participants who have not voted', () => {
       render(<ParticipantVotes {...defaultProps} />)
 
-      // Check for waiting placeholder
-      const waitingIndicators = screen.getAllByText('...')
-      expect(waitingIndicators.length).toBe(3)
+      // Check for waiting state via screen reader text
+      expect(screen.getByText('Waiting for Alice to vote')).toBeInTheDocument()
+      expect(screen.getByText('Waiting for Bob to vote')).toBeInTheDocument()
+      expect(screen.getByText('Waiting for Charlie to vote')).toBeInTheDocument()
     })
   })
 
   describe('Waiting State', () => {
-    it('shows dashed placeholder for unvoted participant', () => {
+    it('shows waiting indicator for unvoted participant', () => {
       const votes = [createVote('Alice', 5)]
       render(<ParticipantVotes {...defaultProps} votes={votes} />)
 
-      // Bob and Charlie should still show waiting state
-      const waitingIndicators = screen.getAllByText('...')
-      expect(waitingIndicators.length).toBe(2)
+      // Bob and Charlie should still show waiting state (via screen reader text)
+      expect(screen.getByText('Waiting for Bob to vote')).toBeInTheDocument()
+      expect(screen.getByText('Waiting for Charlie to vote')).toBeInTheDocument()
+      // Alice should show voted state
+      expect(screen.getByText('Alice has voted')).toBeInTheDocument()
     })
   })
 
   describe('Voted State (Hidden)', () => {
-    it('shows face-down card when voted but not revealed', () => {
+    it('shows ready indicator when voted but not revealed', () => {
       const votes = [createVote('Alice', 5)]
       render(<ParticipantVotes {...defaultProps} votes={votes} revealed={false} />)
 
-      // Should show checkmark on the face-down card
-      expect(screen.getByText('✓')).toBeInTheDocument()
+      // Should show "has voted" in screen reader text
+      expect(screen.getByText('Alice has voted')).toBeInTheDocument()
     })
 
     it('does not show vote value when not revealed', () => {
@@ -182,7 +185,7 @@ describe('ParticipantVotes', () => {
 
       const aliceText = screen.getByText('Alice (you)')
       const aliceCard = aliceText.closest('div[class*="rounded-lg"]')
-      expect(aliceCard).toHaveClass('bg-indigo-100', 'border-indigo-200')
+      expect(aliceCard).toHaveClass('bg-indigo-50', 'border-indigo-200')
     })
   })
 
@@ -287,9 +290,8 @@ describe('ParticipantVotes', () => {
 
       // 2 of 3 voted (Alice and Bob)
       expect(screen.getByText('2 of 3 voted')).toBeInTheDocument()
-      // Charlie should show waiting state
-      const waitingIndicators = screen.getAllByText('...')
-      expect(waitingIndicators.length).toBe(1) // Only Charlie waiting
+      // Charlie should show waiting state (via screen reader text)
+      expect(screen.getByText('Waiting for Charlie to vote')).toBeInTheDocument()
     })
 
     it('handles vote updates from same participant (changing vote before reveal)', () => {

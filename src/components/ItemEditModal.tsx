@@ -1,11 +1,17 @@
 import { useState, FormEvent } from 'react'
-import type { Item } from '../types/database'
+import type { Item, ItemStatus } from '../types/database'
 
 interface ItemEditModalProps {
   item: Item
   onSave: (item: Item) => void
   onCancel: () => void
 }
+
+const STATUS_OPTIONS: { value: ItemStatus; label: string; className: string }[] = [
+  { value: 'todo', label: 'To Do', className: 'bg-gray-50 text-gray-600 border-gray-200' },
+  { value: 'in_progress', label: 'In Progress', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { value: 'done', label: 'Done', className: 'bg-green-50 text-green-700 border-green-200' },
+]
 
 export default function ItemEditModal({
   item,
@@ -14,6 +20,7 @@ export default function ItemEditModal({
 }: ItemEditModalProps) {
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description || '')
+  const [status, setStatus] = useState<ItemStatus>(item.status || 'todo')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -26,6 +33,7 @@ export default function ItemEditModal({
       ...item,
       title: title.trim(),
       description: description.trim() || null,
+      status,
     })
   }
 
@@ -68,6 +76,28 @@ export default function ItemEditModal({
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <div className="flex gap-2">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setStatus(opt.value)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                    status === opt.value
+                      ? `${opt.className} ring-2 ring-offset-1 ring-indigo-500`
+                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-3 justify-end pt-4">

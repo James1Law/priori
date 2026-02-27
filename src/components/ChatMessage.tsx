@@ -11,16 +11,6 @@ function formatTime(dateString: string): string {
 }
 
 export default function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
-  // System messages (join/leave)
-  if (message.message_type === 'system') {
-    return (
-      <div data-testid="chat-message" className="flex justify-center">
-        <span className="text-xs text-gray-500 italic">{message.content}</span>
-      </div>
-    )
-  }
-
-  // User messages
   return (
     <div
       data-testid="chat-message"

@@ -1,8 +1,15 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import RiceScoring from '../../src/components/RiceScoring'
 
 describe('RiceScoring', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   const defaultProps = {
     reach: 1000,
     impact: 1,
@@ -60,6 +67,9 @@ describe('RiceScoring', () => {
 
     const reachInput = screen.getByLabelText(/reach/i)
     fireEvent.change(reachInput, { target: { value: '2000' } })
+
+    // onChange is debounced for text inputs
+    act(() => { vi.advanceTimersByTime(500) })
 
     expect(onChange).toHaveBeenCalledWith({
       reach: 2000,

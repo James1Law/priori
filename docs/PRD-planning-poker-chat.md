@@ -281,14 +281,14 @@ Handle edge cases in real-time sync.
 
 ### Acceptance Criteria
 
-- [x] Chat accessible from participant indicator (tap to open)
-- [x] Desktop: collapsible right sidebar panel (320px)
-- [x] Mobile: full-screen modal overlay (matches existing app modal patterns)
-- [x] Messages persist and sync in real-time via Supabase Realtime
-- [x] Unread badge on participant indicator when new messages arrive (chat closed)
-- [x] Typing indicators show who is composing a message
-- [x] System messages for participant joins/leaves
-- [x] Works across all views (Scoring, Estimates, Backlog, Roadmap)
+- [ ] Chat accessible from participant indicator (tap to open)
+- [ ] Desktop: collapsible right sidebar panel (320px)
+- [ ] Mobile: full-screen modal overlay (matches existing app modal patterns)
+- [ ] Messages persist and sync in real-time via Supabase Realtime
+- [ ] Unread badge on participant indicator when new messages arrive (chat closed)
+- [ ] Typing indicators show who is composing a message
+- [ ] System messages for participant joins/leaves
+- [ ] Works across all views (Scoring, Estimates, Backlog, Roadmap)
 
 ### UI Design (Updated January 2026)
 
@@ -325,7 +325,7 @@ Handle edge cases in real-time sync.
 
 ### Data Model Changes
 
-**New table: ****`messages`**
+**New table: \****`messages`**
 ```sql
 CREATE TABLE messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -360,8 +360,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 Set up the messages table and core data fetching hook.
 
 **Tasks:**
-- [x] Create migration `011_add_chat_support.sql`
-- [x] Create `useMessages` hook with:
+- [ ] Create migration `011_add_chat_support.sql`
+- [ ] Create `useMessages` hook with:
   - `messages` array state
   - `sendMessage(content: string)` function
   - `loading` and `error` states
@@ -385,13 +385,13 @@ describe('useMessages', () => {
 Create the basic chat UI structure for desktop.
 
 **Tasks:**
-- [x] Create `ChatPanel` component
-- [x] Props: `isOpen`, `onClose`, `sessionId`, `currentUser`, `messages`, `loading`, `onSendMessage`
-- [x] Fixed 320px width sidebar
-- [x] Header: "Team Chat" title + close (×) button
-- [x] Message list area (flex-1, overflow-y-auto)
-- [x] Input area: text input + "Send" button
-- [x] Styled with Tailwind (matches app design system)
+- [ ] Create `ChatPanel` component
+- [ ] Props: `isOpen`, `onClose`, `sessionId`, `currentUser`, `messages`, `loading`, `onSendMessage`
+- [ ] Fixed 320px width sidebar
+- [ ] Header: "Team Chat" title + close (×) button
+- [ ] Message list area (flex-1, overflow-y-auto)
+- [ ] Input area: text input + "Send" button
+- [ ] Styled with Tailwind (matches app design system)
 
 **Tests:**
 ```typescript
@@ -410,13 +410,13 @@ describe('ChatPanel', () => {
 Render individual messages in the chat panel.
 
 **Tasks:**
-- [x] Create `ChatMessage` component
-- [x] Props: `message`, `isOwnMessage`
-- [x] Display: participant name, timestamp (relative, e.g., "2:34 PM"), content
-- [x] Own messages: right-aligned, indigo background (#eef2ff)
-- [x] Others' messages: left-aligned, grey background (#f3f4f6)
-- [x] System messages: centred, smaller text, grey colour
-- [x] Integrate into ChatPanel with auto-scroll to bottom
+- [ ] Create `ChatMessage` component
+- [ ] Props: `message`, `isOwnMessage`
+- [ ] Display: participant name, timestamp (relative, e.g., "2:34 PM"), content
+- [ ] Own messages: right-aligned, indigo background (#eef2ff)
+- [ ] Others' messages: left-aligned, grey background (#f3f4f6)
+- [ ] System messages: centred, smaller text, grey colour
+- [ ] Integrate into ChatPanel with auto-scroll to bottom
 
 **Tests:**
 ```typescript
@@ -442,10 +442,10 @@ describe('ChatPanel message display', () => {
 Enable users to send messages.
 
 **Tasks:**
-- [x] Send message on Enter key press (not Shift+Enter)
-- [x] Send message on Send button click
-- [x] Clear input after successful send
-- [x] Disable send button when input is empty
+- [ ] Send message on Enter key press (not Shift+Enter)
+- [ ] Send message on Send button click
+- [ ] Clear input after successful send
+- [ ] Disable send button when input is empty
 - [x] Optimistic updates for responsive UX
 
 **Tests:**
@@ -465,12 +465,12 @@ describe('ChatPanel sending', () => {
 Sync messages across participants using Supabase Realtime.
 
 **Tasks:**
-- [x] Add Realtime subscription to `useMessages` hook
-- [x] Subscribe to INSERT events on messages table
-- [x] Filter by session_id
-- [x] Append new messages to local state
-- [x] Deduplicate own messages (already added optimistically)
-- [x] Clean up subscription on unmount
+- [ ] Add Realtime subscription to `useMessages` hook
+- [ ] Subscribe to INSERT events on messages table
+- [ ] Filter by session_id
+- [ ] Append new messages to local state
+- [ ] Deduplicate own messages (already added optimistically)
+- [ ] Clean up subscription on unmount
 - [x] State lifted to SessionPage to avoid multiple hook instances
 
 **Tests:**
@@ -489,11 +489,11 @@ describe('useMessages realtime', () => {
 Update the header participant indicator to include chat access.
 
 **Tasks:**
-- [x] Combined button: `[green dot] [count] [chat icon]`
-- [x] Click toggles chat panel open/closed
-- [x] Add `isChatOpen` state to SessionPage
-- [x] Pass toggle handler to indicator
-- [x] Chat panel positioned alongside main content
+- [ ] Combined button: `[green dot] [count] [chat icon]`
+- [ ] Click toggles chat panel open/closed
+- [ ] Add `isChatOpen` state to SessionPage
+- [ ] Pass toggle handler to indicator
+- [ ] Chat panel positioned alongside main content
 
 **Tests:**
 ```typescript
@@ -511,11 +511,11 @@ describe('ParticipantIndicator with chat', () => {
 Show unread count when new messages arrive while chat is closed.
 
 **Tasks:**
-- [x] Track `lastReadAt` timestamp in localStorage (per session)
-- [x] Update `lastReadAt` when chat panel opens
-- [x] Calculate unread count: messages after `lastReadAt`
-- [x] Display red badge with count on participant indicator
-- [x] Badge hidden when count is 0
+- [ ] Track `lastReadAt` timestamp in localStorage (per session)
+- [ ] Update `lastReadAt` when chat panel opens
+- [ ] Calculate unread count: messages after `lastReadAt`
+- [ ] Display red badge with count on participant indicator
+- [ ] Badge hidden when count is 0
 - [x] Updates lastReadAt when messages arrive while chat is open
 
 **Tests:**
@@ -540,11 +540,11 @@ describe('ParticipantIndicator unread badge', () => {
 Show when others are composing messages.
 
 **Tasks:**
-- [x] Create `useTypingIndicator` hook
-- [x] Use Supabase Presence to broadcast typing state
-- [x] Clear typing state after 3 seconds of inactivity
-- [x] Display typing indicator at bottom of message list
-- [x] Format: "Sarah is typing..." or "Sarah and 2 others are typing..."
+- [ ] Create `useTypingIndicator` hook
+- [ ] Use Supabase Presence to broadcast typing state
+- [ ] Clear typing state after 3 seconds of inactivity
+- [ ] Display typing indicator at bottom of message list
+- [ ] Format: "Sarah is typing..." or "Sarah and 2 others are typing..."
 
 **Tests:**
 ```typescript
@@ -570,11 +570,11 @@ describe('ChatPanel typing indicator', () => {
 Show join/leave events in the chat.
 
 **Tasks:**
-- [x] Create system messages when participant joins (via presence)
-- [x] Create system messages when participant leaves
-- [x] Store with `message_type: 'system'`
-- [x] Style differently: centred, grey, smaller text
-- [x] Don't create system message for self joining
+- [ ] Create system messages when participant joins (via presence)
+- [ ] Create system messages when participant leaves
+- [ ] Store with `message_type: 'system'`
+- [ ] Style differently: centred, grey, smaller text
+- [ ] Don't create system message for self joining
 - [x] Debounced join/leave to prevent spam on page refresh
 
 **Tests:**
@@ -592,13 +592,13 @@ describe('useMessages system messages', () => {
 Create full-screen chat experience for mobile.
 
 **Tasks:**
-- [x] Create `MobileChatModal` component
-- [x] Full-screen overlay (uses existing modal pattern)
-- [x] Header: "Team Chat" title + close (×) button
-- [x] Reuse ChatMessage component
-- [x] Input with circular send button
-- [x] Typing indicator support
-- [x] Auto-scroll on open
+- [ ] Create `MobileChatModal` component
+- [ ] Full-screen overlay (uses existing modal pattern)
+- [ ] Header: "Team Chat" title + close (×) button
+- [ ] Reuse ChatMessage component
+- [ ] Input with circular send button
+- [ ] Typing indicator support
+- [ ] Auto-scroll on open
 
 **Tests:**
 ```typescript
@@ -617,10 +617,10 @@ describe('MobileChatModal', () => {
 Add chat access to mobile header.
 
 **Tasks:**
-- [x] Update mobile header to show participant/chat indicator
-- [x] Single row: Logo | Name | [dot N chat-icon badge?] | Kebab
-- [x] Tap indicator opens MobileChatModal
-- [x] Unread badge works same as desktop
+- [ ] Update mobile header to show participant/chat indicator
+- [ ] Single row: Logo | Name | [dot N chat-icon badge?] | Kebab
+- [ ] Tap indicator opens MobileChatModal
+- [ ] Unread badge works same as desktop
 
 **Tests:**
 ```typescript
@@ -636,9 +636,9 @@ describe('Mobile chat integration', () => {
 Handle remaining edge cases and polish.
 
 **Tasks:**
-- [x] Empty state: "No messages yet. Start the conversation!"
-- [x] Long messages wrap correctly (Tailwind break-words)
-- [x] Optimistic updates prevent duplicate sends
+- [ ] Empty state: "No messages yet. Start the conversation!"
+- [ ] Long messages wrap correctly (Tailwind break-words)
+- [ ] Optimistic updates prevent duplicate sends
 
 **Tests:**
 ```typescript

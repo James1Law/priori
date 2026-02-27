@@ -1,6 +1,14 @@
 export type Framework = 'rice' | 'ice' | 'value_effort' | 'moscow' | 'weighted'
 
-export type ViewMode = 'scoring' | 'estimates' | 'backlog' | 'roadmap'
+// Legacy view modes (kept for backwards compatibility with old sessions)
+export type LegacyViewMode = 'scoring' | 'estimates' | 'backlog' | 'roadmap'
+
+// New backlog-centric view modes
+export type ViewMode = 'list' | 'roadmap'
+
+export type ItemStatus = 'todo' | 'in_progress' | 'done'
+
+export type CutoffColor = 'red' | 'amber' | 'blue' | 'green'
 
 export interface Session {
   id: string
@@ -14,6 +22,7 @@ export interface Session {
   // Planning Poker state
   current_estimation_item_id: string | null
   estimation_revealed: boolean
+  estimation_item_ids: string[] // Array of item IDs selected for estimation
   created_at: string
   updated_at: string
 }
@@ -31,6 +40,7 @@ export interface Item {
   description: string | null
   position: number
   backlog_position: number | null
+  status: ItemStatus
   created_by: string | null
   created_at: string
   // Legacy period-based positioning (kept for backward compatibility)
@@ -82,5 +92,14 @@ export interface Message {
   participant_name: string
   content: string
   message_type: MessageType
+  created_at: string
+}
+
+export interface Cutoff {
+  id: string
+  session_id: string
+  position: number
+  label: string
+  color: CutoffColor
   created_at: string
 }

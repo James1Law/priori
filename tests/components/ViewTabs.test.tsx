@@ -4,118 +4,94 @@ import ViewTabs from '../../src/components/ViewTabs'
 import type { ViewMode } from '../../src/types/database'
 
 describe('ViewTabs', () => {
-  it('renders Scoring, Estimates, Backlog, and Roadmap tabs', () => {
-    render(<ViewTabs value="scoring" onChange={vi.fn()} />)
+  it('renders List and Roadmap tabs', () => {
+    render(<ViewTabs value="list" onChange={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: /scoring/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /estimates/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /roadmap/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /list/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /roadmap/i })).toBeInTheDocument()
   })
 
   it('highlights the active tab', () => {
-    render(<ViewTabs value="scoring" onChange={vi.fn()} />)
+    render(<ViewTabs value="list" onChange={vi.fn()} />)
 
-    const scoringTab = screen.getByRole('button', { name: /scoring/i })
-    const backlogTab = screen.getByRole('button', { name: /backlog/i })
+    const listTab = screen.getByRole('tab', { name: /list/i })
+    const roadmapTab = screen.getByRole('tab', { name: /roadmap/i })
 
-    expect(scoringTab).toHaveClass('border-indigo-500')
-    expect(backlogTab).not.toHaveClass('border-indigo-500')
-  })
-
-  it('highlights backlog tab when selected', () => {
-    render(<ViewTabs value="backlog" onChange={vi.fn()} />)
-
-    const scoringTab = screen.getByRole('button', { name: /scoring/i })
-    const backlogTab = screen.getByRole('button', { name: /backlog/i })
-
-    expect(scoringTab).not.toHaveClass('border-indigo-500')
-    expect(backlogTab).toHaveClass('border-indigo-500')
-  })
-
-  it('calls onChange when clicking a different tab', () => {
-    const onChange = vi.fn()
-    render(<ViewTabs value="scoring" onChange={onChange} />)
-
-    const backlogTab = screen.getByRole('button', { name: /backlog/i })
-    fireEvent.click(backlogTab)
-
-    expect(onChange).toHaveBeenCalledWith('backlog')
-  })
-
-  it('calls onChange when clicking current tab', () => {
-    const onChange = vi.fn()
-    render(<ViewTabs value="scoring" onChange={onChange} />)
-
-    const scoringTab = screen.getByRole('button', { name: /scoring/i })
-    fireEvent.click(scoringTab)
-
-    expect(onChange).toHaveBeenCalledWith('scoring')
-  })
-
-  it('works with all view modes', () => {
-    const views: ViewMode[] = ['scoring', 'estimates', 'backlog', 'roadmap']
-
-    views.forEach(view => {
-      const onChange = vi.fn()
-      const { unmount } = render(<ViewTabs value={view} onChange={onChange} />)
-
-      const activeTab = screen.getByRole('button', { name: new RegExp(view, 'i') })
-      expect(activeTab).toHaveAttribute('aria-current', 'page')
-
-      unmount()
-    })
-  })
-
-  it('sets aria-current on active tab only', () => {
-    render(<ViewTabs value="backlog" onChange={vi.fn()} />)
-
-    const scoringTab = screen.getByRole('button', { name: /scoring/i })
-    const backlogTab = screen.getByRole('button', { name: /backlog/i })
-
-    expect(scoringTab).not.toHaveAttribute('aria-current')
-    expect(backlogTab).toHaveAttribute('aria-current', 'page')
-  })
-
-  it('roadmap tab has hidden lg:block class for desktop-only visibility', () => {
-    render(<ViewTabs value="scoring" onChange={vi.fn()} />)
-
-    const roadmapTab = screen.getByRole('button', { name: /roadmap/i })
-    expect(roadmapTab).toHaveClass('hidden')
-    expect(roadmapTab).toHaveClass('lg:block')
+    expect(listTab).toHaveClass('bg-white')
+    expect(roadmapTab).not.toHaveClass('bg-white')
   })
 
   it('highlights roadmap tab when selected', () => {
     render(<ViewTabs value="roadmap" onChange={vi.fn()} />)
 
-    const roadmapTab = screen.getByRole('button', { name: /roadmap/i })
-    expect(roadmapTab).toHaveClass('border-indigo-500')
+    const listTab = screen.getByRole('tab', { name: /list/i })
+    const roadmapTab = screen.getByRole('tab', { name: /roadmap/i })
+
+    expect(listTab).not.toHaveClass('bg-white')
+    expect(roadmapTab).toHaveClass('bg-white')
   })
 
-  it('calls onChange when clicking roadmap tab', () => {
+  it('calls onChange when clicking a different tab', () => {
     const onChange = vi.fn()
-    render(<ViewTabs value="scoring" onChange={onChange} />)
+    render(<ViewTabs value="list" onChange={onChange} />)
 
-    const roadmapTab = screen.getByRole('button', { name: /roadmap/i })
+    const roadmapTab = screen.getByRole('tab', { name: /roadmap/i })
     fireEvent.click(roadmapTab)
 
     expect(onChange).toHaveBeenCalledWith('roadmap')
   })
 
-  it('highlights estimates tab when selected', () => {
-    render(<ViewTabs value="estimates" onChange={vi.fn()} />)
+  it('calls onChange when clicking current tab', () => {
+    const onChange = vi.fn()
+    render(<ViewTabs value="list" onChange={onChange} />)
 
-    const estimatesTab = screen.getByRole('button', { name: /estimates/i })
-    expect(estimatesTab).toHaveClass('border-indigo-500')
+    const listTab = screen.getByRole('tab', { name: /list/i })
+    fireEvent.click(listTab)
+
+    expect(onChange).toHaveBeenCalledWith('list')
   })
 
-  it('calls onChange when clicking estimates tab', () => {
+  it('works with all view modes', () => {
+    const views: ViewMode[] = ['list', 'roadmap']
+
+    views.forEach(view => {
+      const onChange = vi.fn()
+      const { unmount } = render(<ViewTabs value={view} onChange={onChange} />)
+
+      const activeTab = screen.getByRole('tab', { name: new RegExp(view, 'i') })
+      expect(activeTab).toHaveAttribute('aria-selected', 'true')
+
+      unmount()
+    })
+  })
+
+  it('sets aria-selected on active tab only', () => {
+    render(<ViewTabs value="roadmap" onChange={vi.fn()} />)
+
+    const listTab = screen.getByRole('tab', { name: /list/i })
+    const roadmapTab = screen.getByRole('tab', { name: /roadmap/i })
+
+    expect(listTab).toHaveAttribute('aria-selected', 'false')
+    expect(roadmapTab).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('calls onChange when clicking list tab', () => {
     const onChange = vi.fn()
-    render(<ViewTabs value="scoring" onChange={onChange} />)
+    render(<ViewTabs value="roadmap" onChange={onChange} />)
 
-    const estimatesTab = screen.getByRole('button', { name: /estimates/i })
-    fireEvent.click(estimatesTab)
+    const listTab = screen.getByRole('tab', { name: /list/i })
+    fireEvent.click(listTab)
 
-    expect(onChange).toHaveBeenCalledWith('estimates')
+    expect(onChange).toHaveBeenCalledWith('list')
+  })
+
+  it('calls onChange when clicking roadmap tab', () => {
+    const onChange = vi.fn()
+    render(<ViewTabs value="list" onChange={onChange} />)
+
+    const roadmapTab = screen.getByRole('tab', { name: /roadmap/i })
+    fireEvent.click(roadmapTab)
+
+    expect(onChange).toHaveBeenCalledWith('roadmap')
   })
 })

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Weighted Criteria Editor - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Poppins', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Mobile Frame Container -->
+  <div class="max-w-sm mx-auto bg-white min-h-screen relative shadow-xl">
+
+    <!-- Simulated Mobile Header -->
+    <header class="bg-indigo-600 text-white px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-sm font-bold">P</div>
+        <span class="font-semibold">Sprint Planning</span>
+      </div>
+      <button class="p-2 hover:bg-white/10 rounded-lg">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Framework Badge -->
+    <div class="px-4 py-2 bg-gray-50 border-b">
+      <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Weighted Scoring</span>
+    </div>
+
+    <!-- Dimmed Background Content (to show context) -->
+    <div class="p-4 opacity-30 pointer-events-none">
+      <div class="space-y-3">
+        <div class="bg-white rounded-lg border p-3">
+          <p class="font-medium text-gray-900">User Authentication</p>
+          <p class="text-sm text-gray-500">Add login and signup flows</p>
+        </div>
+        <div class="bg-white rounded-lg border p-3">
+          <p class="font-medium text-gray-900">Dashboard Analytics</p>
+          <p class="text-sm text-gray-500">Usage metrics and charts</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Sheet Overlay -->
+    <div class="fixed inset-0 bg-black/40 z-40" style="max-width: 24rem; margin: 0 auto;"></div>
+
+    <!-- Bottom Sheet -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 shadow-2xl" style="max-width: 24rem; margin: 0 auto; max-height: 75vh;">
+
+      <!-- Drag Handle -->
+      <div class="flex justify-center pt-3 pb-2">
+        <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+      </div>
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-4 pb-3 border-b">
+        <h2 class="text-lg font-semibold text-gray-900">Weighted Criteria</h2>
+        <button class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="overflow-y-auto px-4 py-4 space-y-3" style="max-height: calc(75vh - 140px);">
+
+        <!-- Criterion Card 1 -->
+        <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
+          <div class="flex items-start justify-between mb-2">
+            <input
+              type="text"
+              value="Business Value"
+              class="flex-1 bg-transparent font-medium text-gray-900 border-0 focus:ring-0 p-0 text-base"
+            >
+            <button class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg ml-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Weight</span>
+            <div class="flex items-center gap-1">
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                −
+              </button>
+              <span class="w-10 text-center font-semibold text-indigo-600 text-lg">8</span>
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Criterion Card 2 -->
+        <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
+          <div class="flex items-start justify-between mb-2">
+            <input
+              type="text"
+              value="Technical Effort"
+              class="flex-1 bg-transparent font-medium text-gray-900 border-0 focus:ring-0 p-0 text-base"
+            >
+            <button class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg ml-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Weight</span>
+            <div class="flex items-center gap-1">
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                −
+              </button>
+              <span class="w-10 text-center font-semibold text-indigo-600 text-lg">3</span>
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Criterion Card 3 -->
+        <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
+          <div class="flex items-start justify-between mb-2">
+            <input
+              type="text"
+              value="Strategic Fit"
+              class="flex-1 bg-transparent font-medium text-gray-900 border-0 focus:ring-0 p-0 text-base"
+            >
+            <button class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg ml-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Weight</span>
+            <div class="flex items-center gap-1">
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                −
+              </button>
+              <span class="w-10 text-center font-semibold text-indigo-600 text-lg">5</span>
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Criterion Card 4 -->
+        <div class="bg-gray-50 rounded-xl p-3 border border-gray-200">
+          <div class="flex items-start justify-between mb-2">
+            <input
+              type="text"
+              value="User Demand"
+              class="flex-1 bg-transparent font-medium text-gray-900 border-0 focus:ring-0 p-0 text-base"
+            >
+            <button class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg ml-2 shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Weight</span>
+            <div class="flex items-center gap-1">
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                −
+              </button>
+              <span class="w-10 text-center font-semibold text-indigo-600 text-lg">6</span>
+              <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 active:bg-gray-100 font-medium">
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Add New Criterion (Sticky Footer) -->
+      <div class="border-t bg-white px-4 py-3 space-y-2">
+        <div class="flex gap-2">
+          <input
+            type="text"
+            placeholder="New criterion name..."
+            class="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+          <button class="px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 active:bg-indigo-800 shrink-0">
+            Add
+          </button>
+        </div>
+        <p class="text-xs text-gray-500 text-center">New criteria start with weight 5</p>
+      </div>
+
+    </div>
+
+    <!-- Mobile Bottom Bar (behind sheet, for context) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t z-30 opacity-30" style="max-width: 24rem; margin: 0 auto;">
+      <div class="flex justify-around py-2">
+        <button class="flex flex-col items-center px-3 py-1 text-indigo-600">
+          <span class="text-xs font-medium">Scoring</span>
+        </button>
+        <button class="flex flex-col items-center px-3 py-1 text-gray-500">
+          <span class="text-xs">Estimates</span>
+        </button>
+        <button class="flex flex-col items-center px-3 py-1 text-gray-500">
+          <span class="text-xs">Backlog</span>
+        </button>
+        <button class="flex flex-col items-center px-3 py-1 text-gray-500">
+          <span class="text-xs">Roadmap</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Annotations -->
+  <div class="max-w-sm mx-auto mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+    <h3 class="font-semibold text-yellow-800 mb-2">Design Notes</h3>
+    <ul class="text-sm text-yellow-700 space-y-1">
+      <li>• <strong>Entry point:</strong> "Manage Criteria" option in kebab menu (when weighted framework selected)</li>
+      <li>• <strong>Stepper pattern:</strong> Touch-friendly −/+ buttons for weight adjustment (1-10)</li>
+      <li>• <strong>Inline editing:</strong> Tap criterion name to edit directly</li>
+      <li>• <strong>Delete confirmation:</strong> Uses existing ConfirmModal pattern</li>
+      <li>• <strong>Auto-save:</strong> Changes save immediately (debounced)</li>
+      <li>• <strong>Reuses:</strong> Existing BottomSheet component</li>
+    </ul>
+  </div>
+
+</body>
+</html>

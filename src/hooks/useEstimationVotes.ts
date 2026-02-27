@@ -13,7 +13,8 @@ interface UseEstimationVotesReturn {
 export function useEstimationVotes(
   sessionId: string | null,
   itemId: string | null,
-  participantName: string | null
+  participantName: string | null,
+  forceRefreshKey?: number // Optional key to force re-fetch votes
 ): UseEstimationVotesReturn {
   const [votes, setVotes] = useState<EstimationVote[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,7 +45,7 @@ export function useEstimationVotes(
     } finally {
       setLoading(false)
     }
-  }, [sessionId, itemId])
+  }, [sessionId, itemId, forceRefreshKey])
 
   useEffect(() => {
     setLoading(true)

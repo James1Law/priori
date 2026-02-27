@@ -7,7 +7,7 @@ interface UseMessagesReturn {
   loading: boolean
   error: string | null
   sendMessage: (content: string) => Promise<void>
-  sendSystemMessage: (content: string) => Promise<void>
+
 }
 
 export function useMessages(
@@ -120,35 +120,10 @@ export function useMessages(
     [sessionId, participantName]
   )
 
-  // Send a system message (for join/leave events)
-  const sendSystemMessage = useCallback(
-    async (content: string) => {
-      if (!sessionId) return
-
-      try {
-        await supabase
-          .from('messages')
-          .insert([
-            {
-              session_id: sessionId,
-              participant_name: 'System',
-              content,
-              message_type: 'system',
-            } as never,
-          ])
-        // Don't add to local state - realtime subscription will handle it
-      } catch (err) {
-        console.error('Error sending system message:', err)
-      }
-    },
-    [sessionId]
-  )
-
   return {
     messages,
     loading,
     error,
     sendMessage,
-    sendSystemMessage,
   }
 }

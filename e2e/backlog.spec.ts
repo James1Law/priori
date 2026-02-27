@@ -6,21 +6,14 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
-// Helper to add an item via the slide-in panel (desktop)
+// Helper to add an item via the FAB + BottomSheet
 async function addItem(page: import('@playwright/test').Page, title: string) {
-  await page.click('[data-testid="add-item-button"]')
+  await page.locator('button[aria-label="Add item"]').click()
   await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
   await page.fill('input[placeholder="Item title (required)"]', title)
   await page.click('[data-testid="submit-item-button"]')
-  // Wait for item to appear and panel to close
+  // Wait for item to appear in the list
   await expect(page.locator(`text=${title}`)).toBeVisible({ timeout: 10000 })
-  // Wait for panel to close before continuing
-  await expect(page.locator('[data-testid="add-item-button"]')).toBeVisible({ timeout: 5000 })
-}
-
-// Helper to change framework via ViewTabs dropdown (desktop)
-async function changeFramework(page: import('@playwright/test').Page, framework: string) {
-  await page.selectOption('[data-testid="framework-selector"]', framework)
 }
 
 test.describe('Backlog View', () => {
@@ -30,61 +23,65 @@ test.describe('Backlog View', () => {
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
 
-    // Use ICE framework for simpler scoring
-    await changeFramework(page, 'ice')
-
-    // Add items
+    // Add items - backlog is now the default view
     await addItem(page, 'High priority')
     await addItem(page, 'Medium priority')
     await addItem(page, 'Low priority')
 
-    // Wait for items count to be visible
-    await expect(page.locator('text=Items (3)')).toBeVisible()
+    // Wait for all items to be visible
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(3)
   })
 
-  test('switches to backlog view', async ({ page }) => {
-    // Click on Backlog tab
-    await page.click('button:has-text("Backlog")')
-
-    // Should show backlog view
-    await expect(page.locator('text=Prioritised Backlog (3)')).toBeVisible()
-    await expect(page.locator('text=Order: Score')).toBeVisible()
+  test('shows backlog list as default view', async ({ page }) => {
+    // Should show items in the backlog list by default
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(3)
+    // Should have the List button active in bottom bar
+    await expect(page.locator('.fixed.bottom-0 button:has-text("List")')).toHaveClass(/bg-indigo-600/)
   })
 
   test('shows items with rank numbers', async ({ page }) => {
-    await page.click('button:has-text("Backlog")')
-
-    // Should show items in the backlog view
-    const articles = page.locator('article')
-    expect(await articles.count()).toBe(3)
-  })
-
-  test('displays score badges', async ({ page }) => {
-    await page.click('button:has-text("Backlog")')
-
-    // Should show ICE scores in the backlog view (desktop badges are visible)
-    // Use :visible pseudo-selector to find only visible badges
-    await expect(page.locator('text=ICE:').locator('visible=true').first()).toBeVisible()
+    // Should show items in the backlog list
+    const items = page.locator('[data-testid="backlog-item-row"]')
+    expect(await items.count()).toBe(3)
   })
 
   test('shows drag handles', async ({ page }) => {
-    await page.click('button:has-text("Backlog")')
-
     // Should have drag handles
     const dragHandles = page.locator('button[aria-label="Drag to reorder"]')
     await expect(dragHandles.first()).toBeVisible()
     expect(await dragHandles.count()).toBe(3)
   })
 
+  test('can select items with checkboxes', async ({ page }) => {
+    // Click first checkbox
+    await page.locator('button[aria-label="Select item"]').first().click()
+
+    // Action bar should appear with selection count
+    await expect(page.locator('text=1 item selected')).toBeVisible()
+
+    // Select another item
+    await page.locator('button[aria-label="Select item"]').nth(1).click()
+
+    // Should show 2 items selected
+    await expect(page.locator('text=2 items selected')).toBeVisible()
+  })
+
+  test('can open item drawer by clicking row', async ({ page }) => {
+    // Click on item row (not checkbox)
+    await page.locator('[data-testid="backlog-item-row"]').first().click()
+
+    // Drawer should open
+    await expect(page.locator('[data-testid="item-drawer"]')).toBeVisible()
+    await expect(page.locator('text=Item Details')).toBeVisible()
+  })
+
   // Note: Drag-and-drop tests with dnd-kit require complex event simulation
   // These tests are skipped for now - manual testing should verify drag functionality
   test.skip('shows reset button after manual reorder', async ({ page }) => {
-    await page.click('button:has-text("Backlog")')
     // Test skipped - dnd-kit drag simulation is complex
   })
 
   test.skip('reset to score button restores original order', async ({ page }) => {
-    await page.click('button:has-text("Backlog")')
     // Test skipped - dnd-kit drag simulation is complex
   })
 })
@@ -94,126 +91,65 @@ test.describe('View Switching', () => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
-    await changeFramework(page, 'ice')
 
     // Add items
     await addItem(page, 'Item A')
     await addItem(page, 'Item B')
 
-    await expect(page.locator('text=Items (2)')).toBeVisible()
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(2)
   })
 
-  test('can switch between scoring and backlog views', async ({ page }) => {
-    // Start in scoring view
-    await expect(page.locator('text=Items (2)')).toBeVisible()
+  test('can switch between list and roadmap views', async ({ page }) => {
+    // Start in list view (default)
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(2)
 
-    // Switch to backlog
-    await page.click('button:has-text("Backlog")')
-    await expect(page.locator('text=Prioritised Backlog (2)')).toBeVisible()
+    // Switch to roadmap via bottom bar
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
+    // Should show roadmap view (bottom bar button active)
+    await expect(page.locator('.fixed.bottom-0 button:has-text("Roadmap")')).toHaveClass(/bg-indigo-600/)
 
-    // Switch back to scoring
-    await page.click('button:has-text("Scoring")')
-    await expect(page.locator('text=Items (2)')).toBeVisible()
+    // Switch back to list
+    await page.locator('.fixed.bottom-0 button:has-text("List")').click()
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(2)
   })
 
   // Note: Drag-and-drop tests with dnd-kit require complex event simulation
-  test.skip('scoring view maintains score order after backlog reorder', async () => {
+  test.skip('list view maintains order after reorder', async () => {
     // Test skipped - dnd-kit drag simulation is complex
   })
 
-  test.skip('backlog preserves manual order when switching views', async () => {
+  test.skip('list preserves manual order when switching views', async () => {
     // Test skipped - dnd-kit drag simulation is complex
   })
 })
 
-test.describe('Framework Switching with Scores', () => {
+test.describe('Item Status', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
   })
 
-  test('creates default scores when switching frameworks', async ({ page }) => {
-    // Start with RICE framework
-    await changeFramework(page, 'rice')
+  test('items default to To Do status', async ({ page }) => {
+    await addItem(page, 'New Item')
 
-    // Add items
-    await addItem(page, 'Feature A')
-    await addItem(page, 'Feature B')
-
-    await expect(page.locator('text=Items (2)')).toBeVisible()
-
-    // Switch to backlog view
-    await page.click('button:has-text("Backlog")')
-    await expect(page.locator('text=Prioritised Backlog (2)')).toBeVisible()
-
-    // Both items should show RICE scores (not dashes)
-    // Use visible filter since badges appear twice (mobile hidden + desktop visible)
-    const riceBadges = page.locator('text=RICE:').locator('visible=true')
-    await expect(riceBadges.first()).toBeVisible()
-    expect(await riceBadges.count()).toBe(2)
-
-    // Switch back to scoring view to change framework
-    await page.click('button:has-text("Scoring")')
-
-    // Switch to ICE framework
-    await changeFramework(page, 'ice')
-
-    // Switch back to backlog
-    await page.click('button:has-text("Backlog")')
-
-    // Wait for scores to update - both items should now show ICE scores
-    const iceBadges = page.locator('text=ICE:').locator('visible=true')
-    await expect(iceBadges.first()).toBeVisible({ timeout: 10000 })
-    expect(await iceBadges.count()).toBe(2)
-
-    // No dashes should be visible in the score badges
-    const dashBadges = page.locator('article').locator('text=—').locator('visible=true')
-    expect(await dashBadges.count()).toBe(0)
+    // Should show To Do status badge in the item row (on desktop, use visible filter)
+    await expect(page.locator('article button:has-text("To Do"):visible')).toBeVisible()
   })
 
-  test('all items have scores after multiple framework switches', async ({ page }) => {
-    // Start with ICE
-    await changeFramework(page, 'ice')
+  test('can cycle status by clicking badge', async ({ page }) => {
+    await addItem(page, 'Status Test')
 
-    // Add items
-    await addItem(page, 'Task 1')
-    await addItem(page, 'Task 2')
-    await addItem(page, 'Task 3')
+    // Click To Do badge to cycle to In Progress (use :visible to get visible button)
+    await page.locator('article button:has-text("To Do"):visible').click()
+    await expect(page.locator('article button:has-text("In Progress"):visible')).toBeVisible()
 
-    await expect(page.locator('text=Items (3)')).toBeVisible()
+    // Click In Progress to cycle to Done
+    await page.locator('article button:has-text("In Progress"):visible').click()
+    await expect(page.locator('article button:has-text("Done"):visible')).toBeVisible()
 
-    // Switch to backlog
-    await page.click('button:has-text("Backlog")')
-    await expect(page.locator('text=Prioritised Backlog (3)')).toBeVisible()
-
-    // All should have ICE scores (use visible filter for desktop badges)
-    const iceBadges = page.locator('text=ICE:').locator('visible=true')
-    await expect(iceBadges.first()).toBeVisible()
-    expect(await iceBadges.count()).toBe(3)
-
-    // Switch back to scoring view to change framework
-    await page.click('button:has-text("Scoring")')
-
-    // Switch to Value vs Effort
-    await changeFramework(page, 'value_effort')
-
-    // Switch back to backlog
-    await page.click('button:has-text("Backlog")')
-    const veBadges = page.locator('text=V/E:').locator('visible=true')
-    await expect(veBadges.first()).toBeVisible({ timeout: 10000 })
-    expect(await veBadges.count()).toBe(3)
-
-    // Switch back to scoring view to change framework
-    await page.click('button:has-text("Scoring")')
-
-    // Switch to RICE
-    await changeFramework(page, 'rice')
-
-    // Switch back to backlog
-    await page.click('button:has-text("Backlog")')
-    const riceBadges = page.locator('text=RICE:').locator('visible=true')
-    await expect(riceBadges.first()).toBeVisible({ timeout: 10000 })
-    expect(await riceBadges.count()).toBe(3)
+    // Click Done to cycle back to To Do
+    await page.locator('article button:has-text("Done"):visible').click()
+    await expect(page.locator('article button:has-text("To Do"):visible')).toBeVisible()
   })
 })

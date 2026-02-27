@@ -1,94 +1,151 @@
-import type { ItemWithScore, Framework } from '../types/database'
+import type { ItemWithScore, Framework, RoadmapPeriod } from '../types/database'
 import { MoscowCategory, MOSCOW_LABELS } from './moscow'
 
 interface ExportOptions {
   items: ItemWithScore[]
   framework: Framework
   sessionName?: string
+  periods?: RoadmapPeriod[]
+}
+
+/**
+ * Get the period name for an item based on its quadrant position
+ */
+function getItemPeriodName(item: ItemWithScore, periods: RoadmapPeriod[]): string {
+  if (item.roadmap_start_quadrant === null || item.roadmap_start_quadrant === undefined || periods.length === 0) {
+    return ''
+  }
+  // Each period has 4 quadrants, find which period the start quadrant belongs to
+  const periodIndex = Math.floor(item.roadmap_start_quadrant / 4)
+  const period = periods.find(p => p.position === periodIndex)
+  return period?.name || ''
+}
+
+/**
+ * Format status for display
+ */
+function formatStatus(status: string | undefined): string {
+  switch (status) {
+    case 'in_progress':
+      return 'In Progress'
+    case 'done':
+      return 'Done'
+    case 'todo':
+    default:
+      return 'To Do'
+  }
 }
 
 /**
  * Generate CSV content from items
  */
-export function generateCsvContent({ items, framework }: ExportOptions): string {
+export function generateCsvContent({ items, framework, periods = [] }: ExportOptions): string {
   const rows: string[][] = []
 
-  // Header row based on framework
-  const baseHeaders = ['Rank', 'Title', 'Description', 'Created By']
-  let frameworkHeaders: string[] = []
+  // Check what data we have to determine columns
+  const hasAnyScores = items.some(item => item.score?.calculated_score !== undefined && item.score?.calculated_score !== null)
+  const hasAnyEstimates = items.some(item => item.story_points !== null && item.story_points !== undefined)
+  const hasAnyPeriods = items.some(item => item.roadmap_start_quadrant !== null && item.roadmap_start_quadrant !== undefined)
 
-  switch (framework) {
-    case 'rice':
-      frameworkHeaders = ['Reach', 'Impact', 'Confidence', 'Effort', 'RICE Score']
-      break
-    case 'ice':
-      frameworkHeaders = ['Impact', 'Confidence', 'Ease', 'ICE Score']
-      break
-    case 'value_effort':
-      frameworkHeaders = ['Value', 'Effort', 'Quadrant']
-      break
-    case 'moscow':
-      frameworkHeaders = ['Category']
-      break
-    case 'weighted':
-      frameworkHeaders = ['Weighted Score']
-      break
+  // Header row - always include base columns, conditionally add others
+  const headers = ['Rank', 'Title', 'Description', 'Status', 'Created By']
+
+  // Add estimate column if any items have estimates
+  if (hasAnyEstimates) {
+    headers.push('Story Points')
   }
 
-  rows.push([...baseHeaders, ...frameworkHeaders])
+  // Add period column if any items are scheduled
+  if (hasAnyPeriods) {
+    headers.push('Period')
+  }
+
+  // Add framework-specific headers if any items have scores
+  if (hasAnyScores) {
+    switch (framework) {
+      case 'rice':
+        headers.push('Reach', 'Impact', 'Confidence', 'Effort', 'RICE Score')
+        break
+      case 'ice':
+        headers.push('Impact', 'Confidence', 'Ease', 'ICE Score')
+        break
+      case 'value_effort':
+        headers.push('Value', 'Effort', 'Quadrant')
+        break
+      case 'moscow':
+        headers.push('Category')
+        break
+      case 'weighted':
+        headers.push('Weighted Score')
+        break
+    }
+  }
+
+  rows.push(headers)
 
   // Data rows
   items.forEach((item, index) => {
-    const baseData = [
+    const rowData: string[] = [
       String(index + 1),
       item.title,
       item.description || '',
+      formatStatus(item.status),
       item.created_by || '',
     ]
 
-    let frameworkData: string[] = []
-    const criteria = item.score?.criteria || {}
-
-    switch (framework) {
-      case 'rice':
-        frameworkData = [
-          String(criteria.reach || 0),
-          String(criteria.impact || 1),
-          String(criteria.confidence || 0.8),
-          String(criteria.effort || 1),
-          String(item.score?.calculated_score?.toFixed(2) || '0'),
-        ]
-        break
-      case 'ice':
-        frameworkData = [
-          String(criteria.impact || 5),
-          String(criteria.confidence || 5),
-          String(criteria.ease || 5),
-          String(item.score?.calculated_score?.toFixed(2) || '0'),
-        ]
-        break
-      case 'value_effort':
-        const value = (criteria.value as number) || 5
-        const effort = (criteria.effort as number) || 5
-        const quadrant = getQuadrantLabel(value, effort)
-        frameworkData = [
-          String(value),
-          String(effort),
-          quadrant,
-        ]
-        break
-      case 'moscow':
-        const category = (criteria.category as string) || MoscowCategory.Must
-        frameworkData = [MOSCOW_LABELS[category as MoscowCategory] || category]
-        break
-      case 'weighted':
-        frameworkData = [
-          String(item.score?.calculated_score?.toFixed(2) || '0'),
-        ]
-        break
+    // Add estimate if column exists
+    if (hasAnyEstimates) {
+      rowData.push(item.story_points !== null && item.story_points !== undefined ? String(item.story_points) : '')
     }
 
-    rows.push([...baseData, ...frameworkData])
+    // Add period if column exists
+    if (hasAnyPeriods) {
+      rowData.push(getItemPeriodName(item, periods))
+    }
+
+    // Add framework-specific data if scores exist
+    if (hasAnyScores) {
+      const criteria = item.score?.criteria || {}
+
+      switch (framework) {
+        case 'rice':
+          rowData.push(
+            String(criteria.reach || ''),
+            String(criteria.impact || ''),
+            String(criteria.confidence || ''),
+            String(criteria.effort || ''),
+            item.score?.calculated_score !== undefined ? String(item.score.calculated_score.toFixed(2)) : ''
+          )
+          break
+        case 'ice':
+          rowData.push(
+            String(criteria.impact || ''),
+            String(criteria.confidence || ''),
+            String(criteria.ease || ''),
+            item.score?.calculated_score !== undefined ? String(item.score.calculated_score.toFixed(2)) : ''
+          )
+          break
+        case 'value_effort':
+          const value = criteria.value as number | undefined
+          const effort = criteria.effort as number | undefined
+          const quadrant = value !== undefined && effort !== undefined ? getQuadrantLabel(value, effort) : ''
+          rowData.push(
+            value !== undefined ? String(value) : '',
+            effort !== undefined ? String(effort) : '',
+            quadrant
+          )
+          break
+        case 'moscow':
+          const category = criteria.category as string | undefined
+          rowData.push(category ? (MOSCOW_LABELS[category as MoscowCategory] || category) : '')
+          break
+        case 'weighted':
+          rowData.push(item.score?.calculated_score !== undefined ? String(item.score.calculated_score.toFixed(2)) : '')
+          break
+      }
+    }
+
+    rows.push(rowData)
   })
 
   // Convert to CSV string

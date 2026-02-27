@@ -1788,34 +1788,33 @@
     <div>
       <div class="mobile-frame">
         <div class="mobile-screen">
-          <!-- Header (matching actual app) -->
-          <div class="mobile-header">
+          <!-- Header (matching actual app - single row) -->
+          <div class="mobile-header" style="padding: 3.75rem 1rem 0.75rem;">
             <div class="mobile-header-row">
               <div class="mobile-header-left">
                 <div class="mobile-logo">
                   <div class="mobile-logo-triangle"></div>
                 </div>
-                <div>
-                  <div class="mobile-session-title font-display">Sprint 24</div>
-                  <div class="mobile-session-slug">Session: m5jgf1</div>
+                <div class="mobile-session-title font-display">New name</div>
+              </div>
+              <div class="mobile-header-right" style="display: flex; align-items: center; gap: 0.5rem;">
+                <!-- Participant count with chat icon -->
+                <div class="mobile-participant-chat-btn" style="cursor: pointer;">
+                  <span class="online-dot"></span>
+                  <span class="participant-count">1</span>
+                  <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                  </svg>
+                  <span class="unread-badge">2</span>
                 </div>
-              </div>
-            </div>
-            <div class="mobile-header-row">
-              <!-- Combined participant + chat button (like desktop) -->
-              <div class="mobile-participant-chat-btn">
-                <span class="online-dot"></span>
-                <span class="participant-count">4</span>
-                <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                </svg>
-                <span class="unread-badge">2</span>
-              </div>
-              <div class="mobile-header-right">
-                <span class="mobile-header-btn">Export</span>
-                <span class="mobile-header-btn">Clear</span>
-                <span class="mobile-header-btn">Copy</span>
-                <span class="mobile-header-btn primary">New</span>
+                <!-- Kebab menu -->
+                <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #6b7280;">
+                    <circle cx="12" cy="5" r="2"/>
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="19" r="2"/>
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
@@ -1897,6 +1896,13 @@
             <button class="mobile-btn mobile-btn-primary" style="width: 100%; margin-top: 1rem;">Reveal Votes</button>
           </div>
 
+          <!-- FAB (Floating Action Button) -->
+          <div style="position: absolute; bottom: 5rem; right: 1rem; width: 56px; height: 56px; background: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
+            <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </div>
+
           <!-- Bottom Bar with View Tabs (matching actual app) -->
           <div class="mobile-bottom-bar-full">
             <div class="mobile-view-tabs">
@@ -1909,7 +1915,7 @@
         </div>
       </div>
       <p class="mobile-label">Planning Poker (Mobile)</p>
-      <p class="mobile-sublabel">View tabs at bottom, matching existing app</p>
+      <p class="mobile-sublabel">Single row header with chat + kebab menu</p>
     </div>
 
     <!-- Mobile Chat -->
@@ -2001,33 +2007,32 @@
     <div>
       <div class="mobile-frame">
         <div class="mobile-screen">
-          <!-- Header (matching actual app) -->
-          <div class="mobile-header">
+          <!-- Header (matching actual app - single row) -->
+          <div class="mobile-header" style="padding: 3.75rem 1rem 0.75rem;">
             <div class="mobile-header-row">
               <div class="mobile-header-left">
                 <div class="mobile-logo">
                   <div class="mobile-logo-triangle"></div>
                 </div>
-                <div>
-                  <div class="mobile-session-title font-display">Sprint 24</div>
-                  <div class="mobile-session-slug">Session: m5jgf1</div>
+                <div class="mobile-session-title font-display">New name</div>
+              </div>
+              <div class="mobile-header-right" style="display: flex; align-items: center; gap: 0.5rem;">
+                <!-- Participant count with chat icon -->
+                <div class="mobile-participant-chat-btn" style="cursor: pointer;">
+                  <span class="online-dot"></span>
+                  <span class="participant-count">4</span>
+                  <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                  </svg>
                 </div>
-              </div>
-            </div>
-            <div class="mobile-header-row">
-              <!-- Combined participant + chat button (like desktop) -->
-              <div class="mobile-participant-chat-btn">
-                <span class="online-dot"></span>
-                <span class="participant-count">4</span>
-                <svg width="16" height="16" fill="none" stroke="#6b7280" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                </svg>
-              </div>
-              <div class="mobile-header-right">
-                <span class="mobile-header-btn">Export</span>
-                <span class="mobile-header-btn">Clear</span>
-                <span class="mobile-header-btn">Copy</span>
-                <span class="mobile-header-btn primary">New</span>
+                <!-- Kebab menu -->
+                <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" style="color: #6b7280;">
+                    <circle cx="12" cy="5" r="2"/>
+                    <circle cx="12" cy="12" r="2"/>
+                    <circle cx="12" cy="19" r="2"/>
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
@@ -2106,6 +2111,13 @@
               <button class="mobile-btn mobile-btn-secondary" style="flex: 1;">Re-vote</button>
               <button class="mobile-btn mobile-btn-primary" style="flex: 1;">Accept & Next</button>
             </div>
+          </div>
+
+          <!-- FAB (Floating Action Button) -->
+          <div style="position: absolute; bottom: 5rem; right: 1rem; width: 56px; height: 56px; background: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
+            <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
           </div>
 
           <!-- Bottom Bar with View Tabs (matching actual app) -->

@@ -32,8 +32,13 @@ export default function ParticipantVotes({
     votesByParticipant.set(vote.participant_name, vote)
   })
 
-  // Count voted participants
-  const votedCount = votes.filter((v) => v.vote !== null).length
+  // Get set of active participant names for filtering
+  const activeParticipantNames = new Set(participants.map(p => p.name))
+
+  // Count voted participants - only count votes from active participants
+  const votedCount = votes.filter(
+    (v) => v.vote !== null && activeParticipantNames.has(v.participant_name)
+  ).length
   const totalCount = participants.length
 
   return (
@@ -58,34 +63,40 @@ export default function ParticipantVotes({
               key={participant.name}
               className={`
                 relative rounded-lg p-3 text-center transition-all
-                ${isCurrentUser ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}
+                ${isCurrentUser ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}
                 ${
                   hasVoted
                     ? revealed
-                      ? 'bg-indigo-100 border border-indigo-200'
+                      ? 'bg-indigo-50 border border-indigo-200'
                       : 'bg-green-50 border border-green-200'
-                    : 'bg-gray-50 border-2 border-dashed border-gray-300'
+                    : 'bg-gray-50 border border-gray-200'
                 }
               `}
             >
               {/* Vote display area */}
-              <div className="h-10 flex items-center justify-center mb-2">
+              <div className="h-12 flex items-center justify-center mb-2">
                 {hasVoted ? (
                   revealed ? (
-                    // Revealed state - show the vote value
-                    <span className="text-2xl font-bold text-indigo-700">
-                      {getVoteDisplay(vote?.vote ?? null)}
-                    </span>
+                    // Revealed state - show the vote value prominently
+                    <div className="w-10 h-12 bg-indigo-600 rounded-lg shadow-md flex items-center justify-center">
+                      <span className="text-xl font-bold text-white">
+                        {getVoteDisplay(vote?.vote ?? null)}
+                      </span>
+                    </div>
                   ) : (
-                    // Voted but not revealed - show face-down card
-                    <div className="w-8 h-10 bg-indigo-600 rounded shadow-sm flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">✓</span>
+                    // Voted but not revealed - show "Ready" with checkmark
+                    <div className="w-10 h-12 bg-green-500 rounded-lg shadow-md flex flex-col items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
                   )
                 ) : (
-                  // Waiting state - show placeholder
-                  <div className="w-8 h-10 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">...</span>
+                  // Waiting state - show hourglass/waiting indicator
+                  <div className="w-10 h-12 bg-gray-100 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                 )}
               </div>

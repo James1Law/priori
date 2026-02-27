@@ -7,12 +7,11 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
-// Helper to add an item via the slide-in panel (desktop)
+// Helper to add an item via the FAB + BottomSheet
 async function addItem(page: import('@playwright/test').Page, title: string, description?: string) {
-  // Click "Add Item" button in the ViewTabs
-  await page.click('[data-testid="add-item-button"]')
+  await page.locator('button[aria-label="Add item"]').click()
 
-  // Wait for panel to open
+  // Wait for bottom sheet to open
   await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
 
   // Fill in the form
@@ -28,11 +27,6 @@ async function addItem(page: import('@playwright/test').Page, title: string, des
   await expect(page.locator(`text=${title}`)).toBeVisible()
 }
 
-// Helper to change framework via ViewTabs dropdown (desktop)
-async function changeFramework(page: import('@playwright/test').Page, framework: string) {
-  await page.selectOption('[data-testid="framework-selector"]', framework)
-}
-
 test.describe('Session Creation and Basic Functionality', () => {
   test('creates a new session from landing page', async ({ page }) => {
     await page.goto('/')
@@ -46,9 +40,10 @@ test.describe('Session Creation and Basic Functionality', () => {
     // Dismiss name modal
     await dismissNameModal(page)
 
-    // Should show session page elements (use first() since it appears in both desktop and mobile headers)
+    // Should show session page elements
     await expect(page.locator('text=Untitled Session').first()).toBeVisible()
-    await expect(page.locator('text=Items (0)')).toBeVisible()
+    // Should have the bottom bar with view toggle
+    await expect(page.locator('.fixed.bottom-0 button:has-text("List")')).toBeVisible()
   })
 
   test('adds items to a session', async ({ page }) => {
@@ -58,28 +53,27 @@ test.describe('Session Creation and Basic Functionality', () => {
 
     // Add first item
     await addItem(page, 'First feature')
-    await expect(page.locator('text=Items (1)')).toBeVisible()
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(1)
 
     // Add second item
     await addItem(page, 'Second feature')
-    await expect(page.locator('text=Items (2)')).toBeVisible()
+    await expect(page.locator('[data-testid="backlog-item-row"]')).toHaveCount(2)
   })
 
-  test('scores items using ICE framework', async ({ page }) => {
+  test('opens item drawer when clicking an item', async ({ page }) => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
 
-    // Change to ICE framework
-    await changeFramework(page, 'ice')
-
     // Add an item
     await addItem(page, 'Test item')
 
-    // Should show ICE scoring sliders inside the article (not the select option)
-    await expect(page.locator('article').locator('label:has-text("Impact")')).toBeVisible()
-    await expect(page.locator('article').locator('label:has-text("Confidence")')).toBeVisible()
-    await expect(page.locator('article').locator('label:has-text("Ease")')).toBeVisible()
+    // Click on the item row (not checkbox) to open drawer
+    await page.locator('[data-testid="backlog-item-row"]').first().click()
+
+    // Should open the item drawer
+    await expect(page.locator('[data-testid="item-drawer"]')).toBeVisible()
+    await expect(page.locator('input[value="Test item"]')).toBeVisible()
   })
 
   test('edits session name', async ({ page }) => {
@@ -98,7 +92,7 @@ test.describe('Session Creation and Basic Functionality', () => {
     await expect(page.locator('text=My Prioritisation Session').first()).toBeVisible()
   })
 
-  test('deletes an item', async ({ page }) => {
+  test('deletes an item via drawer', async ({ page }) => {
     await page.goto('/')
     await page.click('button:has-text("Create New Session")')
     await dismissNameModal(page)
@@ -106,8 +100,11 @@ test.describe('Session Creation and Basic Functionality', () => {
     // Add an item
     await addItem(page, 'Item to delete')
 
-    // Click delete button on the item card (desktop text button)
-    await page.locator('article').locator('button:has-text("Delete")').click()
+    // Click on item to open drawer
+    await page.locator('[data-testid="backlog-item-row"]').first().click()
+
+    // Click delete button in the drawer
+    await page.locator('[data-testid="item-drawer"]').locator('button:has-text("Delete")').click()
 
     // Wait for and confirm deletion in the modal
     await expect(page.locator('role=dialog')).toBeVisible()
@@ -125,8 +122,9 @@ test.describe('Session Creation and Basic Functionality', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
 
-    // Click copy URL button
-    await page.click('button:has-text("Copy")')
+    // Open kebab menu and click Copy URL
+    await page.locator('button[aria-label="Open menu"]').click()
+    await page.getByRole('menuitem', { name: 'Copy URL' }).click()
 
     // Should show confirmation modal
     await expect(page.locator('text=URL Copied')).toBeVisible()

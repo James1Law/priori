@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, lazy, Suspense, useMemo } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData, ViewMode } from '../types/database'
@@ -7,31 +7,25 @@ import { calculateIceScore } from '../lib/ice'
 import { calculateWeightedScore, type WeightedCriterion, type WeightedItemScores } from '../lib/weighted'
 import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
-import ItemList from '../components/ItemList'
 import BacklogList from '../components/BacklogList'
-import EstimatesView from '../components/EstimatesView'
+import { type FilterState, applyFilters } from '../components/BacklogToolbar'
 import MobileRoadmapView from '../components/MobileRoadmapView'
-import ItemEditModal from '../components/ItemEditModal'
+import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
 import ConfirmModal from '../components/ConfirmModal'
-import ViewTabs from '../components/ViewTabs'
-import SlideInPanel from '../components/SlideInPanel'
 import FAB from '../components/FAB'
 import BottomSheet from '../components/BottomSheet'
 import MobileMenu from '../components/MobileMenu'
-import ChatPanel from '../components/ChatPanel'
 import MobileChatModal from '../components/MobileChatModal'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 import { useRoadmapPeriods } from '../hooks/useRoadmapPeriods'
+import { useCutoffs } from '../hooks/useCutoffs'
 import { useMessages } from '../hooks/useMessages'
 import { useUnreadCount } from '../hooks/useUnreadCount'
 
-// Lazy load components that are only used for specific frameworks/views
-const ValueEffortMatrix = lazy(() => import('../components/ValueEffortMatrix'))
-const WeightedCriteriaEditor = lazy(() => import('../components/WeightedCriteriaEditor'))
-const RoadmapView = lazy(() => import('../components/RoadmapView'))
+// Lazy load components that are only used for specific views
 
 function Logo({ className = '', id = 'header-brand' }: { className?: string; id?: string }) {
   const gradientId = `${id}-gradient`
@@ -61,9 +55,7 @@ export default function SessionPage() {
   const [items, setItems] = useState<ItemWithScore[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [editingItem, setEditingItem] = useState<Item | null>(null)
-  const [updatingScores, setUpdatingScores] = useState<Set<string>>(new Set())
-  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
+  const [editingItem, setEditingItem] = useState<ItemWithScore | null>(null)
   const [editingSessionName, setEditingSessionName] = useState(false)
   const [sessionNameInput, setSessionNameInput] = useState('')
   const [confirmModal, setConfirmModal] = useState<{
@@ -73,8 +65,8 @@ export default function SessionPage() {
     variant: 'danger' | 'warning' | 'default'
     onConfirm: () => void
   } | null>(null)
-  const [isAddPanelOpen, setIsAddPanelOpen] = useState(false)
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [notification, setNotification] = useState<{
@@ -82,8 +74,15 @@ export default function SessionPage() {
     message: string
   } | null>(null)
   // Local view state - stored per-participant, not synced to database
-  const [localView, setLocalView] = useState<ViewMode>('scoring')
-  const saveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  const [localView, setLocalView] = useState<ViewMode>('list')
+  // Filter state for backlog toolbar
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    status: 'all',
+    hasEstimate: null,
+    onRoadmap: null,
+    period: null,
+  })
   // Refs to track current values for realtime callbacks (avoids stale closure)
   const frameworkRef = useRef<Framework | undefined>(session?.framework)
   const sessionIdRef = useRef<string | undefined>(session?.id)
@@ -98,21 +97,13 @@ export default function SessionPage() {
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
 
   // Chat messages and unread count
-  const { messages, loading: messagesLoading, sendMessage, sendSystemMessage } = useMessages(session?.id || null, participantName)
+  const { messages, loading: messagesLoading, sendMessage } = useMessages(session?.id || null, participantName)
   const { unreadCount } = useUnreadCount(session?.id || null, messages, isChatOpen)
 
-  // Presence with join/leave callbacks for system messages
-  const { participants, participantCount } = usePresence(
+  // Presence tracking
+  const { participantCount } = usePresence(
     session?.id || null,
-    participantName,
-    useMemo(() => ({
-      onJoin: (name: string) => {
-        sendSystemMessage(`${name} joined the session`)
-      },
-      onLeave: (name: string) => {
-        sendSystemMessage(`${name} left the session`)
-      },
-    }), [sendSystemMessage])
+    participantName
   )
 
   // Roadmap periods
@@ -123,6 +114,14 @@ export default function SessionPage() {
     updatePeriod: updateRoadmapPeriod,
     deletePeriod: deleteRoadmapPeriod,
   } = useRoadmapPeriods(localView === 'roadmap' ? (session?.id ?? null) : null)
+
+  // Cutoffs hook
+  const {
+    cutoffs,
+    addCutoff,
+    updateCutoff,
+    deleteCutoff,
+  } = useCutoffs(session?.id ?? null)
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -139,12 +138,7 @@ export default function SessionPage() {
       // "N" key opens add item panel (desktop) or bottom sheet (mobile)
       if (e.key === 'n' || e.key === 'N') {
         e.preventDefault()
-        // Check if we're on mobile (< lg breakpoint = 1024px)
-        if (window.innerWidth < 1024) {
-          setIsAddSheetOpen(true)
-        } else {
-          setIsAddPanelOpen(true)
-        }
+        setIsAddSheetOpen(true)
       }
     }
 
@@ -514,6 +508,7 @@ export default function SessionPage() {
     const updates = {
       title: updatedItem.title,
       description: updatedItem.description,
+      status: updatedItem.status,
     }
 
     const { error: updateError } = await supabase
@@ -527,8 +522,36 @@ export default function SessionPage() {
       return
     }
 
-    setItems(items.map((item) => (item.id === updatedItem.id ? updatedItem : item)))
+    setItems(items.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem } : item)))
     setEditingItem(null)
+  }
+
+  const handleStatusChange = async (itemId: string, status: import('../types/database').ItemStatus) => {
+    // Optimistically update local state
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === itemId ? { ...item, status } : item
+      )
+    )
+
+    // Persist to database
+    const { error } = await supabase
+      .from('items')
+      .update({ status } as never)
+      .eq('id', itemId)
+
+    if (error) {
+      console.error('Error updating item status:', error)
+      // Revert on error
+      const originalItem = items.find((item) => item.id === itemId)
+      if (originalItem) {
+        setItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === itemId ? { ...item, status: originalItem.status } : item
+          )
+        )
+      }
+    }
   }
 
   const handleDeleteItem = (itemId: string) => {
@@ -556,6 +579,84 @@ export default function SessionPage() {
     })
   }
 
+  const handleDeleteMultiple = (itemIds: string[]) => {
+    setConfirmModal({
+      title: 'Delete Items',
+      message: `Are you sure you want to delete ${itemIds.length} ${itemIds.length === 1 ? 'item' : 'items'}?`,
+      confirmLabel: 'Delete',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmModal(null)
+
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .in('id', itemIds)
+
+        if (deleteError) {
+          console.error('Error deleting items:', deleteError)
+          alert('Failed to delete items. Please try again.')
+          return
+        }
+
+        setItems(items.filter((item) => !itemIds.includes(item.id)))
+      },
+    })
+  }
+
+  const handleStatusChangeMultiple = async (itemIds: string[], status: import('../types/database').ItemStatus) => {
+    // Optimistically update local state
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        itemIds.includes(item.id) ? { ...item, status } : item
+      )
+    )
+
+    // Persist to database
+    const { error } = await supabase
+      .from('items')
+      .update({ status } as never)
+      .in('id', itemIds)
+
+    if (error) {
+      console.error('Error updating items status:', error)
+      // Note: we don't revert on error for bulk operations to avoid complexity
+    }
+  }
+
+  const handleAssignPeriod = async (itemIds: string[], periodPosition: number) => {
+    if (!roadmapPeriods.length) return
+
+    // Calculate quadrant for the start of this period
+    const QUADRANTS_PER_PERIOD = 4
+    const startQuadrant = periodPosition * QUADRANTS_PER_PERIOD
+    const endQuadrant = startQuadrant // Single quadrant by default
+
+    // Optimistically update local state
+    setItems((prevItems) =>
+      prevItems.map((item) =>
+        itemIds.includes(item.id)
+          ? { ...item, roadmap_start_quadrant: startQuadrant, roadmap_end_quadrant: endQuadrant }
+          : item
+      )
+    )
+
+    // Persist to database
+    for (const itemId of itemIds) {
+      const { error } = await supabase
+        .from('items')
+        .update({
+          roadmap_start_quadrant: startQuadrant,
+          roadmap_end_quadrant: endQuadrant,
+        } as never)
+        .eq('id', itemId)
+
+      if (error) {
+        console.error('Error assigning period to item:', error)
+      }
+    }
+  }
+
   const handleClearItems = () => {
     if (!session) return
 
@@ -578,16 +679,14 @@ export default function SessionPage() {
           return
         }
 
-        // Also reset cutoff position since there are no items
-        if (session.cutoff_position !== null) {
-          const { error: updateError } = await supabase
-            .from('sessions')
-            .update({ cutoff_position: null } as never)
-            .eq('id', session.id)
+        // Also clear all cutoffs since there are no items
+        const { error: cutoffError } = await supabase
+          .from('cutoffs')
+          .delete()
+          .eq('session_id', session.id)
 
-          if (!updateError) {
-            setSession({ ...session, cutoff_position: null })
-          }
+        if (cutoffError) {
+          console.error('Error clearing cutoffs:', cutoffError)
         }
 
         setItems([])
@@ -612,83 +711,16 @@ export default function SessionPage() {
     navigate(`/s/${slug}`)
   }
 
-  const handleFrameworkChange = async (framework: Framework) => {
-    if (!session) return
-
-    const updates = { framework }
-
-    const { error: updateError } = await supabase
-      .from('sessions')
-      .update(updates as never)
-      .eq('id', session.id)
-
-    if (updateError) {
-      console.error('Error updating framework:', updateError)
-      alert('Failed to update framework. Please try again.')
-      return
-    }
-
-    setSession({ ...session, framework })
-
-    // Create default scores for items that don't have scores in the new framework
-    await createDefaultScoresForFramework(session.id, framework)
-
-    // Fetch items with the new framework's scores
-    await fetchItems(session.id, framework)
-  }
-
-  // Create default scores for all items that don't have scores in the specified framework
-  const createDefaultScoresForFramework = async (sessionId: string, framework: Framework) => {
-    // Get all item IDs for this session
-    const { data: itemsData } = await supabase
-      .from('items')
-      .select('id')
-      .eq('session_id', sessionId)
-
-    if (!itemsData || itemsData.length === 0) return
-
-    const itemIds = (itemsData as { id: string }[]).map((item) => item.id)
-
-    // Get existing scores for this framework
-    const { data: existingScores } = await supabase
-      .from('scores')
-      .select('item_id')
-      .in('item_id', itemIds)
-      .eq('framework', framework)
-
-    const scoredItemIds = new Set((existingScores as { item_id: string }[] | null)?.map((s) => s.item_id) || [])
-
-    // Find items without scores in this framework
-    const unscoredItemIds = itemIds.filter((id) => !scoredItemIds.has(id))
-
-    if (unscoredItemIds.length === 0) return
-
-    // Create default scores for unscored items
-    const defaultCriteria = getDefaultCriteria(framework)
-    const calculatedScore = calculateScore(
-      defaultCriteria as Record<string, number | string | WeightedItemScores>,
-      framework,
-      session?.weighted_criteria
-    )
-
-    const scoreRecords = unscoredItemIds.map((itemId) => ({
-      item_id: itemId,
-      framework,
-      criteria: defaultCriteria,
-      calculated_score: calculatedScore,
-    }))
-
-    await supabase
-      .from('scores')
-      .insert(scoreRecords as never)
-  }
-
   // Initialize local view from localStorage on mount
   useEffect(() => {
     if (!slug) return
     const savedView = localStorage.getItem(`priori_view_${slug}`)
-    if (savedView && ['scoring', 'estimates', 'backlog', 'roadmap'].includes(savedView)) {
-      setLocalView(savedView as ViewMode)
+    // Support new view modes, and migrate legacy views to 'list'
+    if (savedView === 'roadmap') {
+      setLocalView('roadmap')
+    } else if (savedView && ['list', 'scoring', 'estimates', 'backlog'].includes(savedView)) {
+      // Migrate legacy views to 'list'
+      setLocalView('list')
     }
   }, [slug])
 
@@ -703,76 +735,8 @@ export default function SessionPage() {
   // Check if items are in manual order (any item has backlog_position set)
   const isManualOrder = items.some((item) => item.backlog_position !== null && item.backlog_position !== undefined)
 
-  // Track the last stable sort order (when no items are being updated)
-  const [stableSortedItems, setStableSortedItems] = useState<ItemWithScore[]>([])
-  // Ref to track previous sort order for comparison (avoids infinite loop)
-  const prevSortOrderRef = useRef<string[]>([])
-  // Track the most recently edited item (for highlight animation)
-  const [recentlyEditedId, setRecentlyEditedId] = useState<string | null>(null)
-  // Track which item was last being updated
-  const lastUpdatingIdRef = useRef<string | null>(null)
-
-  // Track the item being edited
-  useEffect(() => {
-    if (updatingScores.size > 0) {
-      // Store the first item being updated
-      const updatingId = Array.from(updatingScores)[0]
-      lastUpdatingIdRef.current = updatingId
-    }
-  }, [updatingScores])
-
-  // Update stable sort order when no items are being updated
-  useEffect(() => {
-    if (updatingScores.size === 0) {
-      const sorted = [...items].sort((a, b) => {
-        const scoreA = a.score?.calculated_score || 0
-        const scoreB = b.score?.calculated_score || 0
-        return scoreB - scoreA
-      })
-
-      const newSortOrder = sorted.map((item) => item.id)
-      const prevSortOrder = prevSortOrderRef.current
-
-      // Check if the last edited item changed position
-      if (prevSortOrder.length > 0 && lastUpdatingIdRef.current) {
-        const editedId = lastUpdatingIdRef.current
-        const oldIndex = prevSortOrder.indexOf(editedId)
-        const newIndex = newSortOrder.indexOf(editedId)
-
-        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-          setRecentlyEditedId(editedId)
-          // Clear highlight after 3 seconds
-          setTimeout(() => {
-            setRecentlyEditedId(null)
-          }, 3000)
-        }
-        lastUpdatingIdRef.current = null
-      }
-
-      prevSortOrderRef.current = newSortOrder
-      setStableSortedItems(sorted)
-    }
-  }, [items, updatingScores.size])
-
-  // Get items sorted for scoring view - use stable order while editing, update data in place
-  const scoringViewItems = useMemo(() => {
-    if (updatingScores.size > 0 && stableSortedItems.length > 0) {
-      // Keep the stable order but update the item data (scores) in place
-      return stableSortedItems.map((stableItem) => {
-        const currentItem = items.find((item) => item.id === stableItem.id)
-        return currentItem || stableItem
-      }).filter((item) => items.some((i) => i.id === item.id)) // Remove deleted items
-    }
-    // No items being updated - sort normally
-    return [...items].sort((a, b) => {
-      const scoreA = a.score?.calculated_score || 0
-      const scoreB = b.score?.calculated_score || 0
-      return scoreB - scoreA
-    })
-  }, [items, updatingScores.size, stableSortedItems])
-
   // Get items sorted for backlog view (by backlog_position if set, otherwise by score)
-  const backlogViewItems = isManualOrder
+  const sortedItems = isManualOrder
     ? [...items].sort((a, b) => {
         const posA = a.backlog_position ?? Number.MAX_SAFE_INTEGER
         const posB = b.backlog_position ?? Number.MAX_SAFE_INTEGER
@@ -783,6 +747,9 @@ export default function SessionPage() {
         const scoreB = b.score?.calculated_score || 0
         return scoreB - scoreA
       })
+
+  // Apply filters to sorted items
+  const backlogViewItems = applyFilters(sortedItems, filters, roadmapPeriods)
 
   const handleBacklogReorder = async (reorderedItems: ItemWithScore[]) => {
     if (!session) return
@@ -809,67 +776,6 @@ export default function SessionPage() {
       if (error) {
         console.error('Error updating item position:', error)
       }
-    }
-  }
-
-  const handleResetBacklogOrder = async () => {
-    if (!session) return
-
-    // Reset all items to have null backlog_position
-    const resetItems = items.map((item) => ({
-      ...item,
-      backlog_position: null,
-    }))
-    setItems(resetItems)
-
-    // Persist to database
-    for (const item of items) {
-      const { error } = await supabase
-        .from('items')
-        .update({ backlog_position: null } as never)
-        .eq('id', item.id)
-
-      if (error) {
-        console.error('Error resetting item position:', error)
-      }
-    }
-  }
-
-  const handleCutoffChange = async (position: number | null) => {
-    if (!session) return
-
-    // Optimistically update local state
-    setSession({ ...session, cutoff_position: position })
-
-    // Persist to database
-    const { error } = await supabase
-      .from('sessions')
-      .update({ cutoff_position: position } as never)
-      .eq('id', session.id)
-
-    if (error) {
-      console.error('Error updating cutoff position:', error)
-      // Revert on error
-      setSession({ ...session })
-    }
-  }
-
-  const handleCutoffLabelChange = async (label: string) => {
-    if (!session) return
-
-    // Optimistically update local state
-    setSession({ ...session, cutoff_label: label })
-
-    // Persist to database
-    const { error } = await supabase
-      .from('sessions')
-      .update({ cutoff_label: label } as never)
-      .eq('id', session.id)
-
-    if (error) {
-      console.error('Error updating cutoff label:', error)
-      // Revert on error
-      setSession({ ...session })
     }
   }
 
@@ -1024,108 +930,11 @@ export default function SessionPage() {
     setEditingSessionName(true)
   }
 
-  // Handle changing the current estimation item (for Planning Poker)
-  const handleCurrentEstimationItemChange = async (itemId: string | null) => {
-    if (!session) return
+  // NOTE: Planning Poker and Scoring UI handlers removed during backlog-centric redesign.
+  // They will be re-added when Phase 3 (Dedicated Flows) is implemented.
+  // The handlers can be restored from git history if needed.
 
-    // Optimistically update local state (also reset revealed state when changing items)
-    setSession({ ...session, current_estimation_item_id: itemId, estimation_revealed: false })
-
-    // Persist to database (syncs to all participants via Realtime)
-    const { error } = await supabase
-      .from('sessions')
-      .update({ current_estimation_item_id: itemId, estimation_revealed: false } as never)
-      .eq('id', session.id)
-
-    if (error) {
-      console.error('Error updating current estimation item:', error)
-      // Revert on error
-      setSession({ ...session })
-    }
-  }
-
-  // Handle revealing votes (for Planning Poker)
-  const handleRevealVotes = async () => {
-    if (!session) return
-
-    // Optimistically update local state
-    setSession({ ...session, estimation_revealed: true })
-
-    // Persist to database (syncs to all participants via Realtime)
-    const { error } = await supabase
-      .from('sessions')
-      .update({ estimation_revealed: true } as never)
-      .eq('id', session.id)
-
-    if (error) {
-      console.error('Error revealing votes:', error)
-      // Revert on error
-      setSession({ ...session })
-    }
-  }
-
-  // Handle accepting an estimate (for Planning Poker)
-  const handleAcceptEstimate = async (itemId: string, storyPoints: number) => {
-    if (!session) return
-
-    // Optimistically update local items state
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, story_points: storyPoints } : item
-      )
-    )
-
-    // Save story points to database
-    const { error: itemError } = await supabase
-      .from('items')
-      .update({ story_points: storyPoints } as never)
-      .eq('id', itemId)
-
-    if (itemError) {
-      console.error('Error saving story points:', itemError)
-      // Revert on error - refetch items
-      return
-    }
-
-    // Clear votes for the item
-    const { error: votesError } = await supabase
-      .from('estimation_votes')
-      .delete()
-      .eq('item_id', itemId)
-
-    if (votesError) {
-      console.error('Error clearing votes:', votesError)
-    }
-  }
-
-  // Handle re-voting (for Planning Poker)
-  const handleRevote = async () => {
-    if (!session || !session.current_estimation_item_id) return
-
-    // Clear votes for current item
-    const { error: votesError } = await supabase
-      .from('estimation_votes')
-      .delete()
-      .eq('item_id', session.current_estimation_item_id)
-
-    if (votesError) {
-      console.error('Error clearing votes:', votesError)
-    }
-
-    // Reset revealed state
-    setSession({ ...session, estimation_revealed: false })
-
-    const { error: sessionError } = await supabase
-      .from('sessions')
-      .update({ estimation_revealed: false } as never)
-      .eq('id', session.id)
-
-    if (sessionError) {
-      console.error('Error resetting revealed state:', sessionError)
-    }
-  }
-
-  // Helper to calculate score based on framework
+  // Helper to calculate score based on framework (still needed for default scores on new items)
   const calculateScore = (scores: Record<string, number | string | WeightedItemScores>, framework: Framework, criteria?: WeightedCriterionData[]): number => {
     if (framework === 'rice') {
       return calculateRiceScore(scores as { reach: number; impact: number; confidence: number; effort: number })
@@ -1144,167 +953,6 @@ export default function SessionPage() {
       return calculateWeightedScore(criteria as WeightedCriterion[], itemScores)
     }
     return 0
-  }
-
-  // Handle matrix item click - highlight and scroll to item
-  const handleMatrixItemClick = (itemId: string) => {
-    setHighlightedItemId(itemId)
-    // Scroll to the item in the list
-    const element = document.getElementById(`item-${itemId}`)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-    // Clear highlight after 3 seconds
-    setTimeout(() => setHighlightedItemId(null), 3000)
-  }
-
-  // Actual score save function
-  const saveScoreToDatabase = async (
-    itemId: string,
-    scores: Record<string, number | string | WeightedItemScores>
-  ) => {
-    if (!session) return
-
-    const calculatedScore = calculateScore(scores, session.framework, session.weighted_criteria)
-
-    // Check if score exists
-    const existingItem = items.find((item) => item.id === itemId)
-    const scoreData = {
-      item_id: itemId,
-      framework: session.framework,
-      criteria: scores,
-      calculated_score: calculatedScore,
-    }
-
-    if (existingItem?.score?.id) {
-      // Update existing score
-      const { error: updateError } = await supabase
-        .from('scores')
-        .update({
-          criteria: scores,
-          calculated_score: calculatedScore,
-        } as never)
-        .eq('id', existingItem.score.id)
-
-      if (updateError) {
-        console.error('Error updating score:', updateError)
-        return
-      }
-    } else {
-      // Insert new score
-      const { error: insertError } = await supabase
-        .from('scores')
-        .insert([scoreData as never])
-
-      if (insertError) {
-        console.error('Error inserting score:', insertError)
-        return
-      }
-    }
-
-    // Re-sort items based on updated scores (no need to refetch - local state is already updated)
-    if (session && (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'weighted')) {
-      setItems((prevItems) => {
-        const sorted = [...prevItems].sort((a, b) => {
-          const scoreA = a.score?.calculated_score || 0
-          const scoreB = b.score?.calculated_score || 0
-          return scoreB - scoreA // Descending order
-        })
-        return sorted
-      })
-    }
-
-    // Remove from updating state
-    setUpdatingScores((prev) => {
-      const next = new Set(prev)
-      next.delete(itemId)
-      return next
-    })
-  }
-
-  // Handle score updates with debouncing
-  const handleScoreUpdate = (
-    itemId: string,
-    scores: Record<string, number | string | WeightedItemScores>
-  ) => {
-    if (!session) return
-
-    // Clear any existing timeout for this item
-    const existingTimeout = saveTimeouts.current.get(itemId)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
-
-    // Mark item as updating
-    setUpdatingScores((prev) => new Set(prev).add(itemId))
-
-    // Update local score immediately for instant feedback (sorting happens after save completes)
-    const calculatedScore = calculateScore(scores, session.framework, session.weighted_criteria)
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              score: {
-                id: item.score?.id || '',
-                item_id: itemId,
-                framework: session.framework,
-                criteria: scores,
-                calculated_score: calculatedScore,
-              },
-            }
-          : item
-      )
-    )
-
-    // Create new timeout for saving
-    const timeoutId = setTimeout(() => {
-      saveScoreToDatabase(itemId, scores)
-      saveTimeouts.current.delete(itemId)
-    }, 1500)
-
-    // Store timeout
-    saveTimeouts.current.set(itemId, timeoutId)
-  }
-
-  // Handle weighted criteria updates
-  const handleWeightedCriteriaChange = async (criteria: WeightedCriterionData[]) => {
-    if (!session) return
-
-    const updates = { weighted_criteria: criteria }
-
-    const { error: updateError } = await supabase
-      .from('sessions')
-      .update(updates as never)
-      .eq('id', session.id)
-
-    if (updateError) {
-      console.error('Error updating weighted criteria:', updateError)
-      alert('Failed to update criteria. Please try again.')
-      return
-    }
-
-    setSession({ ...session, weighted_criteria: criteria })
-
-    // Recalculate scores for all items with the new criteria
-    if (session.framework === 'weighted') {
-      setItems((prevItems) =>
-        prevItems.map((item) => {
-          if (item.score?.criteria) {
-            const itemScores = (item.score.criteria as { scores: WeightedItemScores }).scores || {}
-            const newCalculatedScore = calculateWeightedScore(criteria as WeightedCriterion[], itemScores)
-            return {
-              ...item,
-              score: {
-                ...item.score,
-                calculated_score: newCalculatedScore,
-              },
-            }
-          }
-          return item
-        })
-      )
-    }
   }
 
   if (loading) {
@@ -1382,135 +1030,7 @@ export default function SessionPage() {
     <div className="min-h-screen bg-gray-50 font-body">
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          {/* Desktop header - hidden on mobile */}
-          <div className="hidden lg:flex lg:items-center lg:justify-between">
-            {/* Left: Logo + Session name + ID */}
-            <div className="min-w-0 flex-1 flex items-center gap-3">
-              <a href="/" className="flex-shrink-0" title="Go to home">
-                <Logo className="w-9 h-9" />
-              </a>
-              <div className="min-w-0 flex items-center gap-3">
-                {editingSessionName ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={sessionNameInput}
-                      onChange={(e) => setSessionNameInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSessionNameSave()
-                        if (e.key === 'Escape') setEditingSessionName(false)
-                      }}
-                      placeholder="Session name"
-                      className="text-lg font-display font-semibold text-gray-900 border-b-2 border-indigo-500 bg-transparent focus:outline-none"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleSessionNameSave}
-                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingSessionName(false)}
-                      className="text-sm text-gray-500 hover:text-gray-700 font-medium"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <h1
-                      className="text-lg font-display font-semibold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate max-w-xs"
-                      onClick={startEditingSessionName}
-                      title="Click to edit session name"
-                    >
-                      {session.name || 'Untitled Session'}
-                    </h1>
-                    {!session.name && (
-                      <span className="text-sm text-gray-400 font-mono">{session.slug}</span>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Participant indicator + Actions */}
-            <div className="flex items-center gap-3">
-              {/* Participant indicator with chat toggle */}
-              {participantCount > 0 && (
-                <button
-                  onClick={() => setIsChatOpen(!isChatOpen)}
-                  className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 pr-2 border-r border-gray-200 transition-colors relative"
-                  title="Open team chat"
-                >
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <span>{participantCount}</span>
-                  <span className="relative">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-medium text-white bg-red-500 rounded-full">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              )}
-
-              {/* Session actions */}
-              <button
-                onClick={() => exportToCsv({
-                  items,
-                  framework: session.framework,
-                  sessionName: session.name || session.slug,
-                })}
-                disabled={items.length === 0 || localView !== 'scoring'}
-                title={localView !== 'scoring' ? 'Switch to Scoring view to export' : undefined}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Export CSV
-              </button>
-              <button
-                onClick={handleClearItems}
-                disabled={items.length === 0}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href)
-                  setNotification({
-                    title: 'URL Copied',
-                    message: 'Session URL has been copied to your clipboard. Share it with your team to collaborate!',
-                  })
-                }}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-1.5 px-3 rounded-md transition-colors text-sm"
-              >
-                Copy URL
-              </button>
-              <button
-                onClick={handleNewSession}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors text-sm"
-              >
-                New
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile header - visible on mobile only */}
-          <div className="lg:hidden flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <a href="/" className="flex-shrink-0" title="Go to home">
               <Logo className="w-10 h-10" id="mobile-brand" />
             </a>
@@ -1598,9 +1118,6 @@ export default function SessionPage() {
               <MobileMenu
                 isOpen={isMobileMenuOpen}
                 onClose={() => setIsMobileMenuOpen(false)}
-                view={localView}
-                framework={session.framework}
-                onFrameworkChange={handleFrameworkChange}
                 onCopyUrl={() => {
                   navigator.clipboard.writeText(window.location.href)
                   setNotification({
@@ -1612,6 +1129,7 @@ export default function SessionPage() {
                   items,
                   framework: session.framework,
                   sessionName: session.name || session.slug,
+                  periods: roadmapPeriods,
                 })}
                 onClearItems={handleClearItems}
                 onNewSession={handleNewSession}
@@ -1622,116 +1140,99 @@ export default function SessionPage() {
         </div>
       </header>
 
-      {/* View Tabs - hidden on mobile, shown on desktop */}
-      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <ViewTabs
-            value={localView}
-            onChange={handleViewChange}
-            framework={session.framework}
-            onFrameworkChange={handleFrameworkChange}
-            onAddItemClick={() => setIsAddPanelOpen(true)}
-          />
-        </div>
-      </div>
-
-      {/* Mobile framework badge - only in scoring view */}
-      {localView === 'scoring' && (
-        <div className="lg:hidden bg-gray-50 border-b border-gray-200 px-4 py-2">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <span className="font-medium">
-              {session.framework === 'rice' && 'RICE'}
-              {session.framework === 'ice' && 'ICE'}
-              {session.framework === 'value_effort' && 'Value vs Effort'}
-              {session.framework === 'moscow' && 'MoSCoW'}
-              {session.framework === 'weighted' && 'Weighted Scoring'}
-            </span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-      )}
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Main content area - full width for most views, grid for roadmap */}
-        <div className="space-y-4 sm:space-y-6 pb-24 lg:pb-0">
-            {/* Scoring View */}
-            {localView === 'scoring' && (
-              <>
-                {/* Value vs Effort Matrix */}
-                {session.framework === 'value_effort' && items.length > 0 && (
-                  <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
-                    <ValueEffortMatrix
-                      items={scoringViewItems}
-                      onItemClick={handleMatrixItemClick}
-                      selectedItemId={highlightedItemId || undefined}
-                    />
-                  </Suspense>
-                )}
-
-                <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
-                      Items ({items.length})
-                    </h2>
-                  </div>
-                  <ItemList
-                    items={scoringViewItems}
-                    framework={session.framework}
-                    onEdit={setEditingItem}
-                    onDelete={handleDeleteItem}
-                    onScoreUpdate={handleScoreUpdate}
-                    updatingScores={updatingScores}
-                    highlightedItemId={highlightedItemId || undefined}
-                    recentlyMovedItemId={recentlyEditedId}
-                    weightedCriteria={session.weighted_criteria}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Estimates View (Planning Poker) */}
-            {localView === 'estimates' && (
-              <div className="bg-white rounded-lg shadow">
-                <EstimatesView
-                  items={items}
-                  sessionId={session.id}
-                  participantName={participantName}
-                  participants={participants}
-                  currentEstimationItemId={session.current_estimation_item_id ?? null}
-                  estimationRevealed={session.estimation_revealed ?? false}
-                  onCurrentItemChange={handleCurrentEstimationItemChange}
-                  onReveal={handleRevealVotes}
-                  onAccept={handleAcceptEstimate}
-                  onRevote={handleRevote}
-                />
-              </div>
-            )}
-
-            {/* Backlog View */}
-            {localView === 'backlog' && (
+        {/* Main content area */}
+        <div className="space-y-4 sm:space-y-6 pb-24">
+            {/* List View - the main backlog-centric view */}
+            {localView === 'list' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
-                    Prioritised Backlog ({items.length})
-                  </h2>
+                {/* Compact toolbar - search + filters button */}
+                <div className="mb-4">
+                  {/* Search + Filters row */}
+                  <div className="flex items-center gap-2">
+                    {/* Search input */}
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder="Search items..."
+                        value={filters.search}
+                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                      <svg
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      {filters.search && (
+                        <button
+                          onClick={() => setFilters({ ...filters, search: '' })}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                          aria-label="Clear search"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filters button */}
+                    <button
+                      onClick={() => setIsFilterSheetOpen(true)}
+                      className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                        filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null || filters.period !== null
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                      </svg>
+                      Filters
+                      {(filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null || filters.period !== null) && (
+                        <span className="w-2 h-2 bg-indigo-600 rounded-full" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Filter summary (when active) */}
+                  {(filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null || filters.period !== null || filters.search) && backlogViewItems.length !== items.length && (
+                    <div className="flex items-center gap-2 mt-2 text-sm">
+                      <span className="text-gray-500">
+                        Showing {backlogViewItems.length} of {items.length}
+                      </span>
+                      <button
+                        onClick={() => setFilters({ search: '', status: 'all', hasEstimate: null, onRoadmap: null, period: null })}
+                        className="text-indigo-600 hover:text-indigo-800 font-medium"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
                 </div>
+
                 <BacklogList
                   items={backlogViewItems}
                   framework={session.framework}
                   isManualOrder={isManualOrder}
-                  cutoffPosition={session.cutoff_position}
-                  cutoffLabel={session.cutoff_label}
+                  cutoffs={cutoffs}
+                  periods={roadmapPeriods}
                   onEdit={setEditingItem}
                   onDelete={handleDeleteItem}
+                  onDeleteMultiple={handleDeleteMultiple}
                   onReorder={handleBacklogReorder}
-                  onResetOrder={handleResetBacklogOrder}
-                  onCutoffChange={handleCutoffChange}
-                  onCutoffLabelChange={handleCutoffLabelChange}
+                  onAddCutoff={(position) => addCutoff(position)}
+                  onUpdateCutoff={updateCutoff}
+                  onDeleteCutoff={deleteCutoff}
+                  onStatusChange={handleStatusChange}
+                  onStatusChangeMultiple={handleStatusChangeMultiple}
+                  onAssignPeriod={handleAssignPeriod}
+                  onScore={(selectedItemIds) => navigate(`/s/${slug}/score`, { state: { selectedItemIds } })}
+                  onEstimate={(selectedItemIds) => navigate(`/s/${slug}/estimate`, { state: { selectedItemIds } })}
                 />
               </div>
             )}
@@ -1739,54 +1240,27 @@ export default function SessionPage() {
             {/* Roadmap View */}
             {localView === 'roadmap' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                {/* Desktop: Roadmap timeline */}
-                <div className="hidden lg:block">
-                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                    <h2 className="text-lg sm:text-xl font-display font-semibold text-gray-900">
-                      Roadmap
-                    </h2>
-                  </div>
-                  <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-64" />}>
-                    <RoadmapView
-                      periods={roadmapPeriods}
-                      items={items}
-                      loading={roadmapPeriodsLoading}
-                      onAddPeriod={addRoadmapPeriod}
-                      onUpdatePeriod={updateRoadmapPeriod}
-                      onDeletePeriod={handleDeletePeriod}
-                      onScheduleItem={handleScheduleItem}
-                      onUnscheduleItem={handleUnscheduleItem}
-                    />
-                  </Suspense>
-                </div>
-
-                {/* Mobile: Vertical stacked roadmap */}
-                <div className="lg:hidden">
-                  <MobileRoadmapView
-                    periods={roadmapPeriods}
-                    items={items}
-                    loading={roadmapPeriodsLoading}
-                    onScheduleItem={handleScheduleItem}
-                    onAddPeriod={addRoadmapPeriod}
-                    onUpdatePeriod={updateRoadmapPeriod}
-                    onDeletePeriod={handleDeletePeriod}
-                  />
-                </div>
+                <MobileRoadmapView
+                  periods={roadmapPeriods}
+                  items={items}
+                  loading={roadmapPeriodsLoading}
+                  onScheduleItem={handleScheduleItem}
+                  onAddPeriod={addRoadmapPeriod}
+                  onUpdatePeriod={updateRoadmapPeriod}
+                  onDeletePeriod={handleDeletePeriod}
+                />
               </div>
             )}
         </div>
       </main>
 
-      {/* Mobile FAB - only visible below lg breakpoint */}
+      {/* FAB for adding items */}
       <FAB onClick={() => setIsAddSheetOpen(true)} />
 
-      {/* Mobile bottom bar - only visible below lg breakpoint */}
+      {/* Bottom tab bar */}
       <MobileBottomBar
-        framework={session.framework}
         view={localView}
-        onFrameworkChange={handleFrameworkChange}
         onViewChange={handleViewChange}
-        onAddItem={handleAddItem}
       />
 
       {/* Mobile add item bottom sheet */}
@@ -1803,13 +1277,124 @@ export default function SessionPage() {
         />
       </BottomSheet>
 
-      {editingItem && (
-        <ItemEditModal
-          item={editingItem}
-          onSave={handleEditItem}
-          onCancel={() => setEditingItem(null)}
-        />
-      )}
+      {/* Mobile filters bottom sheet */}
+      <BottomSheet
+        isOpen={isFilterSheetOpen}
+        onClose={() => setIsFilterSheetOpen(false)}
+        title="Filters"
+      >
+        <div className="space-y-4">
+          {/* Status filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'All' },
+                { value: 'todo', label: 'To Do' },
+                { value: 'in_progress', label: 'In Progress' },
+                { value: 'done', label: 'Done' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setFilters({ ...filters, status: option.value as FilterState['status'] })}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                    filters.status === option.value
+                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                      : 'bg-white border-gray-300 text-gray-700'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Toggle filters */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Quick Filters</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilters({ ...filters, hasEstimate: filters.hasEstimate === true ? null : true })}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                  filters.hasEstimate === true
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : 'bg-white border-gray-300 text-gray-700'
+                }`}
+              >
+                Estimated
+              </button>
+              <button
+                onClick={() => setFilters({ ...filters, onRoadmap: filters.onRoadmap === true ? null : true })}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                  filters.onRoadmap === true
+                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    : 'bg-white border-gray-300 text-gray-700'
+                }`}
+              >
+                On Roadmap
+              </button>
+            </div>
+          </div>
+
+          {/* Period filter */}
+          {roadmapPeriods.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Period</label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setFilters({ ...filters, period: null })}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                    filters.period === null
+                      ? 'bg-purple-50 border-purple-200 text-purple-700'
+                      : 'bg-white border-gray-300 text-gray-700'
+                  }`}
+                >
+                  All
+                </button>
+                {[...roadmapPeriods].sort((a, b) => a.position - b.position).map((period) => (
+                  <button
+                    key={period.id}
+                    onClick={() => setFilters({ ...filters, period: period.id })}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                      filters.period === period.id
+                        ? 'bg-purple-50 border-purple-200 text-purple-700'
+                        : 'bg-white border-gray-300 text-gray-700'
+                    }`}
+                  >
+                    {period.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Clear filters button */}
+          <div className="pt-2 border-t border-gray-200">
+            <button
+              onClick={() => {
+                setFilters({ search: '', status: 'all', hasEstimate: null, onRoadmap: null, period: null })
+                setIsFilterSheetOpen(false)
+              }}
+              className="w-full py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      {/* Item Drawer */}
+      <ItemDrawer
+        item={editingItem}
+        isOpen={editingItem !== null}
+        framework={session.framework}
+        periods={roadmapPeriods}
+        onClose={() => setEditingItem(null)}
+        onSave={handleEditItem}
+        onDelete={handleDeleteItem}
+        onAssignPeriod={(itemId, start, end) => handleScheduleItem(itemId, start, end)}
+        onUnassignPeriod={handleUnscheduleItem}
+      />
 
       {/* Name prompt modal */}
       {needsName && (
@@ -1840,20 +1425,7 @@ export default function SessionPage() {
         />
       )}
 
-      {/* Chat panel (desktop only) */}
-      <div className={`hidden lg:block fixed right-0 top-0 h-full z-40 transition-transform duration-300 ${isChatOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <ChatPanel
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          sessionId={session.id}
-          currentUser={participantName || 'Anonymous'}
-          messages={messages}
-          loading={messagesLoading}
-          onSendMessage={sendMessage}
-        />
-      </div>
-
-      {/* Mobile chat modal */}
+      {/* Chat modal */}
       <MobileChatModal
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
@@ -1863,29 +1435,6 @@ export default function SessionPage() {
         loading={messagesLoading}
         onSendMessage={sendMessage}
       />
-
-      {/* Add Item slide-in panel (desktop only) */}
-      <SlideInPanel
-        isOpen={isAddPanelOpen}
-        onClose={() => setIsAddPanelOpen(false)}
-        title="Add New Item"
-      >
-        {/* Weighted Criteria Editor - only show in scoring view with weighted framework */}
-        {session.framework === 'weighted' && localView === 'scoring' && (
-          <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-lg h-32 mb-4" />}>
-            <WeightedCriteriaEditor
-              criteria={session.weighted_criteria || []}
-              onChange={handleWeightedCriteriaChange}
-            />
-          </Suspense>
-        )}
-        <ItemForm
-          onAdd={(item) => {
-            handleAddItem(item)
-            setIsAddPanelOpen(false)
-          }}
-        />
-      </SlideInPanel>
 
     </div>
   )

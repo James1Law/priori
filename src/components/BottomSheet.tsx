@@ -54,7 +54,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 z-40 lg:hidden transition-opacity duration-200 motion-reduce:transition-none"
+        className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-200 motion-reduce:transition-none"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -65,7 +65,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         className={`
           fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl
           transform transition-transform duration-200 ease-out motion-reduce:transition-none
-          lg:hidden
+          lg:max-w-md lg:mx-auto
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}
         `}
         role="dialog"
