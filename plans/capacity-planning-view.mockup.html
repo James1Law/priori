@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priori — Capacity Planning View</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; color: #111827; min-height: 100vh; }
+
+  /* Header */
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  .header-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+  .session-name {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .presence {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #4b5563;
+  }
+  .presence-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .icon-btn {
+    padding: 8px;
+    border: none;
+    background: none;
+    color: #4b5563;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:hover { background: #f3f4f6; color: #111827; }
+
+  /* Main content */
+  .main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px 16px 120px;
+  }
+
+  /* Summary Cards */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+  }
+  .card-accent {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    border: none;
+    color: #fff;
+  }
+  .card-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .card-label-muted { color: #6b7280; }
+  .card-label-white { color: rgba(255,255,255,0.8); }
+  .card-value {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .card-subtitle-muted { color: #9ca3af; }
+  .card-subtitle-white { color: rgba(255,255,255,0.7); }
+
+  /* Utilisation gauge */
+  .gauge-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .gauge-ring {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+  .gauge-ring svg {
+    transform: rotate(-90deg);
+  }
+  .gauge-ring .track {
+    fill: none;
+    stroke: #e5e7eb;
+    stroke-width: 6;
+  }
+  .gauge-ring .fill {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 163.36;
+    stroke-dashoffset: 47.37;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  .gauge-pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    transform: none;
+  }
+  .gauge-detail {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Coverage progress bar */
+  .coverage-bar-bg {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .coverage-bar-fill {
+    height: 100%;
+    background: #6366f1;
+    border-radius: 3px;
+    width: 80%;
+    transition: width 0.4s ease;
+  }
+
+  /* Settings panel */
+  .settings-panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+    align-items: flex-end;
+  }
+  .setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .setting-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .setting-input {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 36px;
+  }
+  .setting-input input {
+    border: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    width: 56px;
+    height: 100%;
+    color: #111827;
+  }
+  .stepper-btn {
+    width: 32px;
+    height: 100%;
+    border: none;
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stepper-btn:hover { background: #f3f4f6; color: #374151; }
+  .stepper-btn:first-child { border-right: 1px solid #e5e7eb; }
+  .stepper-btn:last-child { border-left: 1px solid #e5e7eb; }
+
+  /* Export button */
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 36px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .export-btn:hover { background: #f9fafb; border-color: #9ca3af; }
+  .export-btn svg { width: 16px; height: 16px; color: #6b7280; }
+
+  /* Segmented control */
+  .segmented {
+    display: flex;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 36px;
+  }
+  .seg-btn {
+    padding: 0 14px;
+    border: none;
+    background: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    border-right: 1px solid #e5e7eb;
+    transition: background 0.15s, color 0.15s;
+  }
+  .seg-btn:last-child { border-right: none; }
+  .seg-btn:hover { background: #f9fafb; }
+  .seg-btn.active {
+    background: #4f46e5;
+    color: #fff;
+  }
+
+  /* Item list container */
+  .list-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+  }
+  .list-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    gap: 12px;
+  }
+  .col-rank { width: 40px; text-align: center; }
+  .col-title { flex: 1; min-width: 0; }
+  .col-status { width: 100px; text-align: center; }
+  .col-estimate { width: 100px; text-align: right; }
+
+  /* Item rows */
+  .item-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f3f4f6;
+    gap: 12px;
+    transition: background 0.1s;
+  }
+  .item-row:hover { background: #f9fafb; }
+  .item-row:last-child { border-bottom: none; }
+
+  .rank-badge {
+    width: 32px;
+    height: 32px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+  .item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item-desc {
+    font-size: 12px;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .badge-todo { background: #f9fafb; color: #4b5563; border-color: #e5e7eb; }
+  .badge-progress { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+  .badge-done { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+
+  /* Estimate input */
+  .estimate-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+  .estimate-field {
+    width: 52px;
+    height: 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    text-align: right;
+    padding: 0 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    outline: none;
+  }
+  .estimate-field:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
+  .estimate-field.empty {
+    border-style: dashed;
+    border-color: #d1d5db;
+    color: #9ca3af;
+  }
+  .estimate-unit {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+    width: 28px;
+  }
+
+  /* Summary row */
+  .summary-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    background: #f9fafb;
+    border-top: 2px solid #e5e7eb;
+    gap: 12px;
+  }
+  .summary-label {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+  .summary-total {
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    width: 128px;
+    text-align: right;
+  }
+
+  /* Utilisation bar (bottom of list) */
+  .util-bar-section {
+    padding: 16px 20px;
+    background: #f9fafb;
+  }
+  .util-bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 6px;
+  }
+  .util-bar-bg {
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .util-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #10b981, #10b981);
+    width: 71%;
+    transition: width 0.6s ease;
+  }
+  .util-bar-fill.amber { background: linear-gradient(90deg, #f59e0b, #f59e0b); }
+  .util-bar-fill.red { background: linear-gradient(90deg, #ef4444, #ef4444); }
+  .util-bar-marker {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: #111827;
+    left: 100%;
+    border-radius: 1px;
+  }
+  .util-bar-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Bottom Tab Bar */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    z-index: 40;
+    padding: 12px 16px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .tab-row {
+    display: flex;
+    gap: 8px;
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tab-btn.inactive {
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+  .tab-btn.inactive:hover { background: #e5e7eb; }
+  .tab-btn.active {
+    background: #4f46e5;
+    color: #fff;
+  }
+  .tab-btn svg { width: 20px; height: 20px; }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    z-index: 30;
+    width: 56px;
+    height: 56px;
+    background: #4f46e5;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .fab:hover { background: #4338ca; }
+  .fab svg { width: 24px; height: 24px; }
+
+  /* Responsive: mobile layout */
+  @media (max-width: 768px) {
+    .summary-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .card-value { font-size: 22px; }
+    .gauge-ring { width: 52px; height: 52px; }
+    .gauge-pct { font-size: 13px; }
+    .list-header { display: none; }
+    .item-row {
+      flex-wrap: wrap;
+      padding: 12px 16px;
+    }
+    .col-status { width: auto; }
+    .col-estimate { width: auto; }
+    .settings-panel {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .setting-group { width: 100%; }
+    .setting-input { width: 100%; }
+    .setting-input input { flex: 1; width: auto; }
+    .segmented { width: 100%; }
+    .seg-btn { flex: 1; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+      <defs>
+        <linearGradient id="logo-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#4f46e5"/>
+          <stop offset="100%" stop-color="#6366f1"/>
+        </linearGradient>
+      </defs>
+      <rect width="48" height="48" rx="12" fill="url(#logo-grad)"/>
+      <path d="M24 12L36 34H12L24 12Z" fill="white"/>
+    </svg>
+    <span class="session-name">HWR Phase 2 Planning</span>
+    <div class="header-actions">
+      <div class="presence">
+        <span class="presence-dot"></span>
+        <span>3</span>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </div>
+      <button class="icon-btn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-cards">
+    <!-- Card 1: Total Effort (accent) -->
+    <div class="card card-accent">
+      <div class="card-label card-label-white">Total Effort</div>
+      <div class="card-value" style="color:#fff;">195 days</div>
+      <div class="card-subtitle card-subtitle-white">150 base + 45 contingency (30%)</div>
+    </div>
+
+    <!-- Card 2: Net Capacity -->
+    <div class="card">
+      <div class="card-label card-label-muted">Net Capacity</div>
+      <div class="card-value" style="color:#111827;">273 days</div>
+      <div class="card-subtitle card-subtitle-muted">7 devs &times; 65 days &times; 0.6 focus</div>
+    </div>
+
+    <!-- Card 3: Utilisation -->
+    <div class="card">
+      <div class="card-label card-label-muted">Utilisation</div>
+      <div class="gauge-container">
+        <div class="gauge-ring">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle class="track" cx="32" cy="32" r="26"/>
+            <circle class="fill" cx="32" cy="32" r="26"/>
+          </svg>
+          <div class="gauge-pct">71%</div>
+        </div>
+        <div class="gauge-detail">
+          <div style="font-size:12px; color:#10b981; font-weight:600;">Healthy</div>
+          <div style="font-size:11px; color:#9ca3af;">78 days remaining</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Coverage -->
+    <div class="card">
+      <div class="card-label card-label-muted">Coverage</div>
+      <div class="card-value" style="color:#111827;">8<span style="font-size:16px; font-weight:500; color:#9ca3af;"> / 10</span></div>
+      <div class="card-subtitle card-subtitle-muted">items estimated</div>
+      <div class="coverage-bar-bg">
+        <div class="coverage-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAPACITY SETTINGS (always visible) -->
+  <div class="settings-panel">
+    <div class="setting-group">
+      <div class="setting-label">Team Size</div>
+      <div class="setting-input">
+        <button class="stepper-btn">&minus;</button>
+        <input type="text" value="7" readonly>
+        <button class="stepper-btn">+</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Working Days</div>
+      <div class="setting-input">
+        <button class="stepper-btn">&minus;</button>
+        <input type="text" value="65" readonly>
+        <button class="stepper-btn">+</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Focus Factor</div>
+      <div class="setting-input">
+        <button class="stepper-btn">&minus;</button>
+        <input type="text" value="0.6" readonly>
+        <button class="stepper-btn">+</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Contingency</div>
+      <div class="setting-input">
+        <button class="stepper-btn">&minus;</button>
+        <input type="text" value="30%" readonly>
+        <button class="stepper-btn">+</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Unit</div>
+      <div class="segmented">
+        <button class="seg-btn active">Days</button>
+        <button class="seg-btn">Hours</button>
+        <button class="seg-btn">Points</button>
+      </div>
+    </div>
+    <button class="export-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Export CSV
+    </button>
+  </div>
+
+  <!-- ITEM LIST -->
+  <div class="list-card">
+    <!-- Table header (desktop only) -->
+    <div class="list-header">
+      <div class="col-rank">#</div>
+      <div class="col-title">Item</div>
+      <div class="col-status">Status</div>
+      <div class="col-estimate">Estimate</div>
+    </div>
+
+    <!-- Item rows -->
+    <div class="item-row">
+      <div class="rank-badge">1</div>
+      <div class="col-title">
+        <div class="item-title">Set and Update Vessel Current Timezone Offset</div>
+      </div>
+      <div class="col-status"><span class="badge badge-progress">In Progress</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="15">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">2</div>
+      <div class="col-title">
+        <div class="item-title">Schedule Clock Changes</div>
+      </div>
+      <div class="col-status"><span class="badge badge-todo">To Do</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="15">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">3</div>
+      <div class="col-title">
+        <div class="item-title">Timesheet Adjustment for Clock Changes</div>
+      </div>
+      <div class="col-status"><span class="badge badge-todo">To Do</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="23">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">4</div>
+      <div class="col-title">
+        <div class="item-title">Compliance Engine Regime Resolution</div>
+      </div>
+      <div class="col-status"><span class="badge badge-todo">To Do</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="15">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">5</div>
+      <div class="col-title">
+        <div class="item-title">Base Regime Change Tracking</div>
+      </div>
+      <div class="col-status"><span class="badge badge-progress">In Progress</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="16">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">6</div>
+      <div class="col-title">
+        <div class="item-title">OPA-90 Regime Management</div>
+      </div>
+      <div class="col-status"><span class="badge badge-todo">To Do</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="17">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">7</div>
+      <div class="col-title">
+        <div class="item-title">Mobile Offline Compliance Checks</div>
+      </div>
+      <div class="col-status"><span class="badge badge-done">Done</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="17">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">8</div>
+      <div class="col-title">
+        <div class="item-title">Approve and Reject Events</div>
+      </div>
+      <div class="col-status"><span class="badge badge-done">Done</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field" value="6">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">9</div>
+      <div class="col-title">
+        <div class="item-title">Mobile Scheduled Working Hours</div>
+      </div>
+      <div class="col-status"><span class="badge badge-todo">To Do</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field empty" value="" placeholder="&mdash;">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">10</div>
+      <div class="col-title">
+        <div class="item-title">Comments with User Attribution</div>
+      </div>
+      <div class="col-status"><span class="badge badge-todo">To Do</span></div>
+      <div class="col-estimate">
+        <div class="estimate-input">
+          <input type="text" class="estimate-field empty" value="" placeholder="&mdash;">
+          <span class="estimate-unit">days</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary row -->
+    <div class="summary-row">
+      <div style="width:40px;"></div>
+      <div class="summary-label">Total (8 of 10 items)</div>
+      <div class="summary-total">150 days</div>
+    </div>
+
+    <!-- Utilisation bar -->
+    <div class="util-bar-section">
+      <div class="util-bar-header">
+        <span>Capacity utilisation</span>
+        <span>195 / 273 days (71%)</span>
+      </div>
+      <div class="util-bar-bg">
+        <div class="util-bar-fill"></div>
+        <div class="util-bar-marker" style="left:100%;"></div>
+      </div>
+      <div class="util-bar-legend">
+        <span><span class="legend-dot" style="background:#10b981;"></span>Effort (incl. contingency)</span>
+        <span><span class="legend-dot" style="background:#e5e7eb;"></span>Remaining capacity</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FAB -->
+<button class="fab">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+</button>
+
+<!-- BOTTOM TAB BAR -->
+<div class="bottom-bar">
+  <div class="tab-row">
+    <button class="tab-btn inactive">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      List
+    </button>
+    <button class="tab-btn inactive">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+      Roadmap
+    </button>
+    <button class="tab-btn active">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Capacity
+    </button>
+  </div>
+</div>
+
+</body>
+</html>

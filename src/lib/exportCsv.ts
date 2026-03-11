@@ -202,3 +202,93 @@ export function exportToCsv({ items, framework, sessionName }: ExportOptions): v
   const filename = `${sessionName || 'priori-export'}-${new Date().toISOString().split('T')[0]}.csv`
   downloadCsv(content, filename)
 }
+
+// --- Capacity Planning CSV Export ---
+
+interface CapacityCsvOptions {
+  items: import('../types/database').Item[]
+  sessionName: string
+  teamSize: number
+  workingDays: number
+  focusFactor: number
+  contingency: number
+  unit: string
+  hoursPerDay?: number
+  netCapacity: number
+  totalEffort: number
+  baseEffort: number
+  utilisation: number
+  estimatedCount: number
+  totalCount: number
+}
+
+/**
+ * Escape a CSV cell value
+ */
+function escapeCsvCell(value: string): string {
+  const escaped = value.replace(/"/g, '""')
+  if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+    return `"${escaped}"`
+  }
+  return escaped
+}
+
+/**
+ * Generate CSV content for capacity planning export
+ */
+export function generateCapacityCsvContent(options: CapacityCsvOptions): string {
+  const rows: string[] = []
+
+  // Header rows
+  rows.push(`Session,${escapeCsvCell(options.sessionName)}`)
+  rows.push(`Exported,${new Date().toISOString().split('T')[0]}`)
+  rows.push('')
+
+  // Capacity settings
+  rows.push(`Team Size,${options.teamSize}`)
+  rows.push(`Working Days,${options.workingDays}`)
+  rows.push(`Focus Factor,${options.focusFactor}`)
+  rows.push(`Contingency,${Math.round(options.contingency * 100)}%`)
+  rows.push(`Unit,${options.unit}`)
+  if (options.unit === 'hours' && options.hoursPerDay) {
+    rows.push(`Hours/Day,${options.hoursPerDay}`)
+  }
+  rows.push('')
+
+  // Summary metrics
+  rows.push(`Net Capacity,${Math.round(options.netCapacity)}`)
+  rows.push(`Total Effort,${Math.round(options.totalEffort)}`)
+  rows.push(`Utilisation,${Math.round(options.utilisation)}%`)
+  rows.push(`Coverage,${options.estimatedCount} of ${options.totalCount}`)
+  rows.push('')
+
+  // Item table header
+  rows.push('Rank,Title,Status,Estimate')
+
+  // Item rows
+  options.items.forEach((item, index) => {
+    const estimate = item.effort_estimate != null ? String(item.effort_estimate) : ''
+    rows.push(`${index + 1},${escapeCsvCell(item.title)},${formatStatus(item.status)},${estimate}`)
+  })
+
+  // Total row
+  rows.push(`Total,,,${Math.round(options.baseEffort)}`)
+
+  return rows.join('\n')
+}
+
+/**
+ * Generate filename for capacity CSV export
+ */
+export function generateCapacityFilename(sessionName: string): string {
+  return `${sessionName}-capacity-${new Date().toISOString().split('T')[0]}.csv`
+}
+
+/**
+ * Export capacity planning data to CSV and trigger download
+ */
+export function exportCapacityCsv(options: CapacityCsvOptions): void {
+  const content = generateCapacityCsvContent(options)
+  const filename = generateCapacityFilename(options.sessionName || 'priori-export')
+  downloadCsv(content, filename)
+}

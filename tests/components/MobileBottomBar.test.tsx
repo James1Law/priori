@@ -57,14 +57,39 @@ describe('MobileBottomBar', () => {
     expect(container).toBeInTheDocument()
   })
 
+  it('renders capacity button', () => {
+    render(<MobileBottomBar {...defaultProps} />)
+
+    expect(screen.getByRole('button', { name: /capacity/i })).toBeInTheDocument()
+  })
+
+  it('highlights capacity button when view is capacity', () => {
+    render(<MobileBottomBar {...defaultProps} view="capacity" />)
+
+    const capacityBtn = screen.getByRole('button', { name: /capacity/i })
+    expect(capacityBtn).toHaveClass('bg-indigo-600')
+  })
+
+  it('calls onViewChange with capacity when clicking capacity button', () => {
+    const onViewChange = vi.fn()
+    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
+
+    const capacityBtn = screen.getByRole('button', { name: /capacity/i })
+    fireEvent.click(capacityBtn)
+
+    expect(onViewChange).toHaveBeenCalledWith('capacity')
+  })
+
   it('renders icons alongside labels', () => {
     render(<MobileBottomBar {...defaultProps} />)
 
     const listBtn = screen.getByRole('button', { name: /list/i })
     const roadmapBtn = screen.getByRole('button', { name: /roadmap/i })
+    const capacityBtn = screen.getByRole('button', { name: /capacity/i })
 
     // Check that SVG icons are present
     expect(listBtn.querySelector('svg')).toBeInTheDocument()
     expect(roadmapBtn.querySelector('svg')).toBeInTheDocument()
+    expect(capacityBtn.querySelector('svg')).toBeInTheDocument()
   })
 })

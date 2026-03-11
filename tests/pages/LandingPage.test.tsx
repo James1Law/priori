@@ -82,8 +82,8 @@ describe('LandingPage', () => {
     expect(screen.getByText('Planning Poker')).toBeInTheDocument()
     expect(screen.getByText('Backlog Management')).toBeInTheDocument()
     expect(screen.getByText('Visual Roadmap')).toBeInTheDocument()
+    expect(screen.getByText('Capacity Planning')).toBeInTheDocument()
     expect(screen.getByText('Team Chat')).toBeInTheDocument()
-    expect(screen.getByText('Real-Time Collaboration')).toBeInTheDocument()
   })
 
   it('displays the features section heading', () => {

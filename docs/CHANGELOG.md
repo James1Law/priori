@@ -4,7 +4,64 @@ Detailed history of features implemented across all phases.
 
 ---
 
-## Phase 12 - Backlog-Centric Redesign (In Progress)
+## Phase 14 - Desktop Add Item UX (Complete)
+
+### Features
+- **Centered Modal on Desktop**: BottomSheet renders as a centered modal with proper padding on `lg+` screens, bottom sheet on mobile
+- **Desktop Add Item Button**: "Add Item" button in content area, visible across all views (List, Roadmap, Capacity) on desktop
+- **FAB Hidden on Desktop**: Floating action button now only shows on mobile (`lg:hidden`)
+- **Drag Handle Hidden on Desktop**: Bottom sheet drag handle only visible on mobile
+
+---
+
+## Phase 13 - Capacity Planning (Complete)
+
+### Overview
+New Capacity Planning view that lets teams compare backlog effort against team capacity with real-time utilisation metrics.
+
+### Features
+- **Capacity View**: Third view tab alongside List and Roadmap
+- **Summary Cards**: 4-card dashboard — Total Effort (indigo accent), Net Capacity, Utilisation (SVG circular gauge), Coverage (progress bar)
+- **Settings Panel**: Stepper controls for Team Size, Working Days, Focus Factor, Contingency, with segmented Days/Hours unit toggle
+- **Hours/Day Setting**: Configurable hours per day (default 8), shown only when Hours unit selected
+- **Editable Steppers**: Click inside any stepper value to type directly (desktop UX improvement)
+- **Item List**: Ranked items with inline effort estimate inputs, status badges, summary row
+- **Utilisation Bar**: Colour-coded horizontal bar showing effort vs capacity with legend
+- **CSV Export**: Structured export with settings, summary metrics, and item table
+- **Empty States**: Helpful messages for no items and no estimates
+- **Mobile Optimised**: 44px touch targets, responsive grids, numeric keyboard inputs
+
+### Formulas
+- **Net Capacity**: `teamSize × workingDays × focusFactor` (× `hoursPerDay` when unit is hours)
+- **Total Effort**: `sum(estimates) × (1 + contingency)`
+- **Utilisation**: `totalEffort / netCapacity × 100` — green (<80%), amber (80–99%), red (≥100%)
+
+### New Components
+- `src/components/CapacityView.tsx` — Main orchestrator
+- `src/components/CapacitySummaryCards.tsx` — 4 metric cards with gauge
+- `src/components/CapacitySettings.tsx` — Settings panel with steppers and unit toggle
+- `src/components/CapacityItemList.tsx` — Item table with inline estimate inputs
+- `src/components/UtilisationBar.tsx` — Colour-coded progress bar
+
+### New Hooks
+- `src/hooks/useCapacitySettings.ts` — Read/write capacity settings with debounced persistence
+- `src/hooks/useCapacityMetrics.ts` — Derived capacity calculations via useMemo
+
+### Database Changes
+- `supabase/014_add_capacity_planning.sql` — Capacity columns on sessions + effort_estimate on items
+- `supabase/015_capacity_hours_per_day.sql` — Hours per day column, remove points unit
+
+### Design Reference
+- PRD: `docs/CAPACITY-PLANNING-PRD.md`
+- Mockup: `plans/capacity-planning-view.mockup.html`
+
+### Status
+- ✅ All unit tests passing (646 tests)
+- ✅ Build passing
+
+---
+
+## Phase 12 - Backlog-Centric Redesign (Complete)
 
 ### Overview
 Fundamental UX redesign shifting from a 4-tab model (Scoring, Estimates, Backlog, Roadmap) to a **backlog-centric model** where the backlog is the home view and all other features are actions applied to items.
@@ -234,4 +291,4 @@ Fundamental UX redesign shifting from a 4-tab model (Scoring, Estimates, Backlog
 
 ---
 
-*Last updated: 2026-02-05 - Phase 12 in progress (E2E tests pending)*
+*Last updated: 2026-03-11 - Phase 14 complete (646 unit tests passing)*

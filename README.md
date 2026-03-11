@@ -32,6 +32,16 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **4-Quadrant Grid**: Each period is divided into 4 quadrants for finer positioning
 - **Items Sorted by Position**: Sidebar shows items in timeline order
 
+### Capacity Planning
+- **Team Capacity Settings**: Configure team size, working days, focus factor, and contingency
+- **Days or Hours**: Toggle between day and hour estimates with configurable hours/day
+- **Summary Dashboard**: 4 metric cards — Total Effort, Net Capacity, Utilisation gauge, Coverage
+- **Utilisation Thresholds**: Colour-coded status — green (healthy), amber (at risk), red (over capacity)
+- **Inline Estimates**: Enter effort estimates directly on each item
+- **Utilisation Bar**: Visual progress bar showing effort vs available capacity
+- **Capacity CSV Export**: Download capacity plan with settings, metrics, and item estimates
+- **Real-Time Sync**: All settings and estimates sync across participants
+
 ### Planning Poker (Estimation)
 - **Estimates View**: Dedicated tab for collaborative story point estimation
 - **Fibonacci Cards**: 0, 1, 2, 3, 5, 8, 13, 21 plus ? (uncertain) and ☕ (coffee break)
@@ -48,9 +58,9 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Session Naming**: Give sessions meaningful names
 
 ### Desktop UI
-- **Slide-in Panel**: Add items via a clean slide-in panel from the right
-- **Integrated Tabs**: Framework selector and "+ Add Item" button in view tabs
-- **Keyboard Shortcut**: Press "N" to quickly open add item panel
+- **Add Item Modal**: Centered modal dialog for adding items on desktop
+- **Add Item Button**: Visible CTA in the content area across all views
+- **Keyboard Shortcut**: Press "N" to quickly open add item form
 - **Full-width Content**: No sidebar, maximising workspace
 
 ### Mobile Experience
@@ -59,7 +69,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Bottom Sheet**: Full item form slides up from bottom
 - **Kebab Menu**: Framework selection and session actions in dropdown menu
 - **Touch-friendly Controls**: Tap-friendly interactions throughout
-- **Roadmap Placeholder**: Desktop-only feature with helpful mobile message
+- **Mobile Roadmap**: Vertical timeline with touch-friendly drag-to-resize
 
 ### Polish
 - **Custom Brand**: Indigo colour scheme, Poppins/Inter typography
@@ -71,7 +81,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Unit Testing**: Vitest + React Testing Library (350 tests)
+- **Unit Testing**: Vitest + React Testing Library (646 tests)
 - **E2E Testing**: Playwright
 - **Hosting**: Vercel (auto-deploys from main)
 
@@ -120,6 +130,11 @@ Run the SQL migration scripts in order:
 - `supabase/008_add_planning_poker_support.sql` - Planning Poker tables
 - `supabase/009_enable_realtime_for_core_tables.sql` - Realtime subscriptions
 - `supabase/010_add_backlog_position.sql` - Backlog position column
+- `supabase/011_add_chat_support.sql` - Team Chat messages
+- `supabase/012_backlog_centric_redesign.sql` - Backlog-centric schema
+- `supabase/013_add_estimation_item_ids.sql` - Estimation queue
+- `supabase/014_add_capacity_planning.sql` - Capacity planning fields
+- `supabase/015_capacity_hours_per_day.sql` - Hours per day setting
 
 See `supabase/README.md` for detailed instructions.
 

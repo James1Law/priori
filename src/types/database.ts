@@ -4,7 +4,7 @@ export type Framework = 'rice' | 'ice' | 'value_effort' | 'moscow' | 'weighted'
 export type LegacyViewMode = 'scoring' | 'estimates' | 'backlog' | 'roadmap'
 
 // New backlog-centric view modes
-export type ViewMode = 'list' | 'roadmap'
+export type ViewMode = 'list' | 'roadmap' | 'capacity'
 
 export type ItemStatus = 'todo' | 'in_progress' | 'done'
 
@@ -23,6 +23,13 @@ export interface Session {
   current_estimation_item_id: string | null
   estimation_revealed: boolean
   estimation_item_ids: string[] // Array of item IDs selected for estimation
+  // Capacity planning settings
+  capacity_team_size: number
+  capacity_working_days: number
+  capacity_focus_factor: number
+  capacity_contingency: number
+  capacity_unit: 'days' | 'hours'
+  capacity_hours_per_day: number
   created_at: string
   updated_at: string
 }
@@ -52,6 +59,8 @@ export interface Item {
   roadmap_row: number
   // Planning Poker estimate
   story_points: number | null
+  // Capacity planning estimate
+  effort_estimate: number | null
 }
 
 export interface RoadmapPeriod {

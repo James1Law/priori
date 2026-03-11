@@ -1,15 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session, Item, ItemWithScore, Framework, Score, WeightedCriterionData, ViewMode } from '../types/database'
-import { calculateRiceScore } from '../lib/rice'
-import { calculateIceScore } from '../lib/ice'
-import { calculateWeightedScore, type WeightedCriterion, type WeightedItemScores } from '../lib/weighted'
+import type { Session, Item, ItemWithScore, Framework, Score, ViewMode } from '../types/database'
 import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
 import BacklogList from '../components/BacklogList'
 import { type FilterState, applyFilters } from '../components/BacklogToolbar'
+import RoadmapView from '../components/RoadmapView'
 import MobileRoadmapView from '../components/MobileRoadmapView'
+import CapacityView from '../components/CapacityView'
 import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
@@ -432,30 +431,8 @@ export default function SessionPage() {
 
     const newItemData = data as Item
 
-    // Create default score for scored frameworks so sorting works correctly
-    let defaultScore: Score | undefined
-    if (session.framework === 'rice' || session.framework === 'ice' || session.framework === 'value_effort' || session.framework === 'weighted') {
-      const defaultCriteria = getDefaultCriteria(session.framework)
-      const calculatedScore = calculateScore(defaultCriteria as Record<string, number | string | WeightedItemScores>, session.framework, session.weighted_criteria)
-
-      const { data: scoreData } = await supabase
-        .from('scores')
-        .insert([{
-          item_id: newItemData.id,
-          framework: session.framework,
-          criteria: defaultCriteria,
-          calculated_score: calculatedScore,
-        } as never])
-        .select()
-        .single()
-
-      if (scoreData) {
-        defaultScore = scoreData as Score
-      }
-    }
-
-    // Add to items list with score, then sort
-    const newItemWithScore: ItemWithScore = { ...newItemData, score: defaultScore }
+    // Add to items list (no score until user explicitly scores it)
+    const newItemWithScore: ItemWithScore = { ...newItemData, score: undefined }
     setItems((prevItems) => {
       // Check for duplicates (realtime subscription may have already added it)
       if (prevItems.some((item) => item.id === newItemWithScore.id)) {
@@ -484,24 +461,6 @@ export default function SessionPage() {
       }
       return updatedItems
     })
-  }
-
-  // Get default criteria for a framework
-  const getDefaultCriteria = (framework: Framework): Record<string, unknown> => {
-    switch (framework) {
-      case 'rice':
-        return { reach: 100, impact: 1, confidence: 0.8, effort: 1 }
-      case 'ice':
-        return { impact: 5, confidence: 5, ease: 5 }
-      case 'value_effort':
-        return { value: 5, effort: 5 }
-      case 'weighted':
-        return { scores: {} }
-      case 'moscow':
-        return { category: 'must' }
-      default:
-        return {}
-    }
   }
 
   const handleEditItem = async (updatedItem: Item) => {
@@ -718,6 +677,8 @@ export default function SessionPage() {
     // Support new view modes, and migrate legacy views to 'list'
     if (savedView === 'roadmap') {
       setLocalView('roadmap')
+    } else if (savedView === 'capacity') {
+      setLocalView('capacity')
     } else if (savedView && ['list', 'scoring', 'estimates', 'backlog'].includes(savedView)) {
       // Migrate legacy views to 'list'
       setLocalView('list')
@@ -934,27 +895,6 @@ export default function SessionPage() {
   // They will be re-added when Phase 3 (Dedicated Flows) is implemented.
   // The handlers can be restored from git history if needed.
 
-  // Helper to calculate score based on framework (still needed for default scores on new items)
-  const calculateScore = (scores: Record<string, number | string | WeightedItemScores>, framework: Framework, criteria?: WeightedCriterionData[]): number => {
-    if (framework === 'rice') {
-      return calculateRiceScore(scores as { reach: number; impact: number; confidence: number; effort: number })
-    } else if (framework === 'ice') {
-      return calculateIceScore(scores as { impact: number; confidence: number; ease: number })
-    } else if (framework === 'value_effort') {
-      // Value vs Effort doesn't use a single score - quadrant is determined by position
-      return 0
-    } else if (framework === 'moscow') {
-      // MoSCoW doesn't use numeric scoring - it's categorical
-      return 0
-    } else if (framework === 'weighted') {
-      // Weighted uses custom criteria and item scores
-      if (!criteria || criteria.length === 0) return 0
-      const itemScores = (scores as { scores: WeightedItemScores }).scores || {}
-      return calculateWeightedScore(criteria as WeightedCriterion[], itemScores)
-    }
-    return 0
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -1143,6 +1083,19 @@ export default function SessionPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Main content area */}
         <div className="space-y-4 sm:space-y-6 pb-24">
+            {/* Desktop Add Item button - shown across all views */}
+            <div className="hidden lg:flex justify-end">
+              <button
+                onClick={() => setIsAddSheetOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Item
+              </button>
+            </div>
+
             {/* List View - the main backlog-centric view */}
             {localView === 'list' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
@@ -1197,6 +1150,7 @@ export default function SessionPage() {
                         <span className="w-2 h-2 bg-indigo-600 rounded-full" />
                       )}
                     </button>
+
                   </div>
 
                   {/* Filter summary (when active) */}
@@ -1239,17 +1193,49 @@ export default function SessionPage() {
 
             {/* Roadmap View */}
             {localView === 'roadmap' && (
-              <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-                <MobileRoadmapView
-                  periods={roadmapPeriods}
-                  items={items}
-                  loading={roadmapPeriodsLoading}
-                  onScheduleItem={handleScheduleItem}
-                  onAddPeriod={addRoadmapPeriod}
-                  onUpdatePeriod={updateRoadmapPeriod}
-                  onDeletePeriod={handleDeletePeriod}
-                />
-              </div>
+              <>
+                {/* Desktop: horizontal timeline with periods as columns */}
+                <div className="hidden lg:block bg-white rounded-lg shadow p-4 sm:p-6">
+                  <RoadmapView
+                    periods={roadmapPeriods}
+                    items={items}
+                    loading={roadmapPeriodsLoading}
+                    onScheduleItem={handleScheduleItem}
+                    onUnscheduleItem={handleUnscheduleItem}
+                    onAddPeriod={addRoadmapPeriod}
+                    onUpdatePeriod={updateRoadmapPeriod}
+                    onDeletePeriod={handleDeletePeriod}
+                  />
+                </div>
+                {/* Mobile: stacked period cards */}
+                <div className="lg:hidden bg-white rounded-lg shadow p-4 sm:p-6">
+                  <MobileRoadmapView
+                    periods={roadmapPeriods}
+                    items={items}
+                    loading={roadmapPeriodsLoading}
+                    onScheduleItem={handleScheduleItem}
+                    onAddPeriod={addRoadmapPeriod}
+                    onUpdatePeriod={updateRoadmapPeriod}
+                    onDeletePeriod={handleDeletePeriod}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Capacity Planning View */}
+            {localView === 'capacity' && (
+              <CapacityView
+                session={session}
+                items={items}
+                onSessionUpdate={setSession}
+                onItemUpdate={(itemId, updates) => {
+                  setItems((prev) =>
+                    prev.map((item) =>
+                      item.id === itemId ? { ...item, ...updates } : item
+                    )
+                  )
+                }}
+              />
             )}
         </div>
       </main>

@@ -59,26 +59,31 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         aria-hidden="true"
       />
 
-      {/* Bottom Sheet */}
+      {/* Mobile: Bottom Sheet / Desktop: Centered Modal */}
       <div
         ref={sheetRef}
         className={`
-          fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl
-          transform transition-transform duration-200 ease-out motion-reduce:transition-none
-          lg:max-w-md lg:mx-auto
+          fixed z-50 bg-white shadow-xl
+          transform transition-all duration-200 ease-out motion-reduce:transition-none
+
+          bottom-0 left-0 right-0 rounded-t-2xl
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}
+
+          lg:bottom-auto lg:left-1/2 lg:top-1/2 lg:right-auto
+          lg:-translate-x-1/2 lg:rounded-2xl lg:w-full lg:max-w-lg
+          ${isOpen ? 'lg:-translate-y-1/2 lg:opacity-100 lg:scale-100' : 'lg:-translate-y-1/2 lg:opacity-0 lg:scale-95'}
         `}
         role="dialog"
         aria-modal="true"
         aria-labelledby="sheet-title"
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-2">
+        {/* Drag handle - mobile only */}
+        <div className="flex justify-center pt-3 pb-2 lg:hidden">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200 lg:px-6 lg:pt-5 lg:pb-4">
           <h2 id="sheet-title" className="text-lg font-display font-semibold text-gray-900">
             {title}
           </h2>
@@ -94,7 +99,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         </div>
 
         {/* Content */}
-        <div className="p-4 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 max-h-[70vh] overflow-y-auto lg:p-6">
           {children}
         </div>
       </div>

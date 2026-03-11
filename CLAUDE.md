@@ -81,11 +81,17 @@ supabase/           # Database migrations
 | slug | text | Unique URL identifier |
 | name | text | Optional session name |
 | framework | text | e.g., "rice", "ice", "moscow" |
-| view | text | "list" or "roadmap" (local only) |
+| view | text | "list", "roadmap", or "capacity" (local only) |
 | weighted_criteria | jsonb | Custom criteria for weighted scoring |
 | current_estimation_item_id | uuid | Planning Poker current item |
 | estimation_revealed | boolean | Votes revealed state |
 | estimation_item_ids | uuid[] | Items in estimation queue |
+| capacity_team_size | integer | Team size (default 5) |
+| capacity_working_days | integer | Working days in period (default 65) |
+| capacity_focus_factor | real | Focus factor 0.1–1.0 (default 0.6) |
+| capacity_contingency | real | Contingency 0–2.0 (default 0.3) |
+| capacity_unit | text | "days" or "hours" |
+| capacity_hours_per_day | integer | Hours per working day (default 8) |
 
 ### items
 | Column | Type | Purpose |
@@ -100,6 +106,7 @@ supabase/           # Database migrations
 | story_points | integer | Planning Poker estimate |
 | roadmap_start_quadrant | integer | Roadmap start (0-based) |
 | roadmap_end_quadrant | integer | Roadmap end (inclusive) |
+| effort_estimate | real | Capacity planning estimate |
 | created_by | text | Participant name |
 
 ### cutoffs
@@ -134,6 +141,7 @@ supabase/           # Database migrations
 - **Scoring Flow** — Dedicated `/s/:slug/score` route for scoring selected items
 - **Estimation Flow** — Dedicated `/s/:slug/estimate` route for Planning Poker
 - **Roadmap View** — Visual timeline with periods and quadrant positioning
+- **Capacity Planning** — Compare backlog effort vs team capacity with utilisation metrics
 - **Team Chat** — Real-time messaging with typing indicators
 - **Mobile Support** — Responsive design with touch-friendly interactions
 

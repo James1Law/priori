@@ -33,7 +33,7 @@ const HOW_IT_WORKS = [
     step: 4,
     title: 'Score, Estimate & Plan',
     description:
-      'Use scoring frameworks, run planning poker, and build your roadmap — all in real-time.',
+      'Use scoring frameworks, run planning poker, plan capacity, and build your roadmap — all in real-time.',
   },
 ]
 
@@ -67,18 +67,18 @@ const FEATURES = [
       'Plan work across custom time periods. Drag items onto your timeline and resize them across quarters.',
   },
   {
+    icon: '📐',
+    iconBgColor: '#ecfdf5',
+    title: 'Capacity Planning',
+    description:
+      'Compare backlog effort against team capacity. Configure team size, working days, and focus factor to see utilisation at a glance.',
+  },
+  {
     icon: '💬',
     iconBgColor: '#e0e7ff',
     title: 'Team Chat',
     description:
       "Discuss priorities in real-time without leaving the session. See who's typing and never miss a message.",
-  },
-  {
-    icon: '👥',
-    iconBgColor: '#f3e8ff',
-    title: 'Real-Time Collaboration',
-    description:
-      'See changes instantly as your team works together. No refresh needed — everything syncs automatically.',
   },
 ]
 
