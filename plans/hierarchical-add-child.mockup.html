@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Adding Child Items Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+    /* Header */
+    .header {
+      background: white; border-bottom: 1px solid #e5e7eb;
+      padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+    }
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 1rem;
+    }
+    .session-name { font-weight: 600; font-size: 1.1rem; color: #374151; }
+
+    .view-tabs {
+      display: flex; gap: 0; background: white;
+      border-bottom: 1px solid #e5e7eb; padding: 0 2rem;
+    }
+    .view-tab {
+      padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 500;
+      color: #6b7280; border-bottom: 2px solid transparent;
+    }
+    .view-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem; gap: 1rem;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: 0.75rem; }
+    .add-btn {
+      background: #4f46e5; color: white;
+      border: none; padding: 0.5rem 1rem;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .add-btn-dropdown {
+      position: relative; display: inline-flex;
+    }
+    .add-btn-main {
+      background: #4f46e5; color: white;
+      border: none; padding: 0.5rem 1rem;
+      border-radius: 8px 0 0 8px; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .add-btn-caret {
+      background: #4338ca; color: white;
+      border: none; padding: 0.5rem 0.6rem;
+      border-radius: 0 8px 8px 0; font-size: 0.7rem;
+      cursor: pointer; border-left: 1px solid rgba(255,255,255,0.2);
+    }
+    .dropdown-menu {
+      position: absolute; top: 100%; left: 0; margin-top: 4px;
+      background: white; border: 1px solid #e5e7eb;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      min-width: 220px; z-index: 10; overflow: hidden;
+    }
+    .dropdown-item {
+      padding: 0.6rem 0.85rem;
+      font-size: 0.8rem; color: #374151;
+      display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer; transition: background 0.1s;
+    }
+    .dropdown-item:hover { background: #eef2ff; }
+    .dropdown-item .level-badge-sm {
+      font-size: 0.55rem; font-weight: 600; padding: 0.1rem 0.3rem;
+      border-radius: 999px; text-transform: uppercase;
+    }
+    .dropdown-item-desc {
+      font-size: 0.7rem; color: #9ca3af;
+    }
+
+    /* Item Row */
+    .item-row {
+      display: grid;
+      grid-template-columns: 40px 24px 1fr 100px 90px 70px;
+      gap: 0.5rem; align-items: center;
+      padding: 0.6rem 0.75rem;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      margin-bottom: 0.35rem;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .item-row:hover { border-color: #c7d2fe; }
+    .item-row.level-1 { margin-left: 28px; border-left: 3px solid #c7d2fe; }
+    .item-row.level-2 { margin-left: 56px; border-left: 3px solid #ddd6fe; }
+    .item-row.level-3 { margin-left: 84px; border-left: 3px solid #fde68a; }
+    .item-row.level-4 { margin-left: 112px; border-left: 3px solid #fecaca; }
+
+    .rank-badge {
+      width: 24px; height: 24px;
+      background: #f3f4f6; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 600; color: #6b7280;
+    }
+    .expand-toggle {
+      width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 4px; font-size: 0.7rem; color: #6b7280;
+      border: none; background: transparent;
+    }
+    .expand-toggle:hover { background: #f3f4f6; }
+    .expand-toggle.collapsed { transform: rotate(-90deg); }
+    .item-content { display: flex; flex-direction: column; gap: 0.1rem; }
+    .item-title-row { display: flex; align-items: center; gap: 0.5rem; }
+    .item-title { font-weight: 500; font-size: 0.9rem; color: #111827; }
+    .item-meta { font-size: 0.75rem; color: #9ca3af; }
+
+    .level-badge {
+      font-size: 0.6rem; font-weight: 600; padding: 0.1rem 0.4rem;
+      border-radius: 999px; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .level-badge.goal { background: #fce7f3; color: #9d174d; }
+    .level-badge.initiative { background: #dbeafe; color: #1d4ed8; }
+    .level-badge.epic { background: #ede9fe; color: #6d28d9; }
+    .level-badge.story { background: #fef3c7; color: #92400e; }
+    .level-badge.subtask { background: #fecaca; color: #991b1b; }
+
+    .status-badge {
+      font-size: 0.7rem; font-weight: 500;
+      padding: 0.2rem 0.5rem; border-radius: 999px;
+    }
+    .status-todo { background: #f3f4f6; color: #6b7280; }
+    .status-progress { background: #dbeafe; color: #1d4ed8; }
+    .status-done { background: #dcfce7; color: #166534; }
+
+    .item-child-count {
+      font-size: 0.65rem; color: #6d28d9; background: #ede9fe;
+      padding: 0.1rem 0.4rem; border-radius: 999px; font-weight: 600;
+    }
+
+    .score-cell { font-size: 0.8rem; color: #374151; font-weight: 500; }
+    .estimate-cell { font-size: 0.8rem; color: #374151; }
+
+    .action-btn {
+      width: 28px; height: 28px;
+      border: none; background: transparent;
+      border-radius: 6px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #9ca3af; font-size: 0.8rem;
+    }
+
+    /* === INLINE ADD FORM === */
+    .inline-add-form {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #eef2ff;
+      border: 2px solid #4f46e5;
+      border-radius: 10px;
+      margin-bottom: 0.35rem;
+    }
+    .inline-add-form.level-1 { margin-left: 28px; }
+    .inline-add-form.level-2 { margin-left: 56px; }
+    .inline-add-form.level-3 { margin-left: 84px; }
+    .inline-add-form.level-4 { margin-left: 112px; }
+
+    .inline-add-badge {
+      font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.45rem;
+      border-radius: 999px; text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .inline-add-input {
+      flex: 1; border: none; background: transparent;
+      font-size: 0.85rem; font-weight: 500; color: #111827;
+      outline: none;
+    }
+    .inline-add-input::placeholder { color: #a5b4fc; }
+    .inline-add-hint {
+      font-size: 0.7rem; color: #6b7280;
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .kbd {
+      background: white; border: 1px solid #d1d5db;
+      border-radius: 3px; padding: 0.1rem 0.3rem;
+      font-size: 0.6rem; font-weight: 600; color: #374151;
+    }
+
+    /* Add sub-item button */
+    .add-sub-item-btn {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: #6b7280;
+      cursor: pointer; padding: 0.3rem 0.5rem;
+      border-radius: 6px; border: 1px dashed #d1d5db;
+      background: transparent; transition: all 0.15s;
+      margin-bottom: 0.35rem;
+    }
+    .add-sub-item-btn:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+    .add-sub-item-btn.level-1 { margin-left: 28px; }
+    .add-sub-item-btn.level-2 { margin-left: 56px; }
+    .add-sub-item-btn.level-3 { margin-left: 84px; }
+    .add-sub-item-btn.level-4 { margin-left: 112px; }
+
+    /* Hover action */
+    .hover-action {
+      position: absolute; right: -100px; top: 50%; transform: translateY(-50%);
+      padding: 0.25rem 0.5rem;
+      background: white; border: 1px solid #d1d5db;
+      border-radius: 6px; font-size: 0.7rem; color: #6b7280;
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: all 0.15s;
+    }
+    .hover-action:hover { border-color: #4f46e5; color: #4f46e5; }
+
+    /* Annotation */
+    .annotation {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 0.75rem 1rem;
+      margin: 1rem 0; font-size: 0.8rem; color: #92400e;
+    }
+    .annotation strong { color: #78350f; }
+
+    /* Step indicator */
+    .step-indicator {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: #dbeafe; color: #1d4ed8;
+      font-size: 0.7rem; font-weight: 600;
+      padding: 0.2rem 0.6rem; border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Drawer mockup */
+    .drawer-panel {
+      width: 420px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      margin: 1rem auto;
+      overflow: hidden;
+    }
+    .drawer-header-section {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .drawer-body-section {
+      padding: 1rem 1.25rem;
+    }
+    .breadcrumb {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: #9ca3af;
+      margin-bottom: 0.4rem;
+    }
+    .breadcrumb a { color: #6366f1; text-decoration: none; font-weight: 500; }
+    .breadcrumb-sep { color: #d1d5db; }
+    .drawer-title { font-size: 1.1rem; font-weight: 600; color: #111827; }
+
+    .children-list { margin-top: 0.75rem; }
+    .children-label {
+      font-size: 0.7rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    .child-item-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 0.3rem;
+      font-size: 0.8rem;
+    }
+    .child-item-title { flex: 1; color: #374151; font-weight: 500; }
+    .child-status-sm {
+      font-size: 0.6rem; font-weight: 500;
+      padding: 0.1rem 0.3rem; border-radius: 999px;
+    }
+
+    /* Inline add in drawer */
+    .drawer-inline-add {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.5rem;
+      background: #eef2ff;
+      border: 2px solid #4f46e5;
+      border-radius: 8px;
+      margin-bottom: 0.3rem;
+    }
+    .drawer-add-input {
+      flex: 1; border: none; background: transparent;
+      font-size: 0.8rem; color: #111827; outline: none;
+    }
+    .drawer-add-input::placeholder { color: #a5b4fc; }
+
+    .drawer-add-btn {
+      display: flex; align-items: center; gap: 0.3rem;
+      width: 100%; padding: 0.35rem 0.5rem;
+      border: 1px dashed #d1d5db;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 0.75rem; color: #6b7280;
+      cursor: pointer;
+    }
+    .drawer-add-btn:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+
+    /* Progress bar */
+    .progress-bar { width: 100%; height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #4f46e5, #6366f1); }
+  </style>
+</head>
+<body>
+
+  <div class="concept-header">
+    <h1 class="font-display">Adding Child Items Flow</h1>
+    <p>4 methods to create child items: inline button, item drawer, toolbar dropdown, and drag-to-reparent</p>
+  </div>
+
+  <!-- ========== METHOD 1: INLINE ADD BUTTON ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Method 1</span>
+    <h2>Inline "Add Sub-Item" Button</h2>
+    <p>A dashed button appears below the last child of an expanded parent. Click to open an inline input.</p>
+  </div>
+
+  <div class="main">
+    <div class="step-indicator">Step 1 — Button visible below children</div>
+
+    <div class="item-row">
+      <div class="rank-badge">1</div>
+      <div><button class="expand-toggle">▾</button></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge initiative">Initiative</span>
+          <span class="item-title">User Onboarding Revamp</span>
+          <span class="item-child-count">2 epics</span>
+        </div>
+      </div>
+      <div>
+        <div class="progress-bar"><div class="progress-fill" style="width: 40%"></div></div>
+      </div>
+      <div class="score-cell">RICE: 245</div>
+      <div class="estimate-cell">34d</div>
+    </div>
+
+    <div class="item-row level-1">
+      <div></div>
+      <div><button class="expand-toggle">▾</button></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge epic">Epic</span>
+          <span class="item-title">Welcome Flow Redesign</span>
+          <span class="item-child-count">2 stories</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-progress">In Progress</span></div>
+      <div class="score-cell">RICE: 180</div>
+      <div class="estimate-cell">14d</div>
+    </div>
+
+    <div class="item-row level-2">
+      <div></div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge story">Story</span>
+          <span class="item-title">Design onboarding wizard screens</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-done">Done</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">5d</div>
+    </div>
+
+    <div class="item-row level-2">
+      <div></div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge story">Story</span>
+          <span class="item-title">Implement wizard navigation logic</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-progress">In Progress</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">9d</div>
+    </div>
+
+    <!-- The add button -->
+    <button class="add-sub-item-btn level-2">+ Add story to "Welcome Flow Redesign"</button>
+
+    <!-- Also show add epic button -->
+    <div class="item-row level-1">
+      <div></div>
+      <div><button class="expand-toggle collapsed">▾</button></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge epic">Epic</span>
+          <span class="item-title">Automated Email Sequence</span>
+          <span class="item-child-count">3 stories</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">RICE: 120</div>
+      <div class="estimate-cell">12d</div>
+    </div>
+
+    <button class="add-sub-item-btn level-1">+ Add epic to "User Onboarding Revamp"</button>
+
+    <div style="height: 2rem;"></div>
+    <div class="step-indicator">Step 2 — After clicking, inline input appears</div>
+
+    <div class="item-row level-1">
+      <div></div>
+      <div><button class="expand-toggle">▾</button></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge epic">Epic</span>
+          <span class="item-title">Welcome Flow Redesign</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-progress">In Progress</span></div>
+      <div class="score-cell">RICE: 180</div>
+      <div class="estimate-cell">14d</div>
+    </div>
+
+    <div class="item-row level-2">
+      <div></div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge story">Story</span>
+          <span class="item-title">Design onboarding wizard screens</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-done">Done</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">5d</div>
+    </div>
+
+    <div class="item-row level-2">
+      <div></div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge story">Story</span>
+          <span class="item-title">Implement wizard navigation logic</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-progress">In Progress</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">9d</div>
+    </div>
+
+    <!-- Inline form open -->
+    <div class="inline-add-form level-2">
+      <span class="inline-add-badge" style="background: #fef3c7; color: #92400e;">Story</span>
+      <input class="inline-add-input" placeholder="Type story title and press Enter..." value="Add error handling to wizard">
+      <div class="inline-add-hint">
+        <span class="kbd">Enter</span> save
+        <span style="margin: 0 0.2rem;">·</span>
+        <span class="kbd">Esc</span> cancel
+      </div>
+    </div>
+
+    <div class="annotation">
+      <strong>Inline add flow:</strong>
+      <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+        <li>The <code>+ Add [level name]</code> button appears below the last child of each expanded parent</li>
+        <li>Button text includes the parent name for clarity: <code>+ Add story to "Welcome Flow Redesign"</code></li>
+        <li>Clicking opens an inline input at the same indentation level as the children</li>
+        <li>Level badge shown in the input to confirm what type of item will be created</li>
+        <li><kbd>Enter</kbd> saves and keeps the form open for rapid entry (add another)</li>
+        <li><kbd>Shift+Enter</kbd> saves and closes the form</li>
+        <li><kbd>Esc</kbd> cancels and closes the form</li>
+        <li>After saving, the new item appears in the list with default "To Do" status</li>
+        <li>Button also appears for items with no children yet (on hover/focus) to start the hierarchy</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ========== METHOD 2: ITEM DRAWER ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Method 2</span>
+    <h2>Item Drawer "Add Sub-Item"</h2>
+    <p>Add children directly from the item detail drawer</p>
+  </div>
+
+  <div class="main">
+    <div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
+      <!-- Before clicking -->
+      <div>
+        <div class="step-indicator">Before — Button at bottom of children list</div>
+        <div class="drawer-panel">
+          <div class="drawer-header-section">
+            <div class="breadcrumb">
+              <a href="#">User Onboarding Revamp</a>
+              <span class="breadcrumb-sep">›</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem;">
+              <span class="level-badge epic">Epic</span>
+            </div>
+            <div class="drawer-title">Welcome Flow Redesign</div>
+          </div>
+          <div class="drawer-body-section">
+            <div class="children-list">
+              <div class="children-label">Stories (2)</div>
+              <div class="child-item-row">
+                <span class="level-badge story" style="font-size: 0.5rem;">Story</span>
+                <span class="child-item-title">Design onboarding wizard screens</span>
+                <span class="child-status-sm" style="background: #dcfce7; color: #166534;">Done</span>
+              </div>
+              <div class="child-item-row">
+                <span class="level-badge story" style="font-size: 0.5rem;">Story</span>
+                <span class="child-item-title">Implement wizard navigation</span>
+                <span class="child-status-sm" style="background: #dbeafe; color: #1d4ed8;">In Prog</span>
+              </div>
+              <button class="drawer-add-btn">+ Add story</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- After clicking -->
+      <div>
+        <div class="step-indicator">After — Inline input in drawer</div>
+        <div class="drawer-panel">
+          <div class="drawer-header-section">
+            <div class="breadcrumb">
+              <a href="#">User Onboarding Revamp</a>
+              <span class="breadcrumb-sep">›</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem;">
+              <span class="level-badge epic">Epic</span>
+            </div>
+            <div class="drawer-title">Welcome Flow Redesign</div>
+          </div>
+          <div class="drawer-body-section">
+            <div class="children-list">
+              <div class="children-label">Stories (2)</div>
+              <div class="child-item-row">
+                <span class="level-badge story" style="font-size: 0.5rem;">Story</span>
+                <span class="child-item-title">Design onboarding wizard screens</span>
+                <span class="child-status-sm" style="background: #dcfce7; color: #166534;">Done</span>
+              </div>
+              <div class="child-item-row">
+                <span class="level-badge story" style="font-size: 0.5rem;">Story</span>
+                <span class="child-item-title">Implement wizard navigation</span>
+                <span class="child-status-sm" style="background: #dbeafe; color: #1d4ed8;">In Prog</span>
+              </div>
+              <!-- Inline add form in drawer -->
+              <div class="drawer-inline-add">
+                <span class="inline-add-badge" style="background: #fef3c7; color: #92400e; font-size: 0.5rem;">Story</span>
+                <input class="drawer-add-input" placeholder="Story title..." value="Add form validation">
+              </div>
+              <div style="font-size: 0.65rem; color: #9ca3af; margin-top: -0.1rem; margin-bottom: 0.4rem;">
+                <span class="kbd">Enter</span> to save · <span class="kbd">Esc</span> to cancel
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== METHOD 3: TOOLBAR DROPDOWN ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Method 3</span>
+    <h2>Toolbar "Add Item" Dropdown</h2>
+    <p>The main add button adapts based on selection, with a dropdown for choosing the parent</p>
+  </div>
+
+  <div class="main">
+    <div style="display: flex; gap: 3rem; align-items: flex-start; flex-wrap: wrap;">
+
+      <!-- State 1: No selection -->
+      <div>
+        <div class="step-indicator">No item selected</div>
+        <div style="margin-top: 0.75rem;">
+          <div class="add-btn-dropdown">
+            <button class="add-btn-main">+ Add item</button>
+            <button class="add-btn-caret">▾</button>
+          </div>
+          <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.4rem;">Creates a top-level item (Goal)</div>
+        </div>
+      </div>
+
+      <!-- State 2: Parent selected, button changes -->
+      <div>
+        <div class="step-indicator">Epic "Welcome Flow" is selected</div>
+        <div style="margin-top: 0.75rem;">
+          <div class="add-btn-dropdown">
+            <button class="add-btn-main">+ Add story to "Welcome Flow"</button>
+            <button class="add-btn-caret">▾</button>
+          </div>
+          <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0.4rem;">Button adapts to selected item's child level</div>
+        </div>
+      </div>
+
+      <!-- State 3: Dropdown open -->
+      <div>
+        <div class="step-indicator">Dropdown expanded</div>
+        <div style="margin-top: 0.75rem; position: relative;">
+          <div class="add-btn-dropdown">
+            <button class="add-btn-main">+ Add item</button>
+            <button class="add-btn-caret" style="background: #312e81;">▾</button>
+            <div class="dropdown-menu">
+              <div class="dropdown-item" style="background: #eef2ff;">
+                <span class="level-badge-sm" style="background: #fce7f3; color: #9d174d;">Goal</span>
+                <div>
+                  <div style="font-weight: 500;">Add top-level Goal</div>
+                  <div class="dropdown-item-desc">Strategic objective</div>
+                </div>
+              </div>
+              <div class="dropdown-item">
+                <span class="level-badge-sm" style="background: #ede9fe; color: #6d28d9;">Epic</span>
+                <div>
+                  <div style="font-weight: 500;">Add Epic to "User Onboarding"</div>
+                  <div class="dropdown-item-desc">Under selected initiative</div>
+                </div>
+              </div>
+              <div class="dropdown-item">
+                <span class="level-badge-sm" style="background: #fef3c7; color: #92400e;">Story</span>
+                <div>
+                  <div style="font-weight: 500;">Add Story to "Welcome Flow"</div>
+                  <div class="dropdown-item-desc">Under selected epic</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotation" style="margin-top: 6rem;">
+      <strong>Toolbar dropdown behaviour:</strong>
+      <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+        <li><strong>No selection:</strong> Main button creates a top-level item. Dropdown shows all ancestor options.</li>
+        <li><strong>Item selected:</strong> Main button changes to "Add [child level] to [selected item name]". One click to add a child.</li>
+        <li><strong>Dropdown caret:</strong> Opens menu showing available options: add top-level, add as child of any ancestor in the current context.</li>
+        <li>The dropdown intelligently shows only valid options based on the current selection and max depth (level 4).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ========== METHOD 4: DRAG TO REPARENT ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Method 4</span>
+    <h2>Drag to Reparent (Existing Item)</h2>
+    <p>Drag an existing item onto another to make it a child. Visual drop zone confirms the action.</p>
+  </div>
+
+  <div class="main">
+    <!-- Before -->
+    <div class="step-indicator">Before — Two standalone items</div>
+
+    <div class="item-row">
+      <div class="rank-badge">3</div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="item-title">Performance Monitoring Dashboard</span>
+        </div>
+        <div class="item-meta">Standalone item</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">RICE: 75</div>
+      <div class="estimate-cell">8d</div>
+    </div>
+
+    <div class="item-row">
+      <div class="rank-badge">4</div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="item-title">Set up Datadog integration</span>
+        </div>
+        <div class="item-meta">Standalone item</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">3d</div>
+    </div>
+
+    <div style="height: 1.5rem;"></div>
+    <div class="step-indicator">During drag — Drop zone highlighted on target</div>
+
+    <!-- Target with drop zone -->
+    <div class="item-row" style="border-color: #4f46e5; background: #eef2ff; box-shadow: 0 0 0 2px rgba(79,70,229,0.15);">
+      <div class="rank-badge">3</div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="item-title">Performance Monitoring Dashboard</span>
+        </div>
+        <div class="item-meta" style="color: #4f46e5; font-weight: 500;">↳ Drop to add as child (will become Epic)</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">RICE: 75</div>
+      <div class="estimate-cell">8d</div>
+    </div>
+
+    <!-- Dragged item ghost -->
+    <div class="item-row" style="opacity: 0.5; border: 2px dashed #4f46e5; transform: translate(20px, -5px);">
+      <div class="rank-badge">—</div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="item-title">Set up Datadog integration</span>
+        </div>
+        <div class="item-meta" style="color: #4f46e5;">Dragging...</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">3d</div>
+    </div>
+
+    <div style="height: 1.5rem;"></div>
+    <div class="step-indicator">After drop — Item is now a child</div>
+
+    <div class="item-row">
+      <div class="rank-badge">3</div>
+      <div><button class="expand-toggle">▾</button></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge epic">Epic</span>
+          <span class="item-title">Performance Monitoring Dashboard</span>
+          <span class="item-child-count">1 story</span>
+        </div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">RICE: 75</div>
+      <div class="estimate-cell">11d</div>
+    </div>
+
+    <div class="item-row level-1">
+      <div></div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge story">Story</span>
+          <span class="item-title">Set up Datadog integration</span>
+        </div>
+        <div class="item-meta">Moved under "Performance Monitoring Dashboard"</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">—</div>
+      <div class="estimate-cell">3d</div>
+    </div>
+
+    <div class="annotation">
+      <strong>Drag-to-reparent rules:</strong>
+      <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+        <li>Drag an item towards the right while hovering over a potential parent → reparent mode activates</li>
+        <li>Target item shows blue highlight and "Drop to add as child" message with the level it will become</li>
+        <li>The dragged item (and any of its children) auto-adjust their <code>item_level</code> relative to the new parent</li>
+        <li><strong>Max depth validation:</strong> If reparenting would push any descendant beyond level 4, the drop zone shows red and says "Cannot add — exceeds max depth"</li>
+        <li>To undo: drag the child item back out to the root level, or use the parent selector in the item drawer</li>
+        <li>Items that become children of a parent automatically get a level badge assigned</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ========== FIRST CHILD SCENARIO ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Edge Case</span>
+    <h2>Adding First Child to a Flat Item</h2>
+    <p>When a standalone item has no children yet, hovering reveals the "Add sub-item" action</p>
+  </div>
+
+  <div class="main">
+    <div class="step-indicator">Hover state — Action appears on right</div>
+
+    <div class="item-row" style="border-color: #c7d2fe;">
+      <div class="rank-badge">3</div>
+      <div></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="item-title">Fix login timeout on mobile Safari</span>
+        </div>
+        <div class="item-meta">Created by Bug Reporter</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">RICE: 85</div>
+      <div class="estimate-cell">2d</div>
+      <div style="position: relative;">
+        <div style="
+          padding: 0.25rem 0.5rem; background: white;
+          border: 1px solid #d1d5db; border-radius: 6px;
+          font-size: 0.7rem; color: #6b7280; cursor: pointer;
+          white-space: nowrap;
+        ">+ Sub-item</div>
+      </div>
+    </div>
+
+    <div style="height: 1rem;"></div>
+    <div class="step-indicator">After clicking — Item becomes a parent, inline form opens</div>
+
+    <div class="item-row">
+      <div class="rank-badge">3</div>
+      <div><button class="expand-toggle">▾</button></div>
+      <div class="item-content">
+        <div class="item-title-row">
+          <span class="level-badge initiative">Initiative</span>
+          <span class="item-title">Fix login timeout on mobile Safari</span>
+        </div>
+        <div class="item-meta">Created by Bug Reporter</div>
+      </div>
+      <div><span class="status-badge status-todo">To Do</span></div>
+      <div class="score-cell">RICE: 85</div>
+      <div class="estimate-cell">2d</div>
+    </div>
+
+    <div class="inline-add-form level-1">
+      <span class="inline-add-badge" style="background: #ede9fe; color: #6d28d9;">Epic</span>
+      <input class="inline-add-input" placeholder="Type epic title..." value="">
+      <div class="inline-add-hint">
+        <span class="kbd">Enter</span> save
+        <span style="margin: 0 0.2rem;">·</span>
+        <span class="kbd">Esc</span> cancel
+      </div>
+    </div>
+
+    <div class="annotation">
+      <strong>First child flow:</strong>
+      <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+        <li>Any item can become a parent by adding a sub-item to it</li>
+        <li>The item's level stays at whatever it currently is (level 0 if standalone)</li>
+        <li>The child is created at <code>parent.item_level + 1</code></li>
+        <li>A level badge appears on the parent once it has children</li>
+        <li>The parent gains an expand/collapse toggle</li>
+        <li>If the user cancels (Esc without entering text), the item reverts to its original appearance</li>
+      </ul>
+    </div>
+  </div>
+
+</body>
+</html>

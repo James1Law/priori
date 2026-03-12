@@ -8,7 +8,9 @@ import {
   DragEndEvent,
   DragOverEvent,
 } from '@dnd-kit/core'
-import type { RoadmapPeriod, ItemWithScore } from '../types/database'
+import type { RoadmapPeriod, ItemWithScore, ItemLevel } from '../types/database'
+import { ITEM_LEVEL_LABELS } from '../types/database'
+import { getDirectChildren } from '../lib/hierarchy'
 
 // Number of quadrants per period (fixed)
 const QUADRANTS_PER_PERIOD = 4
@@ -40,33 +42,57 @@ function getItemColour(index: number): string {
   return ITEM_COLOURS[index % ITEM_COLOURS.length]
 }
 
+// Level badge colours for dark backgrounds (white text variants)
+const LEVEL_CHIP_STYLES: Record<number, string> = {
+  0: 'bg-pink-400/30 text-pink-100',
+  1: 'bg-blue-400/30 text-blue-100',
+  2: 'bg-purple-400/30 text-purple-100',
+  3: 'bg-amber-400/30 text-amber-100',
+  4: 'bg-slate-400/30 text-slate-100',
+}
+
 // Draggable item chip for unscheduled/orphaned items
 function DraggableItemChip({
   item,
   colour,
   isOrphaned = false,
+  childCount = 0,
 }: {
   item: ItemWithScore
   colour: string
   isOrphaned?: boolean
+  childCount?: number
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `unscheduled-${item.id}`,
     data: { item },
   })
 
+  const itemLevel = item.item_level ?? 0
+  const isHierarchyItem = itemLevel > 0 || childCount > 0
+
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`${isOrphaned ? 'bg-gray-400' : colour} text-white rounded-md px-3 py-1.5 text-sm font-medium shadow-sm cursor-grab active:cursor-grabbing transition-all ${
+      className={`${isOrphaned ? 'bg-gray-400' : colour} text-white rounded-md px-3 py-1.5 text-sm font-medium shadow-sm cursor-grab active:cursor-grabbing transition-all flex items-center gap-1.5 ${
         isDragging ? 'opacity-50 scale-95' : 'hover:shadow'
       }`}
     >
-      {item.title}
+      {isHierarchyItem && (
+        <span className={`px-1 py-0.5 rounded text-[9px] font-semibold ${LEVEL_CHIP_STYLES[itemLevel] ?? LEVEL_CHIP_STYLES[0]}`}>
+          {ITEM_LEVEL_LABELS[(itemLevel as ItemLevel)] ?? 'Item'}
+        </span>
+      )}
+      <span className="truncate">{item.title}</span>
+      {childCount > 0 && (
+        <span className="px-1 py-0.5 bg-white/20 rounded-full text-[9px] font-medium">
+          {childCount}
+        </span>
+      )}
       {item.score?.calculated_score !== undefined && item.score.calculated_score > 0 && (
-        <span className="ml-1.5 text-white/70">
+        <span className="text-white/70">
           ({item.score.calculated_score.toFixed(1)})
         </span>
       )}
@@ -321,10 +347,10 @@ export default function RoadmapView({
     }
   }, [dragState])
 
-  // Get unscheduled items (items without quadrant positions)
-  const unscheduledItems = items.filter((item) =>
-    item.roadmap_start_quadrant === null || item.roadmap_start_quadrant === undefined
-  )
+  // Get unscheduled items (items without quadrant positions), sorted by level then title
+  const unscheduledItems = items
+    .filter((item) => item.roadmap_start_quadrant === null || item.roadmap_start_quadrant === undefined)
+    .sort((a, b) => (a.item_level ?? 0) - (b.item_level ?? 0) || a.title.localeCompare(b.title))
 
   // Get scheduled items (have valid quadrant positions within current range)
   const scheduledItems = items.filter((item) => {
@@ -598,9 +624,14 @@ export default function RoadmapView({
                     title="Drag to resize"
                   />
 
-                  {/* Item content */}
-                  <span className="text-white text-xs font-medium truncate flex-1 px-3">
-                    {item.title}
+                  {/* Item content with level badge */}
+                  <span className="text-white text-xs font-medium truncate flex-1 px-3 flex items-center gap-1">
+                    {(item.item_level ?? 0) > 0 && (
+                      <span className={`px-1 py-0.5 rounded text-[8px] font-semibold flex-shrink-0 ${LEVEL_CHIP_STYLES[item.item_level ?? 0] ?? LEVEL_CHIP_STYLES[0]}`}>
+                        {ITEM_LEVEL_LABELS[((item.item_level ?? 0) as ItemLevel)] ?? 'Item'}
+                      </span>
+                    )}
+                    <span className="truncate">{item.title}</span>
                   </span>
 
                   {/* Unschedule button */}
@@ -671,6 +702,7 @@ export default function RoadmapView({
                   item={item}
                   colour={colour}
                   isOrphaned
+                  childCount={getDirectChildren(item.id, items).length}
                 />
               )
             })}
@@ -693,6 +725,7 @@ export default function RoadmapView({
                   key={item.id}
                   item={item}
                   colour={colour}
+                  childCount={getDirectChildren(item.id, items).length}
                 />
               )
             })}

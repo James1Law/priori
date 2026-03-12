@@ -14,9 +14,10 @@ interface CapacityViewProps {
   items: Item[]
   onSessionUpdate: (session: Session) => void
   onItemUpdate: (itemId: string, updates: Partial<Item>) => void
+  onEditItem?: (item: Item) => void
 }
 
-export default function CapacityView({ session, items, onSessionUpdate, onItemUpdate }: CapacityViewProps) {
+export default function CapacityView({ session, items, onSessionUpdate, onItemUpdate, onEditItem }: CapacityViewProps) {
   const settings = useCapacitySettings(session, onSessionUpdate)
   const metrics = useCapacityMetrics(items, settings)
 
@@ -115,6 +116,7 @@ export default function CapacityView({ session, items, onSessionUpdate, onItemUp
             totalCount={metrics.totalCount}
             baseEffort={metrics.baseEffort}
             onEstimateChange={handleEstimateChange}
+            onItemClick={onEditItem}
           />
 
           {/* Hint when no items are estimated */}

@@ -40,17 +40,17 @@ npm run test:e2e:ui      # Interactive UI
 
 ```
 src/
-├── components/     # React components
-├── hooks/          # Custom React hooks
-├── lib/            # Utilities, Supabase client
-├── types/          # TypeScript types
+├── components/     # React components (incl. InfoTooltip, BacklogList, CapacityView, etc.)
+├── hooks/          # Custom React hooks (useCapacitySettings, useCapacityMetrics, etc.)
+├── lib/            # Utilities — Supabase client, hierarchy tree helpers
+├── types/          # TypeScript types (database.ts defines all models)
 ├── frameworks/     # Prioritisation framework configs
-└── pages/          # Route components
+└── pages/          # Route components (SessionPage, LandingPage, etc.)
 tests/              # Unit tests (mirror src structure)
 e2e/                # Playwright E2E tests
-docs/               # PRDs and specs
+docs/               # PRDs, specs, and CHANGELOG
 plans/              # Design mockups (.mockup.html)
-supabase/           # Database migrations
+supabase/           # Database migrations (001–016)
 ```
 
 ## Development Rules
@@ -65,6 +65,12 @@ supabase/           # Database migrations
 - Extract reusable logic into hooks or utilities
 - Components should be small and focused
 - Avoid over-engineering - only make changes directly requested
+
+### Mobile / Desktop Dual Layout Pattern
+Several components (BacklogList, CapacityItemList) use a dual-layout pattern:
+- `sm:hidden` block for mobile layout
+- `hidden sm:flex` block for desktop layout
+- **Testing note:** JSDOM renders both layouts, so use `getAllByText` / `getAllByTestId` instead of `getByText` in tests
 
 ### Git Workflow
 - Main branch: `main` (auto-deploys to Vercel)
@@ -107,6 +113,8 @@ supabase/           # Database migrations
 | roadmap_start_quadrant | integer | Roadmap start (0-based) |
 | roadmap_end_quadrant | integer | Roadmap end (inclusive) |
 | effort_estimate | real | Capacity planning estimate |
+| parent_item_id | uuid | FK to items (nullable = top-level) |
+| item_level | integer | 0=Goal, 1=Initiative, 2=Epic, 3=Story, 4=Subtask |
 | created_by | text | Participant name |
 
 ### cutoffs
@@ -124,6 +132,21 @@ supabase/           # Database migrations
 - **estimation\_votes** — Planning Poker votes
 - **messages** — Team Chat messages
 
+## Hierarchy System
+
+Items support a 5-level hierarchy: **Goal → Initiative → Epic → Story → Subtask** (levels 0–4).
+
+### Key Concepts
+- **Flat by default** — Items with no parent remain at level 0 and behave exactly as before
+- **Leaf-based roll-up** — Effort estimates roll up from leaf items (no children) to avoid double-counting
+- **Status cascading** — Parent status auto-updates: all children done → done, any active → in progress, all todo → todo
+- **Max depth** — Level 4 (Subtask) cannot have children; reparenting checks prevent exceeding max depth
+
+### Key Files
+- `src/types/database.ts` — `ItemLevel`, `ITEM_LEVEL_LABELS`, `ItemWithChildren`
+- `src/lib/hierarchy.ts` — `buildTree`, `flattenTree`, `getRolledUpEstimate`, `getCascadedStatusUpdates`, `getDescendants`, `canReparent`, `canAddChild`
+- `src/components/InfoTooltip.tsx` — Portal-based tooltip (escapes overflow-hidden containers)
+
 ## Prioritisation Frameworks
 
 | Framework | Formula/Logic |
@@ -136,20 +159,21 @@ supabase/           # Database migrations
 
 ## Key Features
 
-- **Backlog View** — Home view with all items, multi-select, bulk actions, multiple cutoff lines
-- **Item Drawer** — Side panel for viewing/editing item details
+- **Backlog View** — Home view with all items, multi-select, bulk actions, multiple cutoff lines, hierarchy expand/collapse
+- **Item Hierarchy** — 5-level nesting (Goal → Initiative → Epic → Story → Subtask) with effort roll-up and status cascading
+- **Item Drawer** — Side panel for viewing/editing item details, parent selector, ancestry breadcrumb
 - **Scoring Flow** — Dedicated `/s/:slug/score` route for scoring selected items
 - **Estimation Flow** — Dedicated `/s/:slug/estimate` route for Planning Poker
-- **Roadmap View** — Visual timeline with periods and quadrant positioning
-- **Capacity Planning** — Compare backlog effort vs team capacity with utilisation metrics
+- **Roadmap View** — Currently showing "being redesigned" placeholder (hierarchy support in progress)
+- **Capacity Planning** — Compare backlog effort vs team capacity with utilisation metrics, info tooltips, click-to-edit items
 - **Team Chat** — Real-time messaging with typing indicators
-- **Mobile Support** — Responsive design with touch-friendly interactions
+- **Mobile Support** — Dual-layout responsive design with clamped hierarchy indentation, colour accent bars, compact controls
 
 ## URL Structure
 
 ```
 /s/:slug              → Backlog list view (default)
-/s/:slug/roadmap      → Roadmap timeline view
+/s/:slug/roadmap      → Roadmap view (currently WIP placeholder)
 /s/:slug/score        → Scoring flow for selected items
 /s/:slug/estimate     → Planning Poker estimation flow
 /s/:slug/item/:id     → Backlog with item drawer open

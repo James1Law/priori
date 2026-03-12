@@ -335,9 +335,10 @@ describe('RoadmapView', () => {
       const itemSpan = screen.getByText('Movable Feature', { selector: 'span' })
       expect(itemSpan).toBeInTheDocument()
 
-      // The bar (parent div) should have absolute positioning (bar style)
-      const bar = itemSpan.parentElement
-      expect(bar).toHaveClass('absolute')
+      // The bar (ancestor div) should have absolute positioning (bar style)
+      // The span is inside a flex container span, which is inside the bar div
+      const bar = itemSpan.closest('.absolute')
+      expect(bar).toBeInTheDocument()
     })
   })
 })

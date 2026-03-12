@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, createContext, useContext } from 'react'
-import { RoadmapPeriod, ItemWithScore } from '../types/database'
+import { RoadmapPeriod, ItemWithScore, ItemLevel } from '../types/database'
+import { ITEM_LEVEL_LABELS } from '../types/database'
 import UnscheduledItemsPicker from './UnscheduledItemsPicker'
 import PeriodSelector from './PeriodSelector'
 import PeriodEditModal from './PeriodEditModal'
@@ -262,7 +263,14 @@ function ItemBar({
       )}
 
       {continuesFromPrevious && <span className="ml-2 mr-1 opacity-70" aria-hidden="true">←</span>}
-      <span className={`truncate flex-1 min-w-0 ${isSelected ? 'px-3' : 'px-2'}`}>{displayTitle}</span>
+      <span className={`truncate flex-1 min-w-0 flex items-center gap-1 ${isSelected ? 'px-3' : 'px-2'}`}>
+        {(item.item_level ?? 0) > 0 && (
+          <span className="px-1 py-0.5 rounded text-[8px] font-semibold bg-white/20 flex-shrink-0">
+            {ITEM_LEVEL_LABELS[((item.item_level ?? 0) as ItemLevel)] ?? 'Item'}
+          </span>
+        )}
+        <span className="truncate">{displayTitle}</span>
+      </span>
       {continuesToNext && <span className="ml-1 mr-2 opacity-70" aria-hidden="true">→</span>}
 
       {/* Right resize handle - only show when selected and not continuing to next */}
@@ -513,10 +521,10 @@ export default function MobileRoadmapView({
     [selectedUnscheduledItem, onScheduleItem]
   )
 
-  // Get unscheduled items
-  const unscheduledItems = items.filter(
-    (item) => item.roadmap_start_quadrant === null || item.roadmap_end_quadrant === null
-  )
+  // Get unscheduled items, sorted by level then title
+  const unscheduledItems = items
+    .filter((item) => item.roadmap_start_quadrant === null || item.roadmap_end_quadrant === null)
+    .sort((a, b) => (a.item_level ?? 0) - (b.item_level ?? 0) || a.title.localeCompare(b.title))
 
   // Get count of items in a period
   const getItemCountInPeriod = useCallback(
@@ -634,7 +642,14 @@ export default function MobileRoadmapView({
                     aria-hidden="true"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 truncate">{item.title}</p>
+                    <div className="flex items-center gap-1.5">
+                      {(item.item_level ?? 0) > 0 && (
+                        <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-slate-100 text-slate-600 flex-shrink-0">
+                          {ITEM_LEVEL_LABELS[((item.item_level ?? 0) as ItemLevel)] ?? 'Item'}
+                        </span>
+                      )}
+                      <p className="font-medium text-slate-900 truncate">{item.title}</p>
+                    </div>
                     {item.description && (
                       <p className="text-xs text-slate-500 truncate">{item.description}</p>
                     )}

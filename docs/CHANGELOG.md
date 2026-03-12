@@ -4,6 +4,41 @@ Detailed history of features implemented across all phases.
 
 ---
 
+## Phase 15 - Hierarchical Items (Complete)
+
+### Overview
+5-level item hierarchy (Goal → Initiative → Epic → Story → Subtask) enabling structured work breakdown. Items can be nested, with effort estimates and statuses rolling up from leaf children to parents. Fully backwards-compatible — flat items remain unaffected.
+
+### Features
+- **Parent–Child Hierarchy**: Items support 5 levels (0–4) with expand/collapse in both list and capacity views
+- **Add Child Action**: Context menu action to add a child item directly under any parent (up to max depth)
+- **Hierarchy in Backlog**: Indentation, level badges, expand/collapse chevrons, colour-coded left accent bars
+- **Hierarchy in Capacity**: Rolled-up effort estimates from leaf children, "from children" tooltip explaining roll-up logic
+- **Hierarchy in Item Drawer**: Breadcrumb ancestry, parent selector, level display, "Add Child" button
+- **Status Cascading**: Parent status auto-updates based on children (all done → done, any active → in progress)
+- **Effort Roll-Up**: Parent estimates computed from leaf descendants only, avoiding double-counting
+- **Info Tooltips**: Hover tooltips on capacity settings (Team Size, Working Days, Focus Factor, Contingency, Hours/Day) and on rolled-up estimates
+- **Mobile Hierarchy Layout**: Dual mobile/desktop layouts with clamped indentation, colour accent bars, `line-clamp-2` titles, compact controls
+- **Drag Reordering on Mobile**: Compact drag handles preserved in mobile hierarchy layout
+- **Roadmap WIP Overlay**: Roadmap view replaced with "being redesigned" placeholder while hierarchy support is built
+- **Capacity Click-to-Edit**: Clicking items in capacity view opens the item drawer
+
+### New Components
+- `src/components/InfoTooltip.tsx` — Portal-based tooltip with viewport clamping
+- `src/lib/hierarchy.ts` — Tree utilities: buildTree, flattenTree, getDescendants, getRolledUpEstimate, getCascadedStatusUpdates, etc.
+
+### Database Changes
+- `supabase/016_add_hierarchy.sql` — `parent_item_id` (FK), `item_level` (0–4), indexes
+
+### Design Reference
+- Mockups: `plans/hierarchical-*.mockup.html`, `plans/mobile-hierarchy-*.mockup.html`
+
+### Status
+- ✅ All unit tests passing (685 tests)
+- ✅ Build passing
+
+---
+
 ## Phase 14 - Desktop Add Item UX (Complete)
 
 ### Features
@@ -291,4 +326,4 @@ Fundamental UX redesign shifting from a 4-tab model (Scoring, Estimates, Backlog
 
 ---
 
-*Last updated: 2026-03-11 - Phase 14 complete (646 unit tests passing)*
+*Last updated: 2026-03-12 - Phase 15 complete (685 unit tests passing)*

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import InfoTooltip from './InfoTooltip'
 
 type CapacityUnit = 'days' | 'hours'
 
@@ -26,6 +27,7 @@ function Stepper({
   onDecrement,
   onChange,
   parseDisplay,
+  tooltip,
 }: {
   label: string
   displayValue: string
@@ -33,6 +35,7 @@ function Stepper({
   onDecrement: () => void
   onChange: (value: number) => void
   parseDisplay?: (input: string) => number
+  tooltip?: string
 }) {
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(displayValue)
@@ -47,8 +50,9 @@ function Stepper({
 
   return (
     <div className="flex flex-col gap-1 min-w-0">
-      <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+      <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
         {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
       </div>
       <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden h-9">
         <button
@@ -125,6 +129,7 @@ export default function CapacitySettings({
         onIncrement={() => onTeamSizeChange(teamSize + 1)}
         onDecrement={() => onTeamSizeChange(teamSize - 1)}
         onChange={(v) => onTeamSizeChange(Math.round(v))}
+        tooltip="Number of team members available for this planning period. Multiplied by working days and focus factor to calculate net capacity."
       />
       <Stepper
         label="Working Days"
@@ -132,6 +137,7 @@ export default function CapacitySettings({
         onIncrement={() => onWorkingDaysChange(workingDays + 1)}
         onDecrement={() => onWorkingDaysChange(workingDays - 1)}
         onChange={(v) => onWorkingDaysChange(Math.round(v))}
+        tooltip="Total working days in the planning period. For example, 65 days ≈ one quarter (13 weeks × 5 days)."
       />
       <Stepper
         label="Focus Factor"
@@ -139,6 +145,7 @@ export default function CapacitySettings({
         onIncrement={() => onFocusFactorChange(round(focusFactor + 0.1, 1))}
         onDecrement={() => onFocusFactorChange(round(focusFactor - 0.1, 1))}
         onChange={onFocusFactorChange}
+        tooltip="Proportion of time spent on planned work (0.6 = 60%). Accounts for meetings, support, and other unplanned activities."
       />
       <Stepper
         label="Contingency"
@@ -147,6 +154,7 @@ export default function CapacitySettings({
         onDecrement={() => onContingencyChange(round(contingency - 0.05, 2))}
         onChange={(v) => onContingencyChange(v / 100)}
         parseDisplay={(input) => Number(input)}
+        tooltip="Buffer added to estimates for unknowns and risk. At 30%, a 100-day base estimate becomes 130 days total effort."
       />
 
       {/* Hours per day - only shown when unit is hours */}
@@ -157,6 +165,7 @@ export default function CapacitySettings({
           onIncrement={() => onHoursPerDayChange(hoursPerDay + 1)}
           onDecrement={() => onHoursPerDayChange(hoursPerDay - 1)}
           onChange={(v) => onHoursPerDayChange(Math.round(v))}
+          tooltip="Productive hours per working day when using hours as your unit. Multiplied into the capacity formula alongside team size, working days, and focus factor."
         />
       )}
 

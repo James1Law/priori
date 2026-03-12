@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390, initial-scale=1.0" />
+  <title>Mobile Hierarchy — Capacity View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+    .phone-frame {
+      width: 390px; margin: 20px auto; background: #f9fafb;
+      border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      overflow: hidden; border: 2px solid #d1d5db;
+    }
+  </style>
+</head>
+<body class="bg-gray-200 p-4">
+
+  <h1 class="text-center text-lg font-bold text-gray-700 mb-1">Mobile Hierarchy — Capacity View Redesign</h1>
+  <p class="text-center text-sm text-gray-500 mb-6 max-w-md mx-auto">
+    Stacked card layout with title always visible. Estimate input/rollup shown below title.
+    Colour accent bar indicates level. Tapping card opens item drawer.
+  </p>
+
+  <div class="phone-frame">
+    <div class="p-3 space-y-3">
+
+      <!-- Summary cards row (compact mobile) -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="rounded-lg p-3 bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow">
+          <div class="text-[10px] font-semibold uppercase tracking-wider text-white/80">Total Effort</div>
+          <div class="text-xl font-bold mt-0.5">34 days</div>
+          <div class="text-[10px] text-white/70 mt-0.5">22 base + 12 contingency</div>
+        </div>
+        <div class="rounded-lg p-3 bg-white border border-gray-200 shadow">
+          <div class="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Net Capacity</div>
+          <div class="text-xl font-bold mt-0.5 text-gray-900">195 days</div>
+          <div class="text-[10px] text-gray-400 mt-0.5">5 × 65 × 0.6</div>
+        </div>
+      </div>
+
+      <!-- Settings bar (collapsed on mobile) -->
+      <div class="bg-white border border-gray-200 rounded-lg p-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Settings</span>
+          <span class="text-xs text-gray-400">5 devs · 65 days · 0.6 focus · 30% buffer</span>
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+      </div>
+
+      <!-- Item list -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow overflow-hidden">
+
+        <!-- Goal (level 0) — parent with rolled-up estimate -->
+        <div class="border-b border-gray-100 border-l-[3px] border-l-pink-400 px-3 py-2.5 active:bg-gray-50">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-pink-50 text-pink-700 border border-pink-200">Goal</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-1">Testing hierarchy with a long goal name</p>
+            </div>
+            <div class="flex flex-col items-end flex-shrink-0 pt-0.5">
+              <span class="text-sm font-semibold text-emerald-700">34d</span>
+              <span class="text-[9px] text-gray-400">rolled up</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Initiative (level 1) — parent -->
+        <div class="border-b border-gray-100 border-l-[3px] border-l-blue-400 px-3 py-2.5 active:bg-gray-50" style="padding-left: calc(0.75rem + 12px)">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Initiative</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-1">User authentication improvements</p>
+            </div>
+            <div class="flex flex-col items-end flex-shrink-0 pt-0.5">
+              <span class="text-sm font-semibold text-emerald-700">22d</span>
+              <span class="text-[9px] text-gray-400">rolled up</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Epic (level 2) — parent -->
+        <div class="border-b border-gray-100 border-l-[3px] border-l-purple-400 px-3 py-2.5 active:bg-gray-50" style="padding-left: calc(1.5rem + 12px)">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">Epic</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-1">OAuth2 provider integration</p>
+            </div>
+            <div class="flex flex-col items-end flex-shrink-0 pt-0.5">
+              <span class="text-sm font-semibold text-emerald-700">10d</span>
+              <span class="text-[9px] text-gray-400">rolled up</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Story (level 3) — leaf with editable estimate -->
+        <div class="border-b border-gray-100 border-l-[3px] border-l-amber-400 px-3 py-2.5 active:bg-gray-50" style="padding-left: calc(2.25rem + 12px)">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Story</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-200">To Do</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-1">Implement Google sign-in button with redirect flow</p>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0 pt-1">
+              <input type="text" value="5" class="w-10 h-8 text-right px-1.5 text-sm font-medium rounded border border-gray-300 text-gray-900" />
+              <span class="text-[10px] text-gray-400">days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Story (level 3) — leaf -->
+        <div class="border-b border-gray-100 border-l-[3px] border-l-amber-400 px-3 py-2.5 active:bg-gray-50" style="padding-left: calc(2.25rem + 12px)">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">Story</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-1">Handle token refresh and session persistence</p>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0 pt-1">
+              <input type="text" value="5" class="w-10 h-8 text-right px-1.5 text-sm font-medium rounded border border-gray-300 text-gray-900" />
+              <span class="text-[10px] text-gray-400">days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Second Initiative (level 1) -->
+        <div class="border-b border-gray-100 border-l-[3px] border-l-blue-400 px-3 py-2.5 active:bg-gray-50" style="padding-left: calc(0.75rem + 12px)">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Initiative</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-1">Performance monitoring and alerting</p>
+            </div>
+            <div class="flex flex-col items-end flex-shrink-0 pt-0.5">
+              <span class="text-sm font-semibold text-emerald-700">12d</span>
+              <span class="text-[9px] text-gray-400">rolled up</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flat item (no hierarchy) -->
+        <div class="border-b border-gray-100 px-3 py-2.5 active:bg-gray-50">
+          <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900">A regular flat item without hierarchy</p>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <input type="text" placeholder="—" class="w-10 h-8 text-right px-1.5 text-sm font-medium rounded border border-dashed border-gray-300 text-gray-400" />
+              <span class="text-[10px] text-gray-400">days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary row -->
+        <div class="flex items-center px-3 py-3 bg-gray-50 border-t-2 border-gray-200">
+          <div class="flex-1 text-xs font-semibold text-gray-600">
+            Total (4 of 6 items)
+          </div>
+          <div class="text-base font-bold text-gray-900">
+            22 days
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ANNOTATIONS -->
+  <div class="max-w-md mx-auto mt-6 bg-white rounded-lg p-4 border border-gray-200 text-xs text-gray-600 space-y-2">
+    <h3 class="font-bold text-gray-800 text-sm">Capacity view — mobile design decisions</h3>
+    <p><strong>Colour accent bar</strong> on the left — same level colours as backlog list. Gives immediate visual grouping without eating horizontal space.</p>
+    <p><strong>Title always on its own line</strong> — no truncation. Wraps naturally.</p>
+    <p><strong>Estimate right-aligned</strong> — compact input for leaves, rolled-up total for parents. Smaller input (w-10) on mobile.</p>
+    <p><strong>Rank badges removed</strong> on mobile — position in list is obvious, and the number adds noise.</p>
+    <p><strong>Status shown inline</strong> with level badge — saves a whole column.</p>
+    <p><strong>Tap to open drawer</strong> — entire row is tappable (except estimate input). Uses <code>active:bg-gray-50</code> for touch feedback.</p>
+    <p><strong>Reduced indent</strong> — same 0.75rem/level, capped at 2.25rem.</p>
+  </div>
+
+</body>
+</html>

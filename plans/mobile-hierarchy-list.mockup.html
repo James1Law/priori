@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=390, initial-scale=1.0" />
+  <title>Mobile Hierarchy — Backlog List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+    .phone-frame {
+      width: 390px; margin: 20px auto; background: #f9fafb;
+      border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      overflow: hidden; border: 2px solid #d1d5db;
+    }
+  </style>
+</head>
+<body class="bg-gray-200 p-4">
+
+  <h1 class="text-center text-lg font-bold text-gray-700 mb-1">Mobile Hierarchy — Backlog List Redesign</h1>
+  <p class="text-center text-sm text-gray-500 mb-6 max-w-md mx-auto">
+    Key changes: title always visible on its own line, level indicated by colour accent + small tag,
+    reduced indentation (0.75rem per level), badges wrap below, interactive controls compact.
+  </p>
+
+  <!-- CURRENT (BROKEN) -->
+  <h2 class="text-center text-sm font-semibold text-red-600 mb-2">CURRENT — titles truncated, unreadable</h2>
+  <div class="phone-frame">
+    <div class="p-3 space-y-2">
+      <!-- Goal card (current) -->
+      <article class="bg-white rounded-lg border border-gray-200 shadow-sm p-3">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <input type="checkbox" class="flex-shrink-0 w-4 h-4" />
+          <div class="flex-shrink-0 w-1 h-5 bg-gray-200 rounded"></div>
+          <div class="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 flex-shrink-0">1</div>
+          <span class="px-1 py-0.5 rounded text-[9px] font-semibold border bg-pink-50 text-pink-700 border-pink-200 flex-shrink-0">Goal</span>
+          <span class="text-sm font-medium text-gray-900 truncate">Testin...</span>
+          <button class="flex-shrink-0 text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v.01M12 12v.01M12 18v.01"/></svg></button>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mt-2 ml-7">
+          <span class="px-2 py-0.5 rounded-md text-xs font-medium border bg-amber-50 text-amber-800 border-amber-200">In Progress</span>
+          <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">34d est.</span>
+          <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Next</span>
+        </div>
+      </article>
+      <!-- Initiative (indented - current) -->
+      <article class="bg-white rounded-lg border border-gray-200 shadow-sm p-3" style="margin-left: 1.5rem">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <input type="checkbox" class="flex-shrink-0 w-4 h-4" />
+          <div class="flex-shrink-0 w-1 h-5 bg-gray-200 rounded"></div>
+          <span class="px-1 py-0.5 rounded text-[9px] font-semibold border bg-blue-50 text-blue-700 border-blue-200 flex-shrink-0">Initiative</span>
+          <span class="text-sm font-medium text-gray-900 truncate">Initia...</span>
+          <button class="flex-shrink-0 text-gray-400"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v.01M12 12v.01M12 18v.01"/></svg></button>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mt-2 ml-7">
+          <span class="px-2 py-0.5 rounded-md text-xs font-medium border bg-amber-50 text-amber-800 border-amber-200">In Progress</span>
+          <span class="px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">22d est.</span>
+        </div>
+      </article>
+      <!-- Epic (double indented - current) -->
+      <article class="bg-white rounded-lg border border-gray-200 shadow-sm p-3" style="margin-left: 3rem">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <input type="checkbox" class="flex-shrink-0 w-4 h-4" />
+          <div class="flex-shrink-0 w-1 h-5 bg-gray-200 rounded"></div>
+          <span class="px-1 py-0.5 rounded text-[9px] font-semibold border bg-purple-50 text-purple-700 border-purple-200 flex-shrink-0">Epic</span>
+          <span class="text-sm font-medium text-gray-900 truncate">Ep...</span>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- PROPOSED REDESIGN -->
+  <h2 class="text-center text-sm font-semibold text-emerald-600 mt-8 mb-2">PROPOSED — title always readable, compact hierarchy</h2>
+  <div class="phone-frame">
+    <div class="p-3 space-y-1.5">
+
+      <!-- Design notes -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-xs text-blue-700 leading-relaxed mb-3">
+        <strong>Design changes:</strong>
+        <ul class="list-disc ml-4 mt-1 space-y-0.5">
+          <li>Title on its own line — never competes with controls</li>
+          <li>Level shown by left colour accent bar + small inline tag</li>
+          <li>Indent reduced: 0.75rem/level (was 1.5rem)</li>
+          <li>Max indent capped at 2.25rem (level 3+)</li>
+          <li>Rank badge hidden on mobile for child items</li>
+          <li>Drag handle + checkbox on same row as chevron</li>
+          <li>Progress bar + child count moved to badge row</li>
+        </ul>
+      </div>
+
+      <!-- Goal (level 0) — proposed -->
+      <article class="bg-white rounded-lg border-l-[3px] border-l-pink-400 border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-3 py-2">
+          <!-- Row 1: controls + title -->
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-pink-50 text-pink-700 border border-pink-200 flex-shrink-0">Goal</span>
+                <span class="text-[10px] text-gray-400 flex-shrink-0">0/3</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-0.5 line-clamp-2">Testing hierarchy with a really long goal name that wraps</p>
+            </div>
+          </div>
+          <!-- Row 2: badges -->
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">34d est.</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Next</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Initiative (level 1) — proposed -->
+      <article class="bg-white rounded-lg border-l-[3px] border-l-blue-400 border border-gray-200 shadow-sm overflow-hidden" style="margin-left: 0.75rem">
+        <div class="px-3 py-2">
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">Initiative</span>
+                <span class="text-[10px] text-gray-400 flex-shrink-0">0/2</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-0.5 line-clamp-2">User authentication improvements</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">22d est.</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Now</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Epic (level 2) — proposed -->
+      <article class="bg-white rounded-lg border-l-[3px] border-l-purple-400 border border-gray-200 shadow-sm overflow-hidden" style="margin-left: 1.5rem">
+        <div class="px-3 py-2">
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 flex-shrink-0">Epic</span>
+                <span class="text-[10px] text-gray-400 flex-shrink-0">0/2</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-0.5 line-clamp-2">OAuth2 provider integration</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">10d est.</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Story (level 3) — leaf item, proposed -->
+      <article class="bg-white rounded-lg border-l-[3px] border-l-amber-400 border border-gray-200 shadow-sm overflow-hidden" style="margin-left: 2.25rem">
+        <div class="px-3 py-2">
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <div class="w-4"></div><!-- no chevron for leaf -->
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">Story</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-0.5">Implement Google sign-in button with redirect flow</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <button class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100">To Do</button>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">5d est.</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Story (level 3) — another leaf, proposed -->
+      <article class="bg-white rounded-lg border-l-[3px] border-l-amber-400 border border-gray-200 shadow-sm overflow-hidden" style="margin-left: 2.25rem">
+        <div class="px-3 py-2">
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <div class="w-4"></div>
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">Story</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-0.5">Handle token refresh and session persistence</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <button class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</button>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">5d est.</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Second Initiative (level 1) — collapsed, proposed -->
+      <article class="bg-white rounded-lg border-l-[3px] border-l-blue-400 border border-gray-200 shadow-sm overflow-hidden" style="margin-left: 0.75rem">
+        <div class="px-3 py-2">
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">Initiative</span>
+                <span class="text-[10px] text-gray-400 flex-shrink-0">0/1</span>
+              </div>
+              <p class="text-sm font-medium text-gray-900 mt-0.5 line-clamp-2">Performance monitoring and alerting dashboard</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">In Progress</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">12d est.</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Next</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Flat item (no level) — proposed -->
+      <article class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-3 py-2">
+          <div class="flex items-start gap-1.5">
+            <div class="flex items-center gap-1 flex-shrink-0 pt-0.5">
+              <div class="w-4"></div>
+              <input type="checkbox" class="w-3.5 h-3.5" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 mt-0.5">A regular flat item without any hierarchy</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1 mt-1.5 ml-7">
+            <button class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-200">To Do</button>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+
+  <!-- ANNOTATIONS -->
+  <div class="max-w-md mx-auto mt-6 bg-white rounded-lg p-4 border border-gray-200 text-xs text-gray-600 space-y-2">
+    <h3 class="font-bold text-gray-800 text-sm">Design decisions</h3>
+    <p><strong>Left colour accent bar</strong> replaces the level badge taking horizontal space. Pink=Goal, Blue=Initiative, Purple=Epic, Amber=Story, Slate=Subtask. No bar for flat items.</p>
+    <p><strong>Title on second line</strong> — uses <code>line-clamp-2</code> so titles can wrap to 2 lines before truncating. Always readable.</p>
+    <p><strong>Reduced indent</strong> — 0.75rem per level, capped at 2.25rem max. Enough to show nesting without eating all the space.</p>
+    <p><strong>Rank badge hidden</strong> on mobile for hierarchy items — the level badge + indent already communicates position.</p>
+    <p><strong>Drag handle hidden</strong> on mobile — long-press to reorder (existing behaviour).</p>
+    <p><strong>Badges shrunk</strong> — 10px text, 1.5px padding. Smaller but still legible.</p>
+  </div>
+
+</body>
+</html>

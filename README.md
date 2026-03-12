@@ -19,13 +19,21 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **MoSCoW**: Must, Should, Could, Won't categorisation
 - **Weighted Scoring**: Custom criteria with configurable weights
 
+### Item Hierarchy
+- **5-Level Nesting**: Goal → Initiative → Epic → Story → Subtask
+- **Expand/Collapse**: Show or hide child items in both list and capacity views
+- **Effort Roll-Up**: Parent estimates computed automatically from leaf children
+- **Status Cascading**: Parent status auto-updates based on children's progress
+- **Add Child**: Create child items directly from the context menu or item drawer
+- **Flat by Default**: Works without hierarchy — existing flat items are unaffected
+
 ### Backlog View
 - **Prioritised Backlog**: View items ranked by score in a clean list
 - **Manual Reordering**: Drag-and-drop to override score-based order
 - **Cutoff Line**: Visual separator to define scope (what's in vs out)
 - **Editable Cutoff Label**: Customise the cutoff label (e.g., "MVP", "Sprint 1")
 
-### Roadmap View
+### Roadmap View *(being redesigned for hierarchy support)*
 - **Custom Time Periods**: Define your own timeline periods (default: Now, Next, Later)
 - **Drag-and-Drop Scheduling**: Place items onto the timeline by dragging
 - **Item Bar Resizing**: Extend items across multiple periods by dragging edges
@@ -37,6 +45,8 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Days or Hours**: Toggle between day and hour estimates with configurable hours/day
 - **Summary Dashboard**: 4 metric cards — Total Effort, Net Capacity, Utilisation gauge, Coverage
 - **Utilisation Thresholds**: Colour-coded status — green (healthy), amber (at risk), red (over capacity)
+- **Info Tooltips**: Hover tooltips explaining each setting
+- **Click-to-Edit**: Click items to open the item drawer for editing
 - **Inline Estimates**: Enter effort estimates directly on each item
 - **Utilisation Bar**: Visual progress bar showing effort vs available capacity
 - **Capacity CSV Export**: Download capacity plan with settings, metrics, and item estimates
@@ -69,7 +79,8 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Bottom Sheet**: Full item form slides up from bottom
 - **Kebab Menu**: Framework selection and session actions in dropdown menu
 - **Touch-friendly Controls**: Tap-friendly interactions throughout
-- **Mobile Roadmap**: Vertical timeline with touch-friendly drag-to-resize
+- **Mobile Hierarchy**: Colour-coded accent bars, clamped indentation, two-line titles, compact controls
+- **Drag Reordering**: Touch-friendly drag handles on both mobile and desktop
 
 ### Polish
 - **Custom Brand**: Indigo colour scheme, Poppins/Inter typography
@@ -81,7 +92,7 @@ A lightweight, collaborative product prioritisation web app. No authentication r
 - **Frontend**: React 18 + TypeScript + Vite
 - **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL + Realtime)
-- **Unit Testing**: Vitest + React Testing Library (646 tests)
+- **Unit Testing**: Vitest + React Testing Library (685 tests)
 - **E2E Testing**: Playwright
 - **Hosting**: Vercel (auto-deploys from main)
 
@@ -135,6 +146,7 @@ Run the SQL migration scripts in order:
 - `supabase/013_add_estimation_item_ids.sql` - Estimation queue
 - `supabase/014_add_capacity_planning.sql` - Capacity planning fields
 - `supabase/015_capacity_hours_per_day.sql` - Hours per day setting
+- `supabase/016_add_hierarchy.sql` - Parent-child hierarchy (parent_item_id, item_level)
 
 See `supabase/README.md` for detailed instructions.
 

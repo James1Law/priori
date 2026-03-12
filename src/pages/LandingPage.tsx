@@ -53,6 +53,13 @@ const FEATURES = [
       'Estimate story points as a team with Fibonacci cards. Reveal votes together and reach consensus faster.',
   },
   {
+    icon: '🧩',
+    iconBgColor: '#ede9fe',
+    title: 'Work Breakdown',
+    description:
+      'Organise items into Goals, Initiatives, Epics, Stories and Subtasks. Effort and status roll up automatically.',
+  },
+  {
     icon: '📋',
     iconBgColor: '#fef3c7',
     title: 'Backlog Management',
@@ -79,6 +86,13 @@ const FEATURES = [
     title: 'Team Chat',
     description:
       "Discuss priorities in real-time without leaving the session. See who's typing and never miss a message.",
+  },
+  {
+    icon: '⚡',
+    iconBgColor: '#fef9c3',
+    title: 'Real-Time Collaboration',
+    description:
+      'Share a link — no sign-up needed. Changes sync instantly across all participants with live presence indicators.',
   },
 ]
 
@@ -144,7 +158,7 @@ export default function LandingPage() {
               Product Prioritisation Tool
             </p>
             <p className="text-gray-500 text-sm md:text-base">
-              Score, estimate, plan and ship together in real-time.
+              Score, estimate, plan and ship — together in real-time.
             </p>
           </header>
 

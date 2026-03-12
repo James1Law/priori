@@ -1,17 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Item, ItemWithScore, ItemStatus, Framework, RoadmapPeriod } from '../types/database'
+import type { Item, ItemWithScore, ItemStatus, Framework, RoadmapPeriod, ItemLevel } from '../types/database'
+import { ITEM_LEVEL_LABELS, ITEM_LEVEL_CHILD_LABELS, MAX_ITEM_LEVEL } from '../types/database'
 import { getQuadrant } from '../lib/valueEffort'
+import { getAncestors, getDirectChildren, getStatusRollup, getRolledUpEstimate } from '../lib/hierarchy'
 
 interface ItemDrawerProps {
   item: ItemWithScore | null
   isOpen: boolean
   framework: Framework
   periods: RoadmapPeriod[]
+  allItems?: ItemWithScore[]
   onClose: () => void
   onSave: (item: Item) => void
   onDelete: (itemId: string) => void
   onAssignPeriod?: (itemId: string, startQuadrant: number, endQuadrant: number) => void
   onUnassignPeriod?: (itemId: string) => void
+  onNavigateToItem?: (item: ItemWithScore) => void
+  onAddChild?: (parentId: string, parentLevel: number, title: string) => void
 }
 
 const STATUS_OPTIONS: { value: ItemStatus; label: string; bgClass: string; textClass: string }[] = [
@@ -98,22 +103,37 @@ function getPeriodFromQuadrant(startQuadrant: number | null, periods: RoadmapPer
   return periods.find(p => p.position === periodIndex) || null
 }
 
+// Level badge colours (matching BacklogList)
+const LEVEL_BADGE_STYLES: Record<number, string> = {
+  0: 'bg-pink-50 text-pink-700 border-pink-200',
+  1: 'bg-blue-50 text-blue-700 border-blue-200',
+  2: 'bg-purple-50 text-purple-700 border-purple-200',
+  3: 'bg-amber-50 text-amber-700 border-amber-200',
+  4: 'bg-slate-50 text-slate-600 border-slate-200',
+}
+
 export default function ItemDrawer({
   item,
   isOpen,
   framework,
   periods,
+  allItems = [],
   onClose,
   onSave,
   onDelete,
   onAssignPeriod,
   onUnassignPeriod,
+  onNavigateToItem,
+  onAddChild,
 }: ItemDrawerProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<ItemStatus>('todo')
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
+  const [childTitle, setChildTitle] = useState('')
+  const [isAddingChild, setIsAddingChild] = useState(false)
+  const childInputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Reset form when item changes
@@ -125,8 +145,17 @@ export default function ItemDrawer({
       const currentPeriod = getPeriodFromQuadrant(item.roadmap_start_quadrant ?? null, periods)
       setSelectedPeriodId(currentPeriod?.id || null)
       setHasChanges(false)
+      setIsAddingChild(false)
+      setChildTitle('')
     }
   }, [item, periods])
+
+  // Focus child input when shown
+  useEffect(() => {
+    if (isAddingChild && childInputRef.current) {
+      childInputRef.current.focus()
+    }
+  }, [isAddingChild])
 
   // Track changes
   useEffect(() => {
@@ -169,6 +198,23 @@ export default function ItemDrawer({
 
   const scoreDisplay = formatScoreDisplay(item, framework)
   const currentPeriod = getPeriodFromQuadrant(item.roadmap_start_quadrant ?? null, periods)
+
+  // Hierarchy data
+  const itemLevel = (item.item_level ?? 0) as ItemLevel
+  const ancestors = allItems.length > 0 ? getAncestors(item.id, allItems) : []
+  const children = allItems.length > 0 ? getDirectChildren(item.id, allItems) : []
+  const hasChildren = children.length > 0
+  const canAddChild = itemLevel < MAX_ITEM_LEVEL && !!onAddChild
+  const statusRollup = hasChildren ? getStatusRollup(item.id, allItems) : null
+  const rolledUpEstimate = hasChildren ? getRolledUpEstimate(item.id, allItems) : null
+  const isHierarchyItem = itemLevel > 0 || hasChildren
+
+  const handleAddChild = () => {
+    if (!childTitle.trim() || !onAddChild) return
+    onAddChild(item.id, itemLevel, childTitle.trim())
+    setChildTitle('')
+    setIsAddingChild(false)
+  }
 
   const handleSave = () => {
     if (!title.trim()) return
@@ -225,19 +271,54 @@ export default function ItemDrawer({
         aria-labelledby="drawer-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
-          <h2 id="drawer-title" className="text-lg font-display font-semibold text-gray-900">
-            Item Details
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label="Close drawer"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              {isHierarchyItem && (
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border flex-shrink-0 ${LEVEL_BADGE_STYLES[itemLevel] ?? LEVEL_BADGE_STYLES[0]}`}>
+                  {ITEM_LEVEL_LABELS[itemLevel] ?? 'Item'}
+                </span>
+              )}
+              <h2 id="drawer-title" className="text-lg font-display font-semibold text-gray-900 truncate">
+                Item Details
+              </h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
+              aria-label="Close drawer"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Breadcrumbs */}
+          {ancestors.length > 0 && onNavigateToItem && (
+            <nav className="mt-2 flex items-center gap-1 text-xs text-gray-500 overflow-x-auto" aria-label="Item hierarchy">
+              {ancestors.reverse().map((ancestor, i) => (
+                <span key={ancestor.id} className="flex items-center gap-1 flex-shrink-0">
+                  {i > 0 && (
+                    <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                  <button
+                    onClick={() => onNavigateToItem(ancestor)}
+                    className="hover:text-indigo-600 hover:underline truncate max-w-[120px]"
+                    title={ancestor.title}
+                  >
+                    {ancestor.title}
+                  </button>
+                </span>
+              ))}
+              <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <span className="font-medium text-gray-700 truncate">{item.title}</span>
+            </nav>
+          )}
         </div>
 
         {/* Content */}
@@ -342,6 +423,127 @@ export default function ItemDrawer({
                     </option>
                   ))}
               </select>
+            </div>
+          )}
+
+          {/* Hierarchy Rollup for parent items */}
+          {hasChildren && statusRollup && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-700">Progress</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Status rollup card */}
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="text-xs text-gray-500 font-medium">Children Status</div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden flex">
+                      <div className="bg-green-500 h-full" style={{ width: `${statusRollup.total > 0 ? (statusRollup.done / statusRollup.total) * 100 : 0}%` }} />
+                      <div className="bg-amber-400 h-full" style={{ width: `${statusRollup.total > 0 ? (statusRollup.in_progress / statusRollup.total) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {statusRollup.done}/{statusRollup.total} done
+                    {statusRollup.in_progress > 0 && ` · ${statusRollup.in_progress} in progress`}
+                  </div>
+                </div>
+
+                {/* Rolled-up estimate card */}
+                {rolledUpEstimate !== null && (
+                  <div className="p-3 bg-emerald-50 rounded-lg">
+                    <div className="text-xs text-emerald-600 font-medium">Total Estimate</div>
+                    <div className="text-xl font-semibold text-emerald-900 mt-0.5">{rolledUpEstimate}d</div>
+                    <div className="text-xs text-emerald-600/70 mt-1">From {children.length} children</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Children List */}
+          {(hasChildren || canAddChild) && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-700">
+                  {hasChildren
+                    ? `Children (${children.length})`
+                    : `Add ${ITEM_LEVEL_CHILD_LABELS[itemLevel]}`}
+                </h3>
+                {canAddChild && !isAddingChild && (
+                  <button
+                    onClick={() => setIsAddingChild(true)}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add {ITEM_LEVEL_CHILD_LABELS[itemLevel]}
+                  </button>
+                )}
+              </div>
+
+              {/* Children items */}
+              {children.length > 0 && (
+                <div className="space-y-1">
+                  {children
+                    .sort((a, b) => (a.backlog_position ?? a.position) - (b.backlog_position ?? b.position))
+                    .map((child) => {
+                      const childStatus = child.status || 'todo'
+                      const childStatusLabel = childStatus === 'in_progress' ? 'In Progress' : childStatus === 'done' ? 'Done' : 'To Do'
+                      const childStatusClass = childStatus === 'done' ? 'bg-green-50 text-green-700' : childStatus === 'in_progress' ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-600'
+                      const childLevel = (child.item_level ?? 0) as number
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => onNavigateToItem?.(child)}
+                          className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 text-left transition-colors group"
+                        >
+                          <span className={`px-1 py-0.5 rounded text-[9px] font-semibold border flex-shrink-0 ${LEVEL_BADGE_STYLES[childLevel] ?? LEVEL_BADGE_STYLES[4]}`}>
+                            {ITEM_LEVEL_LABELS[(childLevel as ItemLevel)] ?? 'Item'}
+                          </span>
+                          <span className="flex-1 text-sm text-gray-900 truncate group-hover:text-indigo-600">
+                            {child.title}
+                          </span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${childStatusClass}`}>
+                            {childStatusLabel}
+                          </span>
+                        </button>
+                      )
+                    })}
+                </div>
+              )}
+
+              {/* Inline add child */}
+              {isAddingChild && (
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={childInputRef}
+                    type="text"
+                    value={childTitle}
+                    onChange={(e) => setChildTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddChild()
+                      if (e.key === 'Escape') {
+                        setIsAddingChild(false)
+                        setChildTitle('')
+                      }
+                    }}
+                    placeholder={`New ${ITEM_LEVEL_CHILD_LABELS[itemLevel]}...`}
+                    className="flex-1 text-sm border border-gray-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleAddChild}
+                    disabled={!childTitle.trim()}
+                    className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => { setIsAddingChild(false); setChildTitle('') }}
+                    className="px-2 py-1.5 text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

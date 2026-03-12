@@ -10,6 +10,27 @@ export type ItemStatus = 'todo' | 'in_progress' | 'done'
 
 export type CutoffColor = 'red' | 'amber' | 'blue' | 'green'
 
+// Hierarchy levels
+export type ItemLevel = 0 | 1 | 2 | 3 | 4
+
+export const ITEM_LEVEL_LABELS: Record<ItemLevel, string> = {
+  0: 'Goal',
+  1: 'Initiative',
+  2: 'Epic',
+  3: 'Story',
+  4: 'Subtask',
+}
+
+export const ITEM_LEVEL_CHILD_LABELS: Record<ItemLevel, string> = {
+  0: 'initiative',
+  1: 'epic',
+  2: 'story',
+  3: 'subtask',
+  4: 'subtask', // level 4 can't have children, but included for completeness
+}
+
+export const MAX_ITEM_LEVEL: ItemLevel = 4
+
 export interface Session {
   id: string
   slug: string
@@ -61,6 +82,9 @@ export interface Item {
   story_points: number | null
   // Capacity planning estimate
   effort_estimate: number | null
+  // Hierarchy
+  parent_item_id: string | null
+  item_level: ItemLevel
 }
 
 export interface RoadmapPeriod {
@@ -74,6 +98,10 @@ export interface RoadmapPeriod {
 
 export interface ItemWithScore extends Item {
   score?: Score
+}
+
+export interface ItemWithChildren extends ItemWithScore {
+  children: ItemWithChildren[]
 }
 
 export interface Score {

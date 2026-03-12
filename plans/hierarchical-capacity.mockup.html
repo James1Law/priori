@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Hierarchical Capacity Planning</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb; color: #111827; min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    /* App Frame */
+    .app-frame {
+      max-width: 1100px; margin: 2rem auto;
+      background: white; border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      overflow: hidden; position: relative;
+      padding-bottom: 60px;
+    }
+    .app-header {
+      padding: 1rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .app-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 1rem;
+    }
+    .session-name { font-weight: 600; font-size: 1.2rem; color: #111827; }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .presence-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; }
+    .presence-count { font-size: 0.85rem; color: #6b7280; }
+
+    .add-item-btn {
+      background: #4f46e5; color: white;
+      border: none; padding: 0.45rem 0.85rem;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 0.35rem;
+    }
+
+    .content { padding: 1rem 1.5rem 1.5rem; }
+
+    /* Summary Cards (matches production) */
+    .summary-cards {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem; margin-bottom: 1rem;
+    }
+    .summary-card {
+      background: white; border: 1px solid #e5e7eb;
+      border-radius: 12px; padding: 0.85rem;
+    }
+    .summary-card.primary { background: #4f46e5; border-color: #4f46e5; }
+    .summary-card.primary .sc-label { color: rgba(255,255,255,0.8); }
+    .summary-card.primary .sc-value { color: white; }
+    .summary-card.primary .sc-sub { color: rgba(255,255,255,0.7); }
+    .sc-label {
+      font-size: 0.65rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .sc-value { font-size: 1.4rem; font-weight: 700; color: #111827; margin-top: 0.15rem; }
+    .sc-sub { font-size: 0.7rem; color: #6b7280; margin-top: 0.1rem; }
+    .utilisation-bar {
+      width: 100%; height: 6px; background: #e5e7eb;
+      border-radius: 3px; margin-top: 0.4rem; overflow: hidden;
+    }
+    .utilisation-fill { height: 100%; border-radius: 3px; }
+    .util-ok { background: #22c55e; }
+
+    /* Settings Row (matches production) */
+    .settings-row {
+      display: flex; align-items: center; gap: 1.5rem;
+      padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .setting-group { display: flex; align-items: center; gap: 0.3rem; }
+    .setting-label { font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; }
+    .setting-control {
+      display: flex; align-items: center; gap: 0;
+    }
+    .setting-btn {
+      width: 28px; height: 28px; border: 1px solid #d1d5db;
+      background: white; font-size: 0.85rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #6b7280;
+    }
+    .setting-btn:first-child { border-radius: 6px 0 0 6px; }
+    .setting-btn:last-child { border-radius: 0 6px 6px 0; }
+    .setting-value {
+      padding: 0.25rem 0.5rem; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;
+      font-size: 0.85rem; font-weight: 500; color: #111827;
+      min-width: 36px; text-align: center;
+    }
+    .unit-toggle { display: flex; }
+    .unit-btn {
+      padding: 0.35rem 0.7rem; border: 1px solid #d1d5db;
+      font-size: 0.8rem; font-weight: 500; cursor: pointer;
+    }
+    .unit-btn:first-child { border-radius: 6px 0 0 6px; }
+    .unit-btn:last-child { border-radius: 0 6px 6px 0; }
+    .unit-btn.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+    .unit-btn.inactive { background: white; color: #6b7280; }
+    .export-btn {
+      margin-left: auto; padding: 0.35rem 0.7rem;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 0.8rem; color: #6b7280; background: white; cursor: pointer;
+    }
+
+    /* Capacity Table */
+    .capacity-table {
+      border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;
+    }
+    .table-header {
+      display: grid;
+      grid-template-columns: 32px 1fr 90px 90px 90px;
+      gap: 0.4rem; padding: 0.5rem 0.75rem;
+      font-size: 0.65rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 2px solid #e5e7eb; background: #fafbfc;
+    }
+
+    /* Group Header (Parent) */
+    .group-header {
+      display: grid;
+      grid-template-columns: 32px 1fr 90px 90px 90px;
+      gap: 0.4rem; padding: 0.5rem 0.75rem;
+      align-items: center;
+      background: #f8faff; border-bottom: 1px solid #e5e7eb;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .group-header:hover { background: #eef2ff; }
+    .group-expand {
+      width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; color: #6b7280;
+      border: none; background: transparent; cursor: pointer; border-radius: 4px;
+    }
+    .group-expand:hover { background: #e5e7eb; }
+    .group-expand.collapsed { transform: rotate(-90deg); }
+
+    .group-title {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-weight: 600; font-size: 0.82rem; color: #111827;
+    }
+    .child-count { font-size: 0.65rem; color: #9ca3af; font-weight: 400; }
+
+    .level-badge-sm {
+      font-size: 0.5rem; font-weight: 600; padding: 0.08rem 0.25rem;
+      border-radius: 999px; text-transform: uppercase; flex-shrink: 0;
+    }
+    .level-badge-sm.goal { background: #fce7f3; color: #9d174d; }
+    .level-badge-sm.initiative { background: #dbeafe; color: #1d4ed8; }
+    .level-badge-sm.epic { background: #ede9fe; color: #6d28d9; }
+    .level-badge-sm.story { background: #fef3c7; color: #92400e; }
+
+    .group-status { font-size: 0.7rem; color: #6b7280; }
+    .group-estimate { font-size: 0.85rem; font-weight: 600; color: #111827; }
+    .group-estimate-sub { font-size: 0.6rem; color: #9ca3af; font-style: italic; }
+
+    .effort-bar-container { display: flex; align-items: center; gap: 0.3rem; }
+    .effort-bar { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+    .effort-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #4f46e5, #818cf8); }
+    .effort-pct { font-size: 0.6rem; color: #6b7280; font-weight: 500; min-width: 28px; }
+
+    /* Child Row */
+    .child-row {
+      display: grid;
+      grid-template-columns: 32px 1fr 90px 90px 90px;
+      gap: 0.4rem; padding: 0.35rem 0.75rem;
+      align-items: center; border-bottom: 1px solid #f3f4f6;
+    }
+    .child-row:hover { background: #fafbff; }
+    .child-indent {
+      padding-left: 1.25rem;
+      display: flex; align-items: center; gap: 0.35rem;
+      font-size: 0.8rem; color: #374151;
+    }
+    .child-indent.level-2 { padding-left: 2.5rem; }
+    .child-indent.level-3 { padding-left: 3.75rem; }
+
+    .status-badge {
+      font-size: 0.6rem; font-weight: 500;
+      padding: 0.12rem 0.35rem; border-radius: 999px;
+    }
+    .status-todo { background: #f3f4f6; color: #6b7280; }
+    .status-progress { background: #dbeafe; color: #1d4ed8; }
+    .status-done { background: #dcfce7; color: #166534; }
+
+    .estimate-input {
+      width: 50px; padding: 0.2rem 0.35rem;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 0.8rem; text-align: right;
+    }
+    .estimate-unit { font-size: 0.65rem; color: #9ca3af; }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: 32px 1fr 90px 90px 90px;
+      gap: 0.4rem; padding: 0.6rem 0.75rem;
+      align-items: center; background: #f3f4f6;
+      border-top: 2px solid #e5e7eb; font-weight: 600;
+    }
+
+    /* Utilisation bar at bottom */
+    .util-section {
+      margin-top: 1rem; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 0.85rem;
+    }
+    .util-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: #374151; margin-bottom: 0.4rem; }
+    .util-bar { width: 100%; height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; }
+    .util-bar-fill { height: 100%; border-radius: 6px; background: #22c55e; }
+    .util-legend { display: flex; gap: 1rem; margin-top: 0.4rem; font-size: 0.7rem; color: #6b7280; }
+    .util-legend-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 0.25rem; }
+
+    .empty-hint { text-align: center; padding: 1rem; font-size: 0.8rem; color: #9ca3af; }
+
+    /* Bottom Tab Bar */
+    .bottom-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem; display: flex; gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+    }
+    .bottom-tab {
+      flex: 1; padding: 0.5rem 0.75rem;
+      font-size: 0.85rem; font-weight: 500; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      cursor: pointer; border: none;
+    }
+    .bottom-tab.active { background: #4f46e5; color: white; }
+    .bottom-tab.inactive { background: #f3f4f6; color: #6b7280; }
+    .tab-icon { width: 16px; height: 16px; }
+
+    .annotation {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 0.75rem 1rem;
+      font-size: 0.8rem; color: #92400e;
+      max-width: 1100px; margin: 1rem auto;
+    }
+    .annotation strong { color: #78350f; }
+  </style>
+</head>
+<body>
+
+  <div class="concept-header">
+    <h1 class="font-display">Hierarchical Capacity Planning</h1>
+    <p>Effort estimates grouped by hierarchy level, with automatic roll-up totals and utilisation tracking</p>
+  </div>
+
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 1</span>
+    <h2>Grouped by Goal → Initiative → Epic with Drill-down</h2>
+    <p>Goals show total effort, expand into initiatives, then epics, with editable leaf estimates</p>
+  </div>
+
+  <div style="max-width: 1100px; margin: 2rem auto; padding: 0 1rem;">
+    <div class="app-frame">
+      <div class="app-header">
+        <div class="app-header-left">
+          <div class="logo font-display">P</div>
+          <span class="session-name">Q2 Product Roadmap</span>
+        </div>
+        <div class="header-right">
+          <span class="presence-dot"></span>
+          <span class="presence-count">3</span>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; padding: 0.75rem 1.5rem 0;">
+        <button class="add-item-btn">+ Add Item</button>
+      </div>
+
+      <div class="content">
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+          <div class="summary-card primary">
+            <div class="sc-label">Total Effort</div>
+            <div class="sc-value">136 days</div>
+            <div class="sc-sub">0 base + 0 contingency (30%)</div>
+          </div>
+          <div class="summary-card">
+            <div class="sc-label">Net Capacity</div>
+            <div class="sc-value">195 days</div>
+            <div class="sc-sub">5 devs × 65 days × 0.6 focus</div>
+          </div>
+          <div class="summary-card">
+            <div class="sc-label">Utilisation</div>
+            <div class="sc-value" style="color: #22c55e;">70%</div>
+            <div class="sc-sub" style="color: #22c55e;">Healthy</div>
+            <div class="utilisation-bar"><div class="utilisation-fill util-ok" style="width: 70%"></div></div>
+          </div>
+          <div class="summary-card">
+            <div class="sc-label">Coverage</div>
+            <div class="sc-value">18<span style="font-size: 0.85rem; font-weight: 400; color: #6b7280;">/22</span></div>
+            <div class="sc-sub">items estimated</div>
+          </div>
+        </div>
+
+        <!-- Settings Row -->
+        <div class="settings-row">
+          <div class="setting-group">
+            <span class="setting-label">Team Size</span>
+            <div class="setting-control">
+              <button class="setting-btn">−</button>
+              <div class="setting-value">5</div>
+              <button class="setting-btn">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Working Days</span>
+            <div class="setting-control">
+              <button class="setting-btn">−</button>
+              <div class="setting-value">65</div>
+              <button class="setting-btn">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Focus Factor</span>
+            <div class="setting-control">
+              <button class="setting-btn">−</button>
+              <div class="setting-value">0.6</div>
+              <button class="setting-btn">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Contingency</span>
+            <div class="setting-control">
+              <button class="setting-btn">−</button>
+              <div class="setting-value">30%</div>
+              <button class="setting-btn">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <span class="setting-label">Unit</span>
+            <div class="unit-toggle">
+              <button class="unit-btn active">Days</button>
+              <button class="unit-btn inactive">Hours</button>
+            </div>
+          </div>
+          <button class="export-btn">📋 Export CSV</button>
+        </div>
+
+        <!-- Capacity Table -->
+        <div class="capacity-table">
+          <div class="table-header">
+            <div>#</div>
+            <div>Item</div>
+            <div>Status</div>
+            <div>Estimate</div>
+            <div>% of Total</div>
+          </div>
+
+          <!-- GOAL: Increase Activation (EXPANDED) -->
+          <div class="group-header">
+            <div><button class="group-expand">▾</button></div>
+            <div class="group-title">
+              <span class="level-badge-sm goal">Goal</span>
+              Increase Activation Rate
+              <span class="child-count">2 initiatives</span>
+            </div>
+            <div class="group-status">4/11 done</div>
+            <div class="group-estimate">
+              52d
+              <div class="group-estimate-sub">rolled up</div>
+            </div>
+            <div class="effort-bar-container">
+              <div class="effort-bar"><div class="effort-bar-fill" style="width: 38%"></div></div>
+              <span class="effort-pct">38%</span>
+            </div>
+          </div>
+
+          <!-- Initiative: User Onboarding (EXPANDED) -->
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent">
+              <button class="group-expand" style="font-size: 0.55rem;">▾</button>
+              <span class="level-badge-sm initiative">Init</span>
+              User Onboarding Revamp
+              <span class="child-count">2 epics</span>
+            </div>
+            <div class="group-status" style="font-size: 0.65rem;">2/5 done</div>
+            <div class="group-estimate" style="font-size: 0.8rem;">34d</div>
+            <div class="effort-bar-container">
+              <div class="effort-bar"><div class="effort-bar-fill" style="width: 25%"></div></div>
+              <span class="effort-pct">25%</span>
+            </div>
+          </div>
+
+          <!-- Epic: Welcome Flow (EXPANDED) -->
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent level-2">
+              <button class="group-expand" style="font-size: 0.55rem;">▾</button>
+              <span class="level-badge-sm epic">Epic</span>
+              Welcome Flow Redesign
+              <span class="child-count">2 stories</span>
+            </div>
+            <div><span class="status-badge status-progress">In Progress</span></div>
+            <div class="group-estimate" style="font-size: 0.8rem;">14d</div>
+            <div></div>
+          </div>
+
+          <!-- Story (leaf — editable) -->
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent level-3">
+              <span class="level-badge-sm story">Story</span>
+              Design onboarding wizard
+            </div>
+            <div><span class="status-badge status-done">Done</span></div>
+            <div>
+              <input type="text" class="estimate-input" value="5">
+              <span class="estimate-unit">days</span>
+            </div>
+            <div></div>
+          </div>
+
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent level-3">
+              <span class="level-badge-sm story">Story</span>
+              Implement wizard navigation
+            </div>
+            <div><span class="status-badge status-progress">In Progress</span></div>
+            <div>
+              <input type="text" class="estimate-input" value="9">
+              <span class="estimate-unit">days</span>
+            </div>
+            <div></div>
+          </div>
+
+          <!-- Epic: Email Sequence (COLLAPSED) -->
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent level-2">
+              <button class="group-expand collapsed" style="font-size: 0.55rem;">▾</button>
+              <span class="level-badge-sm epic">Epic</span>
+              Automated Email Sequence
+              <span class="child-count">3 stories</span>
+            </div>
+            <div><span class="status-badge status-todo">To Do</span></div>
+            <div class="group-estimate" style="font-size: 0.8rem;">12d</div>
+            <div></div>
+          </div>
+
+          <!-- Initiative: Growth Analytics (COLLAPSED) -->
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent">
+              <button class="group-expand collapsed" style="font-size: 0.55rem;">▾</button>
+              <span class="level-badge-sm initiative">Init</span>
+              Growth Analytics
+              <span class="child-count">3 epics</span>
+            </div>
+            <div class="group-status" style="font-size: 0.65rem;">2/6 done</div>
+            <div class="group-estimate" style="font-size: 0.8rem;">18d</div>
+            <div class="effort-bar-container">
+              <div class="effort-bar"><div class="effort-bar-fill" style="width: 13%"></div></div>
+              <span class="effort-pct">13%</span>
+            </div>
+          </div>
+
+          <!-- GOAL 2: Reduce Churn (COLLAPSED) -->
+          <div class="group-header">
+            <div><button class="group-expand collapsed">▾</button></div>
+            <div class="group-title">
+              <span class="level-badge-sm goal">Goal</span>
+              Reduce Churn Below 3%
+              <span class="child-count">3 initiatives · 18 items</span>
+            </div>
+            <div class="group-status">2/18 done</div>
+            <div class="group-estimate">
+              82d
+              <div class="group-estimate-sub">rolled up</div>
+            </div>
+            <div class="effort-bar-container">
+              <div class="effort-bar"><div class="effort-bar-fill" style="width: 60%"></div></div>
+              <span class="effort-pct">60%</span>
+            </div>
+          </div>
+
+          <!-- STANDALONE ITEMS -->
+          <div class="group-header" style="background: #fafbfc;">
+            <div><button class="group-expand">▾</button></div>
+            <div class="group-title" style="color: #6b7280;">
+              Standalone Items
+              <span class="child-count">2 items</span>
+            </div>
+            <div class="group-status">0/2 done</div>
+            <div class="group-estimate">2d</div>
+            <div class="effort-bar-container">
+              <div class="effort-bar"><div class="effort-bar-fill" style="width: 2%"></div></div>
+              <span class="effort-pct">2%</span>
+            </div>
+          </div>
+
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent">Safari Login Fix</div>
+            <div><span class="status-badge status-todo">To Do</span></div>
+            <div>
+              <input type="text" class="estimate-input" value="2">
+              <span class="estimate-unit">days</span>
+            </div>
+            <div></div>
+          </div>
+
+          <div class="child-row">
+            <div></div>
+            <div class="child-indent">Privacy policy update</div>
+            <div><span class="status-badge status-progress">In Progress</span></div>
+            <div>
+              <input type="text" class="estimate-input" value="—">
+              <span class="estimate-unit">days</span>
+            </div>
+            <div></div>
+          </div>
+
+          <!-- Summary Row -->
+          <div class="summary-row">
+            <div></div>
+            <div>Total (18 of 22 items estimated)</div>
+            <div></div>
+            <div style="font-size: 1rem;">136 days</div>
+            <div class="effort-bar-container">
+              <div class="effort-bar"><div class="effort-bar-fill" style="width: 100%"></div></div>
+              <span class="effort-pct">100%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-hint">Add estimates to see capacity utilisation.</div>
+
+        <!-- Utilisation bar -->
+        <div class="util-section">
+          <div class="util-header">
+            <span>Capacity utilisation</span>
+            <span>136 / 195 days (70%)</span>
+          </div>
+          <div class="util-bar">
+            <div class="util-bar-fill" style="width: 70%"></div>
+          </div>
+          <div class="util-legend">
+            <span><span class="util-legend-dot" style="background: #22c55e;"></span> Effort (incl. contingency)</span>
+            <span><span class="util-legend-dot" style="background: #e5e7eb;"></span> Remaining capacity</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <button class="bottom-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          List
+        </button>
+        <button class="bottom-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Roadmap
+        </button>
+        <button class="bottom-tab active">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Capacity
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>Capacity hierarchy design (aligned with production UI):</strong>
+    <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+      <li>Matches production: summary cards (purple "Total Effort" card), settings row with +/- controls, Days/Hours toggle, Export CSV</li>
+      <li>Bottom tab bar with List/Roadmap/Capacity pill buttons</li>
+      <li><strong>Estimates only on leaves:</strong> Only stories/subtasks have editable inputs. Parent totals are automatically summed.</li>
+      <li><strong>% of total column:</strong> Shows each goal/initiative's share of total effort</li>
+      <li><strong>No double counting:</strong> Utilisation from leaf-level estimates only</li>
+      <li>Standalone items grouped separately at bottom</li>
+    </ul>
+  </div>
+
+</body>
+</html>

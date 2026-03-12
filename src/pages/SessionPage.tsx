@@ -6,8 +6,6 @@ import { exportToCsv } from '../lib/exportCsv'
 import ItemForm from '../components/ItemForm'
 import BacklogList from '../components/BacklogList'
 import { type FilterState, applyFilters } from '../components/BacklogToolbar'
-import RoadmapView from '../components/RoadmapView'
-import MobileRoadmapView from '../components/MobileRoadmapView'
 import CapacityView from '../components/CapacityView'
 import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
@@ -23,6 +21,7 @@ import { useRoadmapPeriods } from '../hooks/useRoadmapPeriods'
 import { useCutoffs } from '../hooks/useCutoffs'
 import { useMessages } from '../hooks/useMessages'
 import { useUnreadCount } from '../hooks/useUnreadCount'
+import { getCascadedStatusUpdates, getDirectChildren } from '../lib/hierarchy'
 
 // Lazy load components that are only used for specific views
 
@@ -108,10 +107,6 @@ export default function SessionPage() {
   // Roadmap periods
   const {
     periods: roadmapPeriods,
-    loading: roadmapPeriodsLoading,
-    addPeriod: addRoadmapPeriod,
-    updatePeriod: updateRoadmapPeriod,
-    deletePeriod: deleteRoadmapPeriod,
   } = useRoadmapPeriods(localView === 'roadmap' ? (session?.id ?? null) : null)
 
   // Cutoffs hook
@@ -404,17 +399,27 @@ export default function SessionPage() {
   const handleAddItem = async (newItem: {
     title: string
     description: string
+    parent_item_id?: string
+    item_level?: number
   }) => {
     if (!session) return
 
     const position = items.length
 
-    const itemToInsert = {
+    const itemToInsert: Record<string, unknown> = {
       session_id: session.id,
       title: newItem.title,
       description: newItem.description || null,
       position,
       created_by: participantName,
+    }
+
+    // Add hierarchy fields if provided
+    if (newItem.parent_item_id) {
+      itemToInsert.parent_item_id = newItem.parent_item_id
+    }
+    if (newItem.item_level !== undefined) {
+      itemToInsert.item_level = newItem.item_level
     }
 
     const { data, error: insertError } = await supabase
@@ -481,19 +486,52 @@ export default function SessionPage() {
       return
     }
 
-    setItems(items.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem } : item)))
+    // Update local state
+    const newItems = items.map((item) => (item.id === updatedItem.id ? { ...item, ...updatedItem } : item))
+
+    // Cascade status to parents if status changed
+    const originalItem = items.find((i) => i.id === updatedItem.id)
+    if (originalItem && originalItem.status !== updatedItem.status) {
+      const cascadedUpdates = getCascadedStatusUpdates(updatedItem.id, newItems)
+      const cascadeMap = new Map(cascadedUpdates.map((u) => [u.id, u.status]))
+
+      setItems(newItems.map((item) =>
+        cascadeMap.has(item.id) ? { ...item, status: cascadeMap.get(item.id)! } : item
+      ))
+
+      // Persist cascaded updates
+      for (const update of cascadedUpdates) {
+        await supabase
+          .from('items')
+          .update({ status: update.status } as never)
+          .eq('id', update.id)
+      }
+    } else {
+      setItems(newItems)
+    }
+
     setEditingItem(null)
   }
 
   const handleStatusChange = async (itemId: string, status: import('../types/database').ItemStatus) => {
-    // Optimistically update local state
+    // Compute cascaded parent updates before applying changes
+    // We need the updated items array to compute cascading correctly
+    const updatedItems = items.map((item) =>
+      item.id === itemId ? { ...item, status } : item
+    )
+    const cascadedUpdates = getCascadedStatusUpdates(itemId, updatedItems)
+    const cascadeMap = new Map(cascadedUpdates.map((u) => [u.id, u.status]))
+
+    // Optimistically update local state (child + cascaded parents)
     setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId ? { ...item, status } : item
-      )
+      prevItems.map((item) => {
+        if (item.id === itemId) return { ...item, status }
+        if (cascadeMap.has(item.id)) return { ...item, status: cascadeMap.get(item.id)! }
+        return item
+      })
     )
 
-    // Persist to database
+    // Persist child status to database
     const { error } = await supabase
       .from('items')
       .update({ status } as never)
@@ -510,6 +548,15 @@ export default function SessionPage() {
           )
         )
       }
+      return
+    }
+
+    // Persist cascaded parent status updates
+    for (const update of cascadedUpdates) {
+      await supabase
+        .from('items')
+        .update({ status: update.status } as never)
+        .eq('id', update.id)
     }
   }
 
@@ -533,7 +580,7 @@ export default function SessionPage() {
           return
         }
 
-        setItems(items.filter((item) => item.id !== itemId))
+        setItems((prevItems) => prevItems.filter((item) => item.id !== itemId))
       },
     })
   }
@@ -558,7 +605,7 @@ export default function SessionPage() {
           return
         }
 
-        setItems(items.filter((item) => !itemIds.includes(item.id)))
+        setItems((prevItems) => prevItems.filter((item) => !itemIds.includes(item.id)))
       },
     })
   }
@@ -741,21 +788,61 @@ export default function SessionPage() {
   }
 
   const handleScheduleItem = async (itemId: string, startQuadrant: number, endQuadrant: number) => {
+    const scheduledItem = items.find((i) => i.id === itemId)
+
+    let clampedStart = startQuadrant
+    let clampedEnd = endQuadrant
+
+    // If this is a child item, clamp within parent's period
+    if (scheduledItem?.parent_item_id) {
+      const parent = items.find((i) => i.id === scheduledItem.parent_item_id)
+      if (parent && parent.roadmap_start_quadrant != null && parent.roadmap_end_quadrant != null) {
+        clampedStart = Math.max(clampedStart, parent.roadmap_start_quadrant)
+        clampedEnd = Math.min(clampedEnd, parent.roadmap_end_quadrant)
+        // Ensure start <= end after clamping
+        if (clampedStart > clampedEnd) {
+          clampedStart = parent.roadmap_start_quadrant
+          clampedEnd = parent.roadmap_end_quadrant
+        }
+      }
+    }
+
+    // Collect children that need to be constrained within the new parent range
+    const childUpdates: { id: string; start: number; end: number }[] = []
+    if (scheduledItem) {
+      const children = getDirectChildren(itemId, items)
+      for (const child of children) {
+        if (child.roadmap_start_quadrant != null && child.roadmap_end_quadrant != null) {
+          const newStart = Math.max(child.roadmap_start_quadrant, clampedStart)
+          const newEnd = Math.min(child.roadmap_end_quadrant, clampedEnd)
+          if (newStart !== child.roadmap_start_quadrant || newEnd !== child.roadmap_end_quadrant) {
+            childUpdates.push({ id: child.id, start: Math.min(newStart, newEnd), end: Math.max(newStart, newEnd) })
+          }
+        }
+      }
+    }
+
     // Optimistically update local state
+    const childUpdateMap = new Map(childUpdates.map((u) => [u.id, u]))
     setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId
-          ? { ...item, roadmap_start_quadrant: startQuadrant, roadmap_end_quadrant: endQuadrant }
-          : item
-      )
+      prevItems.map((item) => {
+        if (item.id === itemId) {
+          return { ...item, roadmap_start_quadrant: clampedStart, roadmap_end_quadrant: clampedEnd }
+        }
+        if (childUpdateMap.has(item.id)) {
+          const cu = childUpdateMap.get(item.id)!
+          return { ...item, roadmap_start_quadrant: cu.start, roadmap_end_quadrant: cu.end }
+        }
+        return item
+      })
     )
 
     // Persist to database
     const { error } = await supabase
       .from('items')
       .update({
-        roadmap_start_quadrant: startQuadrant,
-        roadmap_end_quadrant: endQuadrant,
+        roadmap_start_quadrant: clampedStart,
+        roadmap_end_quadrant: clampedEnd,
       } as never)
       .eq('id', itemId)
 
@@ -769,6 +856,18 @@ export default function SessionPage() {
             : item
         )
       )
+      return
+    }
+
+    // Persist child constraint updates
+    for (const cu of childUpdates) {
+      await supabase
+        .from('items')
+        .update({
+          roadmap_start_quadrant: cu.start,
+          roadmap_end_quadrant: cu.end,
+        } as never)
+        .eq('id', cu.id)
     }
   }
 
@@ -811,59 +910,6 @@ export default function SessionPage() {
         )
       }
     }
-  }
-
-  const handleDeletePeriod = async (periodId: string) => {
-    // Find the period being deleted and its position
-    const periodToDelete = roadmapPeriods.find((p) => p.id === periodId)
-    if (!periodToDelete) return
-
-    // Calculate the quadrant range this period covers
-    const QUADRANTS_PER_PERIOD = 4
-    let quadrantOffset = 0
-    for (const period of roadmapPeriods) {
-      if (period.id === periodId) break
-      quadrantOffset += QUADRANTS_PER_PERIOD
-    }
-    const deletedPeriodStartQuadrant = quadrantOffset
-    const deletedPeriodEndQuadrant = quadrantOffset + QUADRANTS_PER_PERIOD - 1
-
-    // Find items that overlap with this period's quadrant range
-    const affectedItems = items.filter((item) => {
-      if (item.roadmap_start_quadrant === null || item.roadmap_end_quadrant === null) {
-        return false
-      }
-      // Check if item's range overlaps with the deleted period's range
-      return (
-        item.roadmap_start_quadrant <= deletedPeriodEndQuadrant &&
-        item.roadmap_end_quadrant >= deletedPeriodStartQuadrant
-      )
-    })
-
-    // Clear quadrant values for affected items (optimistically)
-    if (affectedItems.length > 0) {
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          affectedItems.some((ai) => ai.id === item.id)
-            ? { ...item, roadmap_start_quadrant: null, roadmap_end_quadrant: null }
-            : item
-        )
-      )
-
-      // Persist to database
-      for (const item of affectedItems) {
-        await supabase
-          .from('items')
-          .update({
-            roadmap_start_quadrant: null,
-            roadmap_end_quadrant: null,
-          } as never)
-          .eq('id', item.id)
-      }
-    }
-
-    // Now delete the period
-    await deleteRoadmapPeriod(periodId)
   }
 
   const handleSessionNameSave = async () => {
@@ -1187,39 +1233,38 @@ export default function SessionPage() {
                   onAssignPeriod={handleAssignPeriod}
                   onScore={(selectedItemIds) => navigate(`/s/${slug}/score`, { state: { selectedItemIds } })}
                   onEstimate={(selectedItemIds) => navigate(`/s/${slug}/estimate`, { state: { selectedItemIds } })}
+                  onAddChild={(parentId, parentLevel, title) => {
+                    handleAddItem({
+                      title,
+                      description: '',
+                      parent_item_id: parentId,
+                      item_level: parentLevel + 1,
+                    })
+                  }}
                 />
               </div>
             )}
 
-            {/* Roadmap View */}
+            {/* Roadmap View — temporarily disabled while being redesigned for hierarchy */}
             {localView === 'roadmap' && (
-              <>
-                {/* Desktop: horizontal timeline with periods as columns */}
-                <div className="hidden lg:block bg-white rounded-lg shadow p-4 sm:p-6">
-                  <RoadmapView
-                    periods={roadmapPeriods}
-                    items={items}
-                    loading={roadmapPeriodsLoading}
-                    onScheduleItem={handleScheduleItem}
-                    onUnscheduleItem={handleUnscheduleItem}
-                    onAddPeriod={addRoadmapPeriod}
-                    onUpdatePeriod={updateRoadmapPeriod}
-                    onDeletePeriod={handleDeletePeriod}
-                  />
+              <div className="bg-white rounded-xl border border-gray-200 shadow p-8 sm:p-12 text-center">
+                <div className="max-w-sm mx-auto">
+                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Roadmap is being redesigned
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    We&apos;re updating the roadmap view to support the new parent–child item hierarchy. It&apos;ll be back soon with a much better experience.
+                  </p>
+                  <p className="text-xs text-gray-400 mt-4">
+                    In the meantime, use the <strong>List</strong> and <strong>Capacity</strong> views to manage your items.
+                  </p>
                 </div>
-                {/* Mobile: stacked period cards */}
-                <div className="lg:hidden bg-white rounded-lg shadow p-4 sm:p-6">
-                  <MobileRoadmapView
-                    periods={roadmapPeriods}
-                    items={items}
-                    loading={roadmapPeriodsLoading}
-                    onScheduleItem={handleScheduleItem}
-                    onAddPeriod={addRoadmapPeriod}
-                    onUpdatePeriod={updateRoadmapPeriod}
-                    onDeletePeriod={handleDeletePeriod}
-                  />
-                </div>
-              </>
+              </div>
             )}
 
             {/* Capacity Planning View */}
@@ -1235,6 +1280,7 @@ export default function SessionPage() {
                     )
                   )
                 }}
+                onEditItem={setEditingItem}
               />
             )}
         </div>
@@ -1375,11 +1421,21 @@ export default function SessionPage() {
         isOpen={editingItem !== null}
         framework={session.framework}
         periods={roadmapPeriods}
+        allItems={items}
         onClose={() => setEditingItem(null)}
         onSave={handleEditItem}
         onDelete={handleDeleteItem}
         onAssignPeriod={(itemId, start, end) => handleScheduleItem(itemId, start, end)}
         onUnassignPeriod={handleUnscheduleItem}
+        onNavigateToItem={(navItem) => setEditingItem(navItem)}
+        onAddChild={(parentId, parentLevel, childItemTitle) => {
+          handleAddItem({
+            title: childItemTitle,
+            description: '',
+            parent_item_id: parentId,
+            item_level: parentLevel + 1,
+          })
+        }}
       />
 
       {/* Name prompt modal */}

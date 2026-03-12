@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Hierarchical Item Drawer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    /* Layout: Backlog + Drawer */
+    .layout {
+      display: flex; max-width: 1200px; margin: 0 auto;
+      min-height: 600px;
+    }
+
+    /* Backlog side (dimmed) */
+    .backlog-bg {
+      flex: 1; background: #f9fafb; padding: 1.5rem;
+      opacity: 0.4; pointer-events: none;
+    }
+    .backlog-placeholder {
+      background: white; border: 1px solid #e5e7eb;
+      border-radius: 10px; padding: 0.6rem 0.75rem;
+      margin-bottom: 0.35rem; font-size: 0.85rem; color: #6b7280;
+    }
+    .backlog-placeholder.active {
+      border-color: #4f46e5; background: #eef2ff;
+      opacity: 1;
+    }
+
+    /* Drawer Panel */
+    .drawer {
+      width: 440px;
+      background: white;
+      border-left: 1px solid #e5e7eb;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.06);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .drawer-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .drawer-close {
+      width: 28px; height: 28px;
+      border: none; background: #f3f4f6;
+      border-radius: 6px; cursor: pointer;
+      font-size: 0.9rem; color: #6b7280;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: #9ca3af;
+      margin-bottom: 0.5rem;
+    }
+    .breadcrumb a {
+      color: #6366f1; text-decoration: none; font-weight: 500;
+    }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb-sep { color: #d1d5db; }
+
+    .drawer-title {
+      font-size: 1.15rem; font-weight: 600; color: #111827;
+      margin-bottom: 0.25rem;
+    }
+
+    .level-badge {
+      font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.4rem;
+      border-radius: 999px; text-transform: uppercase;
+    }
+    .level-badge.initiative { background: #dbeafe; color: #1d4ed8; }
+    .level-badge.epic { background: #ede9fe; color: #6d28d9; }
+    .level-badge.story { background: #fef3c7; color: #92400e; }
+
+    .drawer-body {
+      padding: 1.25rem 1.5rem;
+      flex: 1;
+    }
+
+    /* Field Groups */
+    .field-group {
+      margin-bottom: 1.25rem;
+    }
+    .field-label {
+      font-size: 0.7rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+
+    .field-value {
+      font-size: 0.85rem; color: #374151;
+      line-height: 1.5;
+    }
+
+    /* Status Toggles */
+    .status-toggles {
+      display: flex; gap: 0.4rem;
+    }
+    .status-toggle {
+      padding: 0.35rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.75rem; font-weight: 500;
+      cursor: pointer; background: white;
+      transition: all 0.15s;
+    }
+    .status-toggle.active-todo { background: #f3f4f6; border-color: #9ca3af; color: #374151; }
+    .status-toggle.active-progress { background: #dbeafe; border-color: #60a5fa; color: #1d4ed8; }
+    .status-toggle.active-done { background: #dcfce7; border-color: #4ade80; color: #166534; }
+
+    /* Metrics Row */
+    .metrics-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .metric-card {
+      background: #f9fafb; border: 1px solid #e5e7eb;
+      border-radius: 8px; padding: 0.6rem 0.75rem;
+    }
+    .metric-value { font-size: 1.1rem; font-weight: 700; color: #111827; }
+    .metric-label { font-size: 0.65rem; color: #9ca3af; margin-top: 0.1rem; }
+
+    /* Progress Bar */
+    .progress-section {
+      margin-bottom: 1.25rem;
+    }
+    .progress-bar-lg {
+      width: 100%; height: 8px; background: #e5e7eb;
+      border-radius: 4px; overflow: hidden; margin-top: 0.3rem;
+    }
+    .progress-fill-lg {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, #4f46e5, #818cf8);
+    }
+    .progress-text {
+      font-size: 0.75rem; color: #6b7280; margin-top: 0.3rem;
+    }
+
+    /* Children List */
+    .children-section {
+      margin-top: 1.25rem;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 1rem;
+    }
+    .children-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .children-title {
+      font-size: 0.8rem; font-weight: 600; color: #374151;
+    }
+
+    .child-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 0.35rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .child-item:hover { border-color: #c7d2fe; background: #fafbff; }
+
+    .child-item-title {
+      flex: 1; font-size: 0.8rem; font-weight: 500; color: #374151;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .child-item-status {
+      font-size: 0.6rem; font-weight: 500;
+      padding: 0.1rem 0.35rem; border-radius: 999px;
+    }
+    .child-item-estimate {
+      font-size: 0.7rem; color: #9ca3af;
+    }
+    .child-item-chevron {
+      font-size: 0.7rem; color: #d1d5db;
+    }
+
+    /* Grandchild nested */
+    .grandchild-group {
+      margin-left: 1.5rem;
+      border-left: 2px solid #ede9fe;
+      padding-left: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+    .grandchild-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #f3f4f6;
+      border-radius: 6px;
+      margin-bottom: 0.25rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.15s;
+    }
+    .grandchild-item:hover { border-color: #ddd6fe; background: #faf5ff; }
+
+    .add-child-btn {
+      display: flex; align-items: center; gap: 0.3rem;
+      width: 100%; padding: 0.4rem 0.6rem;
+      border: 1px dashed #d1d5db;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 0.75rem; color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .add-child-btn:hover { border-color: #4f46e5; color: #4f46e5; background: #eef2ff; }
+
+    /* Parent Selector */
+    .parent-selector {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .parent-selector select {
+      flex: 1; padding: 0.35rem 0.5rem;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      font-size: 0.8rem; color: #374151;
+    }
+    .parent-selector .remove-btn {
+      padding: 0.3rem 0.5rem; border: 1px solid #fca5a5;
+      border-radius: 6px; background: #fef2f2;
+      font-size: 0.7rem; color: #dc2626;
+      cursor: pointer;
+    }
+
+    .annotation {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 0.75rem 1rem;
+      margin: 1rem 2rem; font-size: 0.8rem; color: #92400e;
+    }
+    .annotation strong { color: #78350f; }
+  </style>
+</head>
+<body>
+
+  <div class="concept-header">
+    <h1 class="font-display">Hierarchical Item Drawer</h1>
+    <p>Item detail panel showing parent breadcrumbs, children list, aggregate metrics, and reparenting controls</p>
+  </div>
+
+  <!-- ========== SCENARIO 1: INITIATIVE DRAWER ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 1</span>
+    <h2>Initiative (Level 0) — Parent with Epics</h2>
+    <p>Shows aggregate metrics, progress, and expandable child list</p>
+  </div>
+
+  <div class="layout">
+    <div class="backlog-bg">
+      <div class="backlog-placeholder active">1. User Onboarding Revamp</div>
+      <div class="backlog-placeholder" style="margin-left: 28px;">↳ Welcome Flow Redesign</div>
+      <div class="backlog-placeholder" style="margin-left: 28px;">↳ Email Sequence</div>
+      <div class="backlog-placeholder" style="margin-left: 28px;">↳ Tooltip Guide</div>
+      <div class="backlog-placeholder">2. API Platform Launch</div>
+      <div class="backlog-placeholder">3. Safari Login Fix</div>
+    </div>
+
+    <div class="drawer">
+      <div class="drawer-header">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="level-badge initiative">Initiative</span>
+          </div>
+          <div class="drawer-title">User Onboarding Revamp</div>
+        </div>
+        <button class="drawer-close">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Description -->
+        <div class="field-group">
+          <div class="field-label">Description</div>
+          <div class="field-value">
+            Redesign the entire user onboarding experience to improve activation rates. Includes welcome flow, email nurture sequence, and in-app guidance.
+          </div>
+        </div>
+
+        <!-- Aggregate Metrics -->
+        <div class="field-group">
+          <div class="field-label">Aggregate Metrics</div>
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-value">34d</div>
+              <div class="metric-label">Total effort (sum of children)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">RICE: 245</div>
+              <div class="metric-label">Avg. score across epics</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-section">
+          <div class="field-label">Progress</div>
+          <div class="progress-bar-lg">
+            <div class="progress-fill-lg" style="width: 40%"></div>
+          </div>
+          <div class="progress-text">2 of 5 stories completed (40%)</div>
+        </div>
+
+        <!-- Status Breakdown -->
+        <div class="field-group">
+          <div class="field-label">Status Breakdown</div>
+          <div style="display: flex; gap: 0.5rem; font-size: 0.8rem;">
+            <span style="color: #22c55e; font-weight: 600;">2 done</span>
+            <span style="color: #3b82f6; font-weight: 600;">1 in progress</span>
+            <span style="color: #9ca3af; font-weight: 600;">2 to do</span>
+          </div>
+        </div>
+
+        <!-- Created By -->
+        <div class="field-group">
+          <div class="field-label">Created By</div>
+          <div class="field-value">Sarah</div>
+        </div>
+
+        <!-- Children (Epics) -->
+        <div class="children-section">
+          <div class="children-header">
+            <span class="children-title">Epics (3)</span>
+          </div>
+
+          <!-- Epic 1 -->
+          <div class="child-item">
+            <span class="level-badge epic">Epic</span>
+            <span class="child-item-title">Welcome Flow Redesign</span>
+            <span class="child-item-status status-progress" style="background: #dbeafe; color: #1d4ed8;">In Progress</span>
+            <span class="child-item-estimate">14d</span>
+            <span class="child-item-chevron">›</span>
+          </div>
+          <!-- Grandchildren preview -->
+          <div class="grandchild-group">
+            <div class="grandchild-item">
+              <span class="level-badge story" style="font-size: 0.5rem;">Story</span>
+              <span style="flex: 1; color: #374151;">Design onboarding wizard screens</span>
+              <span class="child-item-status status-done" style="background: #dcfce7; color: #166534; font-size: 0.55rem;">Done</span>
+            </div>
+            <div class="grandchild-item">
+              <span class="level-badge story" style="font-size: 0.5rem;">Story</span>
+              <span style="flex: 1; color: #374151;">Implement wizard navigation</span>
+              <span class="child-item-status status-progress" style="background: #dbeafe; color: #1d4ed8; font-size: 0.55rem;">In Prog</span>
+            </div>
+          </div>
+
+          <!-- Epic 2 -->
+          <div class="child-item">
+            <span class="level-badge epic">Epic</span>
+            <span class="child-item-title">Automated Email Sequence</span>
+            <span class="child-item-status status-todo" style="background: #f3f4f6; color: #6b7280;">To Do</span>
+            <span class="child-item-estimate">12d</span>
+            <span class="child-item-chevron">›</span>
+          </div>
+
+          <!-- Epic 3 -->
+          <div class="child-item">
+            <span class="level-badge epic">Epic</span>
+            <span class="child-item-title">In-App Tooltip Guide</span>
+            <span class="child-item-status status-done" style="background: #dcfce7; color: #166534;">Done</span>
+            <span class="child-item-estimate">8d</span>
+            <span class="child-item-chevron">›</span>
+          </div>
+
+          <button class="add-child-btn">+ Add epic</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCENARIO 2: EPIC DRAWER ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 2</span>
+    <h2>Epic (Level 1) — With Parent Breadcrumb</h2>
+    <p>Shows parent link, own details, and stories underneath</p>
+  </div>
+
+  <div class="layout">
+    <div class="backlog-bg">
+      <div class="backlog-placeholder">1. User Onboarding Revamp</div>
+      <div class="backlog-placeholder active" style="margin-left: 28px;">↳ Welcome Flow Redesign</div>
+      <div class="backlog-placeholder" style="margin-left: 56px;">↳ Design wizard screens</div>
+      <div class="backlog-placeholder" style="margin-left: 56px;">↳ Implement navigation</div>
+      <div class="backlog-placeholder" style="margin-left: 28px;">↳ Email Sequence</div>
+    </div>
+
+    <div class="drawer">
+      <div class="drawer-header">
+        <div>
+          <div class="breadcrumb">
+            <a href="#">User Onboarding Revamp</a>
+            <span class="breadcrumb-sep">›</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="level-badge epic">Epic</span>
+          </div>
+          <div class="drawer-title">Welcome Flow Redesign</div>
+        </div>
+        <button class="drawer-close">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Description -->
+        <div class="field-group">
+          <div class="field-label">Description</div>
+          <div class="field-value">
+            Complete redesign of the first-time user experience with an interactive onboarding wizard.
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="field-group">
+          <div class="field-label">Status</div>
+          <div class="status-toggles">
+            <button class="status-toggle">To Do</button>
+            <button class="status-toggle active-progress">In Progress</button>
+            <button class="status-toggle">Done</button>
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="field-group">
+          <div class="field-label">Metrics</div>
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-value">14d</div>
+              <div class="metric-label">Effort (sum of stories)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">RICE: 180</div>
+              <div class="metric-label">Score</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parent -->
+        <div class="field-group">
+          <div class="field-label">Parent</div>
+          <div class="parent-selector">
+            <select>
+              <option selected>User Onboarding Revamp (Initiative)</option>
+              <option>API Platform Launch (Initiative)</option>
+              <option>Mobile App V2 (Initiative)</option>
+              <option>— None (make standalone) —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Roadmap Period -->
+        <div class="field-group">
+          <div class="field-label">Roadmap Period</div>
+          <div class="field-value">Now (Apr–Jun) · Q1–Q4</div>
+        </div>
+
+        <!-- Children (Stories) -->
+        <div class="children-section">
+          <div class="children-header">
+            <span class="children-title">Stories (2)</span>
+          </div>
+
+          <div class="child-item">
+            <span class="level-badge story">Story</span>
+            <span class="child-item-title">Design onboarding wizard screens</span>
+            <span class="child-item-status status-done" style="background: #dcfce7; color: #166534;">Done</span>
+            <span class="child-item-estimate">5d</span>
+            <span class="child-item-chevron">›</span>
+          </div>
+
+          <div class="child-item">
+            <span class="level-badge story">Story</span>
+            <span class="child-item-title">Implement wizard navigation logic</span>
+            <span class="child-item-status status-progress" style="background: #dbeafe; color: #1d4ed8;">In Progress</span>
+            <span class="child-item-estimate">9d</span>
+            <span class="child-item-chevron">›</span>
+          </div>
+
+          <button class="add-child-btn">+ Add story</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SCENARIO 3: STORY DRAWER ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 3</span>
+    <h2>Story (Level 2) — Leaf Item with Full Breadcrumb</h2>
+    <p>Full parent path shown, no children section (max depth reached)</p>
+  </div>
+
+  <div class="layout">
+    <div class="backlog-bg">
+      <div class="backlog-placeholder">1. User Onboarding Revamp</div>
+      <div class="backlog-placeholder" style="margin-left: 28px;">↳ Welcome Flow Redesign</div>
+      <div class="backlog-placeholder active" style="margin-left: 56px;">↳ Design wizard screens</div>
+      <div class="backlog-placeholder" style="margin-left: 56px;">↳ Implement navigation</div>
+    </div>
+
+    <div class="drawer">
+      <div class="drawer-header">
+        <div>
+          <div class="breadcrumb">
+            <a href="#">User Onboarding Revamp</a>
+            <span class="breadcrumb-sep">›</span>
+            <a href="#">Welcome Flow Redesign</a>
+            <span class="breadcrumb-sep">›</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <span class="level-badge story">Story</span>
+          </div>
+          <div class="drawer-title">Design onboarding wizard screens</div>
+        </div>
+        <button class="drawer-close">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Description -->
+        <div class="field-group">
+          <div class="field-label">Description</div>
+          <div class="field-value">
+            Create high-fidelity designs for each step of the onboarding wizard. Include welcome screen, role selection, feature walkthrough, and completion celebration.
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="field-group">
+          <div class="field-label">Status</div>
+          <div class="status-toggles">
+            <button class="status-toggle">To Do</button>
+            <button class="status-toggle">In Progress</button>
+            <button class="status-toggle active-done">Done</button>
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="field-group">
+          <div class="field-label">Metrics</div>
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-value">5d</div>
+              <div class="metric-label">Effort estimate</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">5 SP</div>
+              <div class="metric-label">Story points</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parent -->
+        <div class="field-group">
+          <div class="field-label">Parent</div>
+          <div class="parent-selector">
+            <select>
+              <option selected>Welcome Flow Redesign (Epic)</option>
+              <option>Automated Email Sequence (Epic)</option>
+              <option>In-App Tooltip Guide (Epic)</option>
+              <option>— None (make standalone) —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Created By -->
+        <div class="field-group">
+          <div class="field-label">Created By</div>
+          <div class="field-value">Alex</div>
+        </div>
+
+        <!-- No children section - max depth -->
+        <div style="margin-top: 1rem; padding: 0.75rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <div style="font-size: 0.75rem; color: #9ca3af; text-align: center;">
+            Stories are the lowest level — no sub-items can be added
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>Item drawer hierarchy features:</strong>
+    <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+      <li><strong>Breadcrumb trail:</strong> Clickable links to navigate up the hierarchy</li>
+      <li><strong>Level badge:</strong> Clear visual indicator of initiative/epic/story level</li>
+      <li><strong>Parent selector:</strong> Dropdown to reparent the item (move to a different parent)</li>
+      <li><strong>Children list:</strong> Shows direct children with status and estimate, clickable to navigate</li>
+      <li><strong>Aggregate metrics:</strong> Parent items show rolled-up totals from children</li>
+      <li><strong>Add sub-item:</strong> Button to create a child directly from the drawer</li>
+      <li><strong>Max depth indicator:</strong> Level 2 (story) items show a message that no further nesting is possible</li>
+    </ul>
+  </div>
+
+</body>
+</html>

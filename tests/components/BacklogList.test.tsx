@@ -94,9 +94,10 @@ describe('BacklogList', () => {
 
   it('renders all items', () => {
     render(<BacklogList {...defaultProps} />)
-    expect(screen.getByText('First Item')).toBeInTheDocument()
-    expect(screen.getByText('Second Item')).toBeInTheDocument()
-    expect(screen.getByText('Third Item')).toBeInTheDocument()
+    // Each title appears in both mobile and desktop layouts
+    expect(screen.getAllByText('First Item').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Second Item').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Third Item').length).toBeGreaterThanOrEqual(1)
   })
 
   it('sorts items by score descending', () => {
@@ -275,7 +276,8 @@ describe('BacklogList', () => {
   it('renders drag handles for each item', () => {
     render(<BacklogList {...defaultProps} />)
     const dragHandles = screen.getAllByLabelText('Drag to reorder')
-    expect(dragHandles).toHaveLength(3)
+    // Each item has mobile + desktop drag handle
+    expect(dragHandles).toHaveLength(6)
   })
 
   // Cutoff line tests
@@ -468,7 +470,8 @@ describe('BacklogList', () => {
   it('renders checkbox for each item', () => {
     render(<BacklogList {...defaultProps} />)
     const checkboxes = screen.getAllByRole('button', { name: /select item|deselect item/i })
-    expect(checkboxes).toHaveLength(3)
+    // Each item has mobile + desktop checkbox
+    expect(checkboxes).toHaveLength(6)
   })
 
   it('renders select all checkbox', () => {
@@ -482,8 +485,9 @@ describe('BacklogList', () => {
 
     fireEvent.click(checkboxes[0])
 
-    // After clicking, button should change to "Deselect item"
-    expect(screen.getByRole('button', { name: /deselect item/i })).toBeInTheDocument()
+    // After clicking, both mobile and desktop checkboxes for this item change
+    const deselect = screen.getAllByRole('button', { name: /deselect item/i })
+    expect(deselect.length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows action bar when item selected', () => {
@@ -498,10 +502,13 @@ describe('BacklogList', () => {
 
   it('shows plural "items" when multiple selected', () => {
     render(<BacklogList {...defaultProps} onDeleteMultiple={vi.fn()} onStatusChangeMultiple={vi.fn()} />)
-    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
+    // Get all articles (items) and click checkboxes within distinct items
+    const articles = screen.getAllByTestId('backlog-item-row')
+    const firstCheckbox = articles[0].querySelector('button[aria-label="Select item"]')!
+    const secondCheckbox = articles[1].querySelector('button[aria-label="Select item"]')!
 
-    fireEvent.click(checkboxes[0])
-    fireEvent.click(checkboxes[1])
+    fireEvent.click(firstCheckbox)
+    fireEvent.click(secondCheckbox)
 
     expect(screen.getByText('2 items selected')).toBeInTheDocument()
   })

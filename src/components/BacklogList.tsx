@@ -16,8 +16,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { ItemWithScore, Framework, RoadmapPeriod, ItemStatus, Cutoff, CutoffColor } from '../types/database'
+import type { ItemWithScore, Framework, RoadmapPeriod, ItemStatus, Cutoff, CutoffColor, ItemLevel } from '../types/database'
+import { ITEM_LEVEL_LABELS, ITEM_LEVEL_CHILD_LABELS, MAX_ITEM_LEVEL } from '../types/database'
 import { getQuadrant } from '../lib/valueEffort'
+import { buildTree, flattenTree, getStatusRollup, getRolledUpEstimate, getMobileIndent } from '../lib/hierarchy'
 import ActionBar from './ActionBar'
 
 type SortOption = 'manual' | 'score' | 'estimate' | 'status' | 'period' | 'title'
@@ -40,6 +42,7 @@ interface BacklogListProps {
   onAssignPeriod?: (itemIds: string[], periodPosition: number) => void
   onScore?: (selectedItemIds: string[]) => void
   onEstimate?: (selectedItemIds: string[]) => void
+  onAddChild?: (parentId: string, parentLevel: number, title: string) => void
 }
 
 // Format score for display based on framework
@@ -124,6 +127,23 @@ function getNextStatus(current: ItemStatus | undefined): ItemStatus {
   }
 }
 
+// Level badge colours
+const LEVEL_BADGE_STYLES: Record<number, string> = {
+  0: 'bg-pink-50 text-pink-700 border-pink-200',
+  1: 'bg-blue-50 text-blue-700 border-blue-200',
+  2: 'bg-purple-50 text-purple-700 border-purple-200',
+  3: 'bg-amber-50 text-amber-700 border-amber-200',
+  4: 'bg-slate-50 text-slate-600 border-slate-200',
+}
+
+// Left border accent colours per level
+const LEVEL_BORDER_COLORS: Record<number, string> = {
+  0: 'border-l-pink-400',
+  1: 'border-l-blue-400',
+  2: 'border-l-purple-400',
+  3: 'border-l-amber-400',
+  4: 'border-l-slate-400',
+}
 
 // Sortable item component
 interface SortableItemProps {
@@ -139,6 +159,15 @@ interface SortableItemProps {
   onEdit: (item: ItemWithScore) => void
   onDelete: (itemId: string) => void
   onStatusChange?: (itemId: string, status: ItemStatus) => void
+  // Hierarchy props
+  hasChildren: boolean
+  isExpanded: boolean
+  onToggleExpand: (itemId: string) => void
+  childCount: number
+  statusRollup?: { todo: number; in_progress: number; done: number; total: number }
+  allItems: ItemWithScore[]
+  canAddChild: boolean
+  onStartAddChild: (parentId: string) => void
 }
 
 function SortableItem({
@@ -154,6 +183,14 @@ function SortableItem({
   onEdit,
   onDelete,
   onStatusChange,
+  hasChildren,
+  isExpanded,
+  onToggleExpand,
+  childCount,
+  statusRollup,
+  allItems,
+  canAddChild,
+  onStartAddChild,
 }: SortableItemProps) {
   const {
     attributes,
@@ -170,6 +207,14 @@ function SortableItem({
   }
 
   const statusBadge = getStatusBadge(item.status)
+  const itemLevel = item.item_level ?? 0
+  const levelLabel = ITEM_LEVEL_LABELS[itemLevel as ItemLevel] ?? 'Item'
+  const levelBadgeStyle = LEVEL_BADGE_STYLES[itemLevel] ?? LEVEL_BADGE_STYLES[0]
+  const levelBorderColor = LEVEL_BORDER_COLORS[itemLevel] ?? LEVEL_BORDER_COLORS[0]
+  const isHierarchyItem = itemLevel > 0 || hasChildren
+
+  // Rolled-up estimate for parent items
+  const rolledUpEstimate = hasChildren ? getRolledUpEstimate(item.id, allItems) : null
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -185,13 +230,35 @@ function SortableItem({
     onEdit(item)
   }
 
+  // Status rollup progress bar for parent items
+  const renderStatusRollup = () => {
+    if (!statusRollup || statusRollup.total === 0) return null
+    const donePercent = (statusRollup.done / statusRollup.total) * 100
+    const inProgressPercent = (statusRollup.in_progress / statusRollup.total) * 100
+    return (
+      <div className="flex items-center gap-1.5">
+        <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
+          <div className="bg-green-500 h-full" style={{ width: `${donePercent}%` }} />
+          <div className="bg-amber-400 h-full" style={{ width: `${inProgressPercent}%` }} />
+        </div>
+        <span className="text-xs text-gray-500">{statusRollup.done}/{statusRollup.total}</span>
+      </div>
+    )
+  }
+
+  // Mobile uses clamped indent, desktop keeps full indent
+  const mobileIndent = itemLevel > 0 ? getMobileIndent(itemLevel) : 0
+  const desktopIndent = itemLevel > 0 ? itemLevel * 1.5 : 0
+
   return (
     <article
       ref={setNodeRef}
       style={style}
       onClick={handleRowClick}
       data-testid="backlog-item-row"
-      className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white border rounded-lg transition-shadow cursor-pointer ${
+      className={`bg-white border rounded-lg transition-shadow cursor-pointer ${
+        isHierarchyItem ? `border-l-[3px] ${levelBorderColor}` : ''
+      } ${
         isDragging
           ? 'border-indigo-300 shadow-lg ring-2 ring-indigo-200 z-10'
           : isSelected
@@ -199,171 +266,345 @@ function SortableItem({
           : 'border-gray-200 hover:shadow-sm hover:border-gray-300'
       }`}
     >
-      {/* Checkbox for selection - always visible */}
-      <button
-        onClick={handleCheckboxClick}
-        className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-          isSelected
-            ? 'bg-indigo-600 border-indigo-600 text-white'
-            : 'border-gray-300 hover:border-indigo-400'
-        }`}
-        aria-label={isSelected ? 'Deselect item' : 'Select item'}
-        aria-pressed={isSelected}
+      {/* ===== MOBILE LAYOUT (below sm) ===== */}
+      <div
+        className="flex items-start gap-1.5 px-3 py-2 sm:hidden"
+        style={{ marginLeft: mobileIndent > 0 ? `${mobileIndent}rem` : undefined }}
       >
-        {isSelected && (
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        )}
-      </button>
-
-      {/* Drag handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none"
-        aria-label="Drag to reorder"
-      >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
-        </svg>
-      </button>
-
-      {/* Rank number */}
-      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-sm font-semibold text-gray-600">
-        {index + 1}
-      </div>
-
-      {/* Content area - flexible width */}
-      <div className="flex-1 min-w-0">
-        {/* Title */}
-        <h3 className="font-medium text-gray-900 truncate">
-          {item.title}
-        </h3>
-        {/* Metadata row - author and description */}
-        <div className="flex items-center gap-2 mt-0.5">
-          {item.created_by && (
-            <span className="text-xs text-gray-400 flex-shrink-0">
-              by {item.created_by}
-            </span>
+        {/* Left controls: drag handle + chevron + checkbox */}
+        <div className="flex items-center gap-1 flex-shrink-0 pt-0.5">
+          <button
+            {...attributes}
+            {...listeners}
+            className="w-4 h-4 flex items-center justify-center text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder"
+          >
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+            </svg>
+          </button>
+          {hasChildren ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleExpand(item.id)
+              }}
+              className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600"
+              aria-label={isExpanded ? 'Collapse children' : 'Expand children'}
+            >
+              <svg
+                className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          ) : (
+            <div className="w-4" />
           )}
-          {item.description && (
-            <p className="text-sm text-gray-500 truncate hidden sm:block">
-              {item.description}
-            </p>
-          )}
+          <button
+            onClick={handleCheckboxClick}
+            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+              isSelected
+                ? 'bg-indigo-600 border-indigo-600 text-white'
+                : 'border-gray-300 hover:border-indigo-400'
+            }`}
+            aria-label={isSelected ? 'Deselect item' : 'Select item'}
+            aria-pressed={isSelected}
+          >
+            {isSelected && (
+              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
         </div>
 
-        {/* Badges row - visible on mobile only */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-1.5 sm:hidden">
-          {/* Status badge - mobile (clickable to cycle) */}
+        {/* Content area */}
+        <div className="flex-1 min-w-0">
+          {/* Level badge + child count row */}
+          {isHierarchyItem && (
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className={`px-1 py-0.5 rounded text-[9px] font-semibold border flex-shrink-0 ${levelBadgeStyle}`}>
+                {levelLabel}
+              </span>
+              {hasChildren && !isExpanded && (
+                <span className="px-1 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[9px] font-medium">
+                  {childCount}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Title — wraps up to 2 lines */}
+          <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+            {item.title}
+          </h3>
+          {/* Author */}
+          {item.created_by && (
+            <span className="text-[10px] text-gray-400">by {item.created_by}</span>
+          )}
+          {/* Status rollup for parent items */}
+          {hasChildren && statusRollup && statusRollup.total > 0 && (
+            <div className="mt-0.5">{renderStatusRollup()}</div>
+          )}
+          {/* Badges row */}
+          <div className="flex flex-wrap items-center gap-1 mt-1">
+            {!hasChildren ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onStatusChange?.(item.id, getNextStatus(item.status))
+                }}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-medium border transition-colors hover:opacity-80 ${statusBadge.className}`}
+                title="Click to change status"
+              >
+                {statusBadge.label}
+              </button>
+            ) : (
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${statusBadge.className}`}>
+                {statusBadge.label}
+              </span>
+            )}
+            {showScoreColumn && (
+              <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-medium">
+                {formatScore(item, framework)}
+              </span>
+            )}
+            {showEstimateColumn && item.story_points !== null && item.story_points !== undefined && (
+              <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-medium">
+                {item.story_points} SP
+              </span>
+            )}
+            {rolledUpEstimate !== null && (
+              <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[10px] font-medium">
+                {rolledUpEstimate}d est.
+              </span>
+            )}
+            {showPeriodColumn && periodName && (
+              <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-[10px] font-medium">
+                {periodName}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile actions — compact */}
+        <div className="flex items-center flex-shrink-0 -mr-1">
+          {canAddChild && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onStartAddChild(item.id)
+              }}
+              className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors"
+              aria-label={`Add ${ITEM_LEVEL_CHILD_LABELS[itemLevel as ItemLevel]}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={() => onDelete(item.id)}
+            className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+            aria-label="Delete item"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* ===== DESKTOP LAYOUT (sm and above) ===== */}
+      <div
+        className="hidden sm:flex items-center gap-3 px-3 py-2"
+        style={{ marginLeft: desktopIndent > 0 ? `${desktopIndent}rem` : undefined }}
+      >
+        {/* Expand/collapse chevron */}
+        {hasChildren ? (
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onStatusChange?.(item.id, getNextStatus(item.status))
+              onToggleExpand(item.id)
             }}
-            className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors hover:opacity-80 ${statusBadge.className}`}
-            title="Click to change status"
+            className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-transform"
+            aria-label={isExpanded ? 'Collapse children' : 'Expand children'}
           >
-            {statusBadge.label}
+            <svg
+              className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
-          {/* Score badge - mobile */}
-          {showScoreColumn && (
-            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+        ) : (
+          <div className="flex-shrink-0 w-5" />
+        )}
+
+        {/* Checkbox */}
+        <button
+          onClick={handleCheckboxClick}
+          className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-indigo-600 border-indigo-600 text-white'
+              : 'border-gray-300 hover:border-indigo-400'
+          }`}
+          aria-label={isSelected ? 'Deselect item' : 'Select item'}
+          aria-pressed={isSelected}
+        >
+          {isSelected && (
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
+
+        {/* Drag handle */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Drag to reorder"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+          </svg>
+        </button>
+
+        {/* Rank number - only for top-level items */}
+        {itemLevel === 0 ? (
+          <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 rounded text-xs font-semibold text-gray-500">
+            {index + 1}
+          </div>
+        ) : (
+          <div className="flex-shrink-0 w-6" />
+        )}
+
+        {/* Content area */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {isHierarchyItem && (
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border flex-shrink-0 ${levelBadgeStyle}`}>
+                {levelLabel}
+              </span>
+            )}
+            <h3 className="text-sm font-medium text-gray-900 truncate">
+              {item.title}
+            </h3>
+            {hasChildren && !isExpanded && (
+              <span className="flex-shrink-0 px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-medium">
+                {childCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {item.created_by && (
+              <span className="text-xs text-gray-400 flex-shrink-0">
+                by {item.created_by}
+              </span>
+            )}
+            {item.description && (
+              <p className="text-sm text-gray-500 truncate">
+                {item.description}
+              </p>
+            )}
+          </div>
+          {hasChildren && statusRollup && statusRollup.total > 0 && (
+            <div className="mt-0.5">{renderStatusRollup()}</div>
+          )}
+        </div>
+
+        {/* Status column */}
+        <div className="flex-shrink-0 w-24 flex justify-center">
+          {!hasChildren ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onStatusChange?.(item.id, getNextStatus(item.status))
+              }}
+              className={`px-2 py-0.5 rounded-md text-xs font-medium border transition-colors hover:opacity-80 ${statusBadge.className}`}
+              title="Click to change status"
+            >
+              {statusBadge.label}
+            </button>
+          ) : (
+            <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${statusBadge.className}`}>
+              {statusBadge.label}
+            </span>
+          )}
+        </div>
+
+        {/* Score column */}
+        {showScoreColumn && (
+          <div className="flex-shrink-0 w-20 flex justify-center">
+            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-xs font-medium">
               {formatScore(item, framework)}
             </span>
+          </div>
+        )}
+
+        {/* Estimate column */}
+        {showEstimateColumn && (
+          <div className="flex-shrink-0 w-16 flex justify-center">
+            {rolledUpEstimate !== null ? (
+              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md text-xs font-medium" title="Rolled-up estimate from children">
+                {rolledUpEstimate}d
+              </span>
+            ) : item.story_points !== null && item.story_points !== undefined ? (
+              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md text-xs font-medium">
+                {item.story_points} SP
+              </span>
+            ) : (
+              <span className="text-gray-300">—</span>
+            )}
+          </div>
+        )}
+
+        {/* Period column */}
+        {showPeriodColumn && (
+          <div className="flex-shrink-0 w-20 flex justify-center">
+            {periodName ? (
+              <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-xs font-medium truncate">
+                {periodName}
+              </span>
+            ) : (
+              <span className="text-gray-300">—</span>
+            )}
+          </div>
+        )}
+
+        {/* Actions column */}
+        <div className="flex-shrink-0 w-28 flex justify-end items-center gap-1">
+          {canAddChild && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onStartAddChild(item.id)
+              }}
+              className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+              aria-label={`Add ${ITEM_LEVEL_CHILD_LABELS[itemLevel as ItemLevel]}`}
+              title={`Add ${ITEM_LEVEL_CHILD_LABELS[itemLevel as ItemLevel]}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
           )}
-          {/* Estimate badge - mobile */}
-          {showEstimateColumn && item.story_points !== null && item.story_points !== undefined && (
-            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
-              {item.story_points} SP
-            </span>
-          )}
-          {/* Period badge - mobile */}
-          {showPeriodColumn && periodName && (
-            <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-xs font-medium">
-              {periodName}
-            </span>
-          )}
+          <button
+            onClick={() => onEdit(item)}
+            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => onDelete(item.id)}
+            className="text-sm text-red-600 hover:text-red-800 font-medium py-1 px-2"
+          >
+            Delete
+          </button>
         </div>
       </div>
-
-      {/* Fixed-width columns for badges - desktop only */}
-      {/* Status column - always visible, fixed width */}
-      <div className="hidden sm:flex flex-shrink-0 w-24 justify-center">
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onStatusChange?.(item.id, getNextStatus(item.status))
-          }}
-          className={`px-2.5 py-1 rounded-md text-sm font-medium border transition-colors hover:opacity-80 ${statusBadge.className}`}
-          title="Click to change status"
-        >
-          {statusBadge.label}
-        </button>
-      </div>
-
-      {/* Score column - fixed width when column is shown */}
-      {showScoreColumn && (
-        <div className="hidden sm:flex flex-shrink-0 w-20 justify-center">
-          <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium">
-            {formatScore(item, framework)}
-          </span>
-        </div>
-      )}
-
-      {/* Estimate column - fixed width when column is shown */}
-      {showEstimateColumn && (
-        <div className="hidden sm:flex flex-shrink-0 w-16 justify-center">
-          {item.story_points !== null && item.story_points !== undefined ? (
-            <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md text-sm font-medium">
-              {item.story_points} SP
-            </span>
-          ) : (
-            <span className="text-gray-300">—</span>
-          )}
-        </div>
-      )}
-
-      {/* Period column - fixed width when column is shown */}
-      {showPeriodColumn && (
-        <div className="hidden sm:flex flex-shrink-0 w-20 justify-center">
-          {periodName ? (
-            <span className="px-2.5 py-1 bg-purple-50 text-purple-700 rounded-md text-sm font-medium truncate">
-              {periodName}
-            </span>
-          ) : (
-            <span className="text-gray-300">—</span>
-          )}
-        </div>
-      )}
-
-      {/* Actions column - fixed width */}
-      <div className="hidden sm:flex flex-shrink-0 w-24 justify-end items-center gap-1">
-        <button
-          onClick={() => onEdit(item)}
-          className="text-sm text-indigo-600 hover:text-indigo-800 font-medium py-1 px-2"
-        >
-          Edit
-        </button>
-        <button
-          onClick={() => onDelete(item.id)}
-          className="text-sm text-red-600 hover:text-red-800 font-medium py-1 px-2"
-        >
-          Delete
-        </button>
-      </div>
-
-      {/* Mobile actions */}
-      <button
-        onClick={() => onDelete(item.id)}
-        className="sm:hidden p-2 text-gray-400 hover:text-red-600 transition-colors flex-shrink-0"
-        aria-label="Delete item"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </button>
     </article>
   )
 }
@@ -577,10 +818,15 @@ export default function BacklogList({
   onAssignPeriod,
   onScore,
   onEstimate,
+  onAddChild,
 }: BacklogListProps) {
   const [sortOption, setSortOption] = useState<SortOption>(isManualOrder ? 'manual' : 'score')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [addingChildToId, setAddingChildToId] = useState<string | null>(null)
+  const [childTitle, setChildTitle] = useState('')
+  const addChildInputRef = useRef<HTMLInputElement>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -632,6 +878,55 @@ export default function BacklogList({
     prevIsManualOrder.current = isManualOrder
   }, [isManualOrder])
 
+  // Toggle expand/collapse for a parent item
+  const handleToggleExpand = useCallback((itemId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(itemId)) {
+        next.delete(itemId)
+      } else {
+        next.add(itemId)
+      }
+      return next
+    })
+  }, [])
+
+  // Start adding a child item
+  const handleStartAddChild = useCallback((parentId: string) => {
+    setAddingChildToId(parentId)
+    setChildTitle('')
+    // Ensure parent is expanded so the inline input is visible
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      next.add(parentId)
+      return next
+    })
+  }, [])
+
+  // Submit new child item
+  const handleSubmitChild = useCallback(() => {
+    if (!addingChildToId || !childTitle.trim() || !onAddChild) return
+    const parent = items.find(i => i.id === addingChildToId)
+    if (!parent) return
+    const parentLevel = parent.item_level ?? 0
+    onAddChild(addingChildToId, parentLevel, childTitle.trim())
+    setAddingChildToId(null)
+    setChildTitle('')
+  }, [addingChildToId, childTitle, onAddChild, items])
+
+  // Cancel adding child
+  const handleCancelAddChild = useCallback(() => {
+    setAddingChildToId(null)
+    setChildTitle('')
+  }, [])
+
+  // Focus input when adding child
+  useEffect(() => {
+    if (addingChildToId && addChildInputRef.current) {
+      addChildInputRef.current.focus()
+    }
+  }, [addingChildToId])
+
   // Sort items based on current sort option (needs to be before useCallback hooks)
   const sortedItems = [...items].sort((a, b) => {
     switch (sortOption) {
@@ -662,6 +957,25 @@ export default function BacklogList({
         return 0
     }
   })
+
+  // Build tree from sorted items and flatten respecting expand state
+  // preserveOrder=true since sortedItems is already in display order
+  const tree = buildTree(sortedItems, true)
+  const displayItems = flattenTree(tree, expandedIds)
+
+  // Pre-compute hierarchy metadata for each item
+  const childrenCountMap = new Map<string, number>()
+  const hasChildrenSet = new Set<string>()
+  for (const item of items) {
+    if (item.parent_item_id) {
+      hasChildrenSet.add(item.parent_item_id)
+      childrenCountMap.set(item.parent_item_id, (childrenCountMap.get(item.parent_item_id) ?? 0) + 1)
+    }
+  }
+
+  // Track top-level rank numbers separately
+  const topLevelCount = items.filter(i => (i.item_level ?? 0) === 0).length
+  let topLevelRank = 0
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -863,16 +1177,31 @@ export default function BacklogList({
         autoScroll={false}
       >
         <SortableContext
-          items={sortedItems.map((item) => item.id)}
+          items={displayItems.map((item) => item.id)}
           strategy={verticalListSortingStrategy}
         >
           {/* touch-pan-y ensures vertical scrolling works even within DndContext */}
           <div className="space-y-2 touch-pan-y">
-            {sortedItems.map((item, index) => {
-              // Find cutoffs at this position
-              const cutoffsAtPosition = cutoffs.filter((c) => c.position === index)
-              // Check if there's already a cutoff at this position
+            {displayItems.map((item, index) => {
+              const itemLevel = item.item_level ?? 0
+              const isTopLevel = itemLevel === 0
+              const itemHasChildren = hasChildrenSet.has(item.id)
+
+              // Only count top-level items for rank numbering
+              if (isTopLevel) {
+                topLevelRank++
+              }
+              // Capture current rank value for closures
+              const currentRank = topLevelRank
+
+              // Cutoff lines only apply between top-level items
+              const cutoffsAtPosition = isTopLevel
+                ? cutoffs.filter((c) => c.position === currentRank - 1)
+                : []
               const hasCutoffAtPosition = cutoffsAtPosition.length > 0
+
+              // Status rollup for parent items
+              const rollup = itemHasChildren ? getStatusRollup(item.id, items) : undefined
 
               return (
                 <div key={item.id}>
@@ -881,20 +1210,20 @@ export default function BacklogList({
                     <CutoffLine
                       key={cutoff.id}
                       cutoff={cutoff}
-                      maxPosition={sortedItems.length}
+                      maxPosition={topLevelCount}
                       onUpdate={(updates) => onUpdateCutoff?.(cutoff.id, updates)}
                       onRemove={() => onDeleteCutoff?.(cutoff.id)}
                     />
                   ))}
 
-                  {/* Show add cutoff button between items (only if no cutoff at this exact position) */}
-                  {onAddCutoff && index > 0 && !hasCutoffAtPosition && (
-                    <AddCutoffButton onClick={() => onAddCutoff(index)} />
+                  {/* Show add cutoff button between top-level items (only if no cutoff at this exact position) */}
+                  {onAddCutoff && isTopLevel && currentRank > 1 && !hasCutoffAtPosition && (
+                    <AddCutoffButton onClick={() => onAddCutoff(currentRank - 1)} />
                   )}
 
                   <SortableItem
                     item={item}
-                    index={index}
+                    index={isTopLevel ? currentRank - 1 : index}
                     framework={framework}
                     periodName={getItemPeriod(item, periods)}
                     showScoreColumn={hasAnyScores}
@@ -905,19 +1234,64 @@ export default function BacklogList({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onStatusChange={onStatusChange}
+                    hasChildren={itemHasChildren}
+                    isExpanded={expandedIds.has(item.id)}
+                    onToggleExpand={handleToggleExpand}
+                    childCount={childrenCountMap.get(item.id) ?? 0}
+                    statusRollup={rollup}
+                    allItems={items}
+                    canAddChild={!!onAddChild && itemLevel < MAX_ITEM_LEVEL}
+                    onStartAddChild={handleStartAddChild}
                   />
+
+                  {/* Inline add child input */}
+                  {addingChildToId === item.id && (
+                    <div
+                      className="flex items-center gap-2 p-2 bg-gray-50 border border-dashed border-gray-300 rounded-lg"
+                      style={{ marginLeft: `${(itemLevel + 1) * 1.5}rem` }}
+                    >
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border flex-shrink-0 ${LEVEL_BADGE_STYLES[(itemLevel + 1)] ?? LEVEL_BADGE_STYLES[4]}`}>
+                        {ITEM_LEVEL_LABELS[((itemLevel + 1) as ItemLevel)] ?? 'Subtask'}
+                      </span>
+                      <input
+                        ref={addChildInputRef}
+                        type="text"
+                        value={childTitle}
+                        onChange={(e) => setChildTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSubmitChild()
+                          if (e.key === 'Escape') handleCancelAddChild()
+                        }}
+                        placeholder={`New ${ITEM_LEVEL_CHILD_LABELS[itemLevel as ItemLevel]}...`}
+                        className="flex-1 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={handleSubmitChild}
+                        disabled={!childTitle.trim()}
+                        className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={handleCancelAddChild}
+                        className="px-2 py-1 text-sm text-gray-500 hover:text-gray-700"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
 
-            {/* Show cutoff lines after all items if position equals length */}
+            {/* Show cutoff lines after all items if position equals top-level count */}
             {cutoffs
-              .filter((c) => c.position === sortedItems.length)
+              .filter((c) => c.position === topLevelCount)
               .map((cutoff) => (
                 <CutoffLine
                   key={cutoff.id}
                   cutoff={cutoff}
-                  maxPosition={sortedItems.length}
+                  maxPosition={topLevelCount}
                   onUpdate={(updates) => onUpdateCutoff?.(cutoff.id, updates)}
                   onRemove={() => onDeleteCutoff?.(cutoff.id)}
                 />

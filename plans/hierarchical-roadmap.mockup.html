@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori - Hierarchical Roadmap View</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb; color: #111827; min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    /* App Frame */
+    .app-frame {
+      max-width: 1200px; margin: 2rem auto;
+      background: white; border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      overflow: hidden; position: relative;
+      padding-bottom: 60px;
+    }
+    .app-header {
+      padding: 1rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .app-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 1rem;
+    }
+    .session-name { font-weight: 600; font-size: 1.2rem; color: #111827; }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .presence-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; }
+    .presence-count { font-size: 0.85rem; color: #6b7280; }
+
+    .add-item-btn {
+      background: #4f46e5; color: white;
+      border: none; padding: 0.45rem 0.85rem;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 0.35rem;
+    }
+    .add-period-btn {
+      font-size: 0.8rem; color: #4f46e5; font-weight: 500;
+      background: none; border: none; cursor: pointer;
+    }
+
+    .toolbar-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 1.5rem;
+    }
+
+    /* Timeline */
+    .roadmap-container {
+      margin: 0 1.5rem 1.5rem; background: white;
+      border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;
+    }
+
+    .timeline-header {
+      display: grid;
+      grid-template-columns: 180px repeat(3, 1fr);
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .timeline-header-label {
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem; font-weight: 600; color: #111827;
+      text-align: left; border-left: 1px solid #e5e7eb;
+    }
+    .timeline-header-label:first-child { border-left: none; font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; }
+
+    .timeline-quadrants {
+      display: grid;
+      grid-template-columns: 180px repeat(12, 1fr);
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .q-header { padding: 0.2rem; font-size: 0.55rem; color: #d1d5db; text-align: center; border-left: 1px solid #f3f4f6; }
+    .q-header:first-child { border-left: none; }
+
+    /* Item Rows */
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 180px repeat(12, 1fr);
+      min-height: 44px; align-items: center;
+      border-bottom: 1px solid #f3f4f6; position: relative;
+    }
+    .timeline-row:hover { background: #fafbff; }
+    .timeline-row.parent-row { background: #f8faff; min-height: 48px; }
+    .timeline-row.child-row { min-height: 36px; }
+    .timeline-row.child-row .row-label { padding-left: 2rem; }
+
+    .row-label {
+      padding: 0.5rem 0.6rem;
+      display: flex; align-items: center; gap: 0.35rem;
+      font-size: 0.78rem; font-weight: 500; color: #374151; overflow: hidden;
+    }
+    .expand-btn {
+      width: 18px; height: 18px; border: none; background: transparent;
+      cursor: pointer; font-size: 0.6rem; color: #6b7280;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 3px; flex-shrink: 0;
+    }
+    .expand-btn:hover { background: #e5e7eb; }
+    .expand-btn.collapsed { transform: rotate(-90deg); }
+
+    .level-badge-sm {
+      font-size: 0.5rem; font-weight: 600; padding: 0.08rem 0.25rem;
+      border-radius: 999px; text-transform: uppercase; flex-shrink: 0;
+    }
+    .level-badge-sm.goal { background: #fce7f3; color: #9d174d; }
+    .level-badge-sm.initiative { background: #dbeafe; color: #1d4ed8; }
+    .level-badge-sm.epic { background: #ede9fe; color: #6d28d9; }
+    .row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .child-count-sm { font-size: 0.55rem; color: #9ca3af; flex-shrink: 0; }
+
+    /* Timeline Bars */
+    .timeline-bar {
+      height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 500; color: white;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .timeline-bar:hover { filter: brightness(1.05); }
+
+    .bar-parent {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      height: 32px; border-radius: 8px; font-weight: 600;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+    }
+    .bar-child {
+      background: linear-gradient(135deg, #818cf8, #a5b4fc);
+      height: 22px; border-radius: 5px;
+    }
+    .bar-standalone {
+      background: #10b981; height: 24px; border-radius: 5px;
+    }
+
+    .span-1-4 { grid-column: 2 / 6; }
+    .span-1-8 { grid-column: 2 / 10; }
+    .span-5-8 { grid-column: 6 / 10; }
+    .span-5-12 { grid-column: 6 / 14; }
+    .span-9-12 { grid-column: 10 / 14; }
+    .span-1-12 { grid-column: 2 / 14; }
+    .span-3-6 { grid-column: 4 / 8; }
+    .span-7-12 { grid-column: 8 / 14; }
+    .span-7-10 { grid-column: 8 / 12; }
+    .span-9-12 { grid-column: 10 / 14; }
+
+    /* Unscheduled Panel */
+    .unscheduled-panel {
+      background: #f9fafb; border-top: 2px solid #e5e7eb; padding: 1rem;
+    }
+    .unscheduled-title {
+      font-size: 0.7rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem;
+    }
+    .unscheduled-group { margin-bottom: 0.6rem; }
+    .unscheduled-group-header {
+      font-size: 0.75rem; font-weight: 600; color: #374151;
+      margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .unscheduled-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .unscheduled-chip {
+      padding: 0.25rem 0.5rem;
+      background: white; border: 1px solid #d1d5db;
+      border-radius: 6px; font-size: 0.72rem; color: #374151;
+      cursor: grab; transition: all 0.15s;
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .unscheduled-chip:hover { border-color: #4f46e5; background: #eef2ff; }
+
+    .sort-hint {
+      font-size: 0.75rem; color: #9ca3af; padding: 0.5rem 1rem;
+      display: flex; align-items: center; gap: 0.3rem;
+    }
+
+    /* Bottom Tab Bar */
+    .bottom-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem; display: flex; gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+    }
+    .bottom-tab {
+      flex: 1; padding: 0.5rem 0.75rem;
+      font-size: 0.85rem; font-weight: 500; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      cursor: pointer; border: none;
+    }
+    .bottom-tab.active { background: #4f46e5; color: white; }
+    .bottom-tab.inactive { background: #f3f4f6; color: #6b7280; }
+    .tab-icon { width: 16px; height: 16px; }
+
+    .annotation {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 0.75rem 1rem;
+      font-size: 0.8rem; color: #92400e;
+      max-width: 1200px; margin: 1rem auto;
+    }
+    .annotation strong { color: #78350f; }
+  </style>
+</head>
+<body>
+
+  <div class="concept-header">
+    <h1 class="font-display">Hierarchical Roadmap View</h1>
+    <p>Parent items span the timeline, child items nest underneath with detailed scheduling</p>
+  </div>
+
+  <!-- ========== SCENARIO 1: EXPANDED ========== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 1</span>
+    <h2>Expanded Parent with Child Items</h2>
+    <p>Goal expanded to show initiatives on the timeline. Parent bar auto-spans children's range.</p>
+  </div>
+
+  <div style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <div class="app-frame">
+      <div class="app-header">
+        <div class="app-header-left">
+          <div class="logo font-display">P</div>
+          <span class="session-name">Q2 Product Roadmap</span>
+        </div>
+        <div class="header-right">
+          <span class="presence-dot"></span>
+          <span class="presence-count">3</span>
+        </div>
+      </div>
+
+      <div class="toolbar-row">
+        <div></div>
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <button class="add-period-btn">+ Add Period</button>
+          <button class="add-item-btn">+ Add Item</button>
+        </div>
+      </div>
+
+      <div class="roadmap-container">
+        <div class="timeline-header">
+          <div class="timeline-header-label"></div>
+          <div class="timeline-header-label">Jan</div>
+          <div class="timeline-header-label">Feb</div>
+          <div class="timeline-header-label">Mar</div>
+        </div>
+
+        <div class="timeline-quadrants">
+          <div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+        </div>
+
+        <!-- GOAL: Expanded -->
+        <div class="timeline-row parent-row">
+          <div class="row-label">
+            <button class="expand-btn">▾</button>
+            <span class="level-badge-sm goal">Goal</span>
+            <span class="row-title">Increase Activation</span>
+            <span class="child-count-sm">2</span>
+          </div>
+          <div class="timeline-bar bar-parent span-1-8">Increase Activation Rate</div>
+        </div>
+
+        <!-- Initiative: User Onboarding (expanded) -->
+        <div class="timeline-row child-row">
+          <div class="row-label">
+            <button class="expand-btn">▾</button>
+            <span class="level-badge-sm initiative">Init</span>
+            <span class="row-title">User Onboarding</span>
+            <span class="child-count-sm">2</span>
+          </div>
+          <div class="timeline-bar bar-child span-1-4">Onboarding</div>
+        </div>
+
+        <!-- Epic: Welcome Flow -->
+        <div class="timeline-row child-row">
+          <div class="row-label" style="padding-left: 3.5rem;">
+            <span class="level-badge-sm epic">Epic</span>
+            <span class="row-title">Welcome Flow</span>
+          </div>
+          <div class="timeline-bar" style="background: #c4b5fd; height: 18px; border-radius: 4px; font-size: 0.6rem; grid-column: 2/4;">Welcome</div>
+        </div>
+
+        <!-- Epic: Email Sequence -->
+        <div class="timeline-row child-row">
+          <div class="row-label" style="padding-left: 3.5rem;">
+            <span class="level-badge-sm epic">Epic</span>
+            <span class="row-title">Email Sequence</span>
+          </div>
+          <div class="timeline-bar" style="background: #c4b5fd; height: 18px; border-radius: 4px; font-size: 0.6rem; grid-column: 4/6;">Emails</div>
+        </div>
+
+        <!-- Initiative: Growth Analytics (collapsed) -->
+        <div class="timeline-row child-row">
+          <div class="row-label">
+            <button class="expand-btn collapsed">▾</button>
+            <span class="level-badge-sm initiative">Init</span>
+            <span class="row-title">Growth Analytics</span>
+            <span class="child-count-sm">3</span>
+          </div>
+          <div class="timeline-bar bar-child span-5-8">Analytics</div>
+        </div>
+
+        <!-- STANDALONE ITEM -->
+        <div class="timeline-row">
+          <div class="row-label">
+            <span style="width: 18px; display: inline-block;"></span>
+            <span class="row-title">Safari Login Fix</span>
+          </div>
+          <div class="timeline-bar bar-standalone span-1-4">Safari Fix</div>
+        </div>
+
+        <!-- GOAL 2: Collapsed -->
+        <div class="timeline-row parent-row">
+          <div class="row-label">
+            <button class="expand-btn collapsed">▾</button>
+            <span class="level-badge-sm goal">Goal</span>
+            <span class="row-title">Reduce Churn</span>
+            <span class="child-count-sm">3</span>
+          </div>
+          <div class="timeline-bar bar-parent span-5-12">Reduce Churn Below 3%</div>
+        </div>
+
+        <div class="sort-hint">ⓘ Items are sorted by start position</div>
+
+        <!-- Unscheduled -->
+        <div class="unscheduled-panel">
+          <div class="unscheduled-title">Unscheduled Items</div>
+          <div class="unscheduled-group">
+            <div class="unscheduled-group-header">
+              <span class="level-badge-sm goal">Goal</span>
+              Scale Infrastructure
+            </div>
+            <div class="unscheduled-chips">
+              <div class="unscheduled-chip"><span class="level-badge-sm initiative">Init</span> Database Migration</div>
+              <div class="unscheduled-chip"><span class="level-badge-sm initiative">Init</span> CDN Rollout</div>
+            </div>
+          </div>
+          <div class="unscheduled-group">
+            <div class="unscheduled-group-header" style="color: #6b7280; font-weight: 400;">Standalone Items</div>
+            <div class="unscheduled-chips">
+              <div class="unscheduled-chip">Privacy Policy Update</div>
+              <div class="unscheduled-chip">Analytics Dashboard</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <button class="bottom-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          List
+        </button>
+        <button class="bottom-tab active">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Roadmap
+        </button>
+        <button class="bottom-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Capacity
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation" style="padding: 0.75rem 1rem;">
+    <strong>Roadmap hierarchy design:</strong>
+    <ul style="margin-top: 0.3rem; padding-left: 1.2rem;">
+      <li><strong>Top 3 levels shown:</strong> Goal → Initiative → Epic on the timeline. Stories/subtasks are too granular for roadmap view.</li>
+      <li><strong>Parent bars</strong> are taller, bolder, and auto-span from earliest to latest child</li>
+      <li><strong>Child bars</strong> are thinner with lighter colour variant</li>
+      <li><strong>Collapsed parents</strong> show just the parent bar spanning the full range</li>
+      <li><strong>Unscheduled panel</strong> groups items by parent hierarchy</li>
+      <li>Dragging a parent auto-moves all children proportionally</li>
+      <li>Matches production layout: bottom tab bar, "Add Item" top-right, "Add Period" link, sort hint at bottom</li>
+    </ul>
+  </div>
+
+</body>
+</html>

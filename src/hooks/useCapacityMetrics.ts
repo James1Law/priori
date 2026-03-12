@@ -35,7 +35,14 @@ export function useCapacityMetrics(
     const hoursMultiplier = settings.unit === 'hours' ? settings.hoursPerDay : 1
     const netCapacity = settings.teamSize * settings.workingDays * settings.focusFactor * hoursMultiplier
 
-    const baseEffort = items.reduce(
+    // Only count leaf items (no children) to avoid double-counting
+    // when both parent and child have estimates
+    const parentIds = new Set(
+      items.filter(i => i.parent_item_id).map(i => i.parent_item_id!)
+    )
+    const leafItems = items.filter(item => !parentIds.has(item.id))
+
+    const baseEffort = leafItems.reduce(
       (sum, item) => sum + (item.effort_estimate ?? 0),
       0
     )
@@ -43,8 +50,8 @@ export function useCapacityMetrics(
 
     const utilisation = netCapacity > 0 ? (totalEffort / netCapacity) * 100 : 0
 
-    const estimatedCount = items.filter((item) => item.effort_estimate != null).length
-    const totalCount = items.length
+    const estimatedCount = leafItems.filter((item) => item.effort_estimate != null).length
+    const totalCount = leafItems.length
 
     const remaining = netCapacity - totalEffort
 
