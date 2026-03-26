@@ -86,26 +86,27 @@ export default function EstimationFlowPage() {
   )
 
   // Determine which item IDs to use for estimation
-  // Priority: session.estimation_item_ids (shared) > navigationSelectedIds (local)
+  // Priority: navigationSelectedIds (fresh selection) > session.estimation_item_ids (shared)
   const estimationItemIds = useMemo(() => {
-    // If session has estimation_item_ids set, use those (shared across all participants)
+    // If we navigated here with selected items, use those (fresh user selection)
+    if (navigationSelectedIds.length > 0) {
+      return navigationSelectedIds
+    }
+    // Otherwise use session's estimation_item_ids (for other participants joining)
     if (session?.estimation_item_ids && session.estimation_item_ids.length > 0) {
       return session.estimation_item_ids
     }
-    // Otherwise use navigation state (for the user who started estimation)
-    return navigationSelectedIds
+    return []
   }, [session?.estimation_item_ids, navigationSelectedIds])
 
-  // Initialize estimation_item_ids in session when navigating with selected items
+  // Sync estimation_item_ids to session so other participants can see the queue
   useEffect(() => {
     if (!session || initializedEstimation) return
 
-    // Only initialize if we have navigation selected IDs and session doesn't have them
-    const sessionHasIds = session.estimation_item_ids && session.estimation_item_ids.length > 0
     const hasNavigationIds = navigationSelectedIds.length > 0
 
-    if (hasNavigationIds && !sessionHasIds) {
-      // Save the selected item IDs to session for all participants to see
+    if (hasNavigationIds) {
+      // Always save fresh selection to session, overwriting any stale IDs
       supabase
         .from('sessions')
         .update({ estimation_item_ids: navigationSelectedIds } as never)
