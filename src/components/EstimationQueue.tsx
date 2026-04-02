@@ -5,6 +5,7 @@ interface EstimationQueueProps {
   currentItemId: string | null
   onStartEstimation: () => void
   onSelectItem: (itemId: string) => void
+  isHost: boolean
 }
 
 type EstimationStatus = 'pending' | 'in_progress' | 'completed'
@@ -59,6 +60,7 @@ export default function EstimationQueue({
   currentItemId,
   onStartEstimation,
   onSelectItem,
+  isHost,
 }: EstimationQueueProps) {
   // Sort items by backlog_position if set, otherwise by position
   const sortedItems = [...items].sort((a, b) => {
@@ -90,13 +92,16 @@ export default function EstimationQueue({
           <span className="font-medium">{estimatedCount}</span> of{' '}
           <span className="font-medium">{totalCount}</span> estimated
         </div>
-        {!hasCurrentItem && estimatedCount < totalCount && (
+        {!hasCurrentItem && estimatedCount < totalCount && isHost && (
           <button
             onClick={onStartEstimation}
             className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-1.5 px-3 rounded-lg transition-colors"
           >
             Start Estimation
           </button>
+        )}
+        {!hasCurrentItem && estimatedCount < totalCount && !isHost && (
+          <span className="text-xs text-gray-500">Waiting for host...</span>
         )}
       </div>
 
@@ -117,12 +122,14 @@ export default function EstimationQueue({
           return (
             <li key={item.id}>
               <button
-                onClick={() => onSelectItem(item.id)}
+                onClick={() => isHost && onSelectItem(item.id)}
                 className={`
                   w-full text-left p-3 rounded-lg border transition-colors
                   ${isCurrentItem
                     ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    : isHost
+                      ? 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 cursor-pointer'
+                      : 'border-gray-200 cursor-default'
                   }
                 `}
               >

@@ -28,6 +28,7 @@ describe('ParticipantVotes', () => {
     votes: [] as EstimationVote[],
     revealed: false,
     currentParticipantName: 'Alice',
+    hostName: null as string | null,
   }
 
   describe('Vote Counter', () => {
@@ -228,6 +229,20 @@ describe('ParticipantVotes', () => {
       render(<ParticipantVotes {...defaultProps} />)
 
       expect(screen.getByText('Team Votes')).toBeInTheDocument()
+    })
+  })
+
+  describe('Host Badge', () => {
+    it('shows Host badge next to the host participant', () => {
+      render(<ParticipantVotes {...defaultProps} hostName="Bob" />)
+
+      expect(screen.getByText('Host')).toBeInTheDocument()
+    })
+
+    it('does not show Host badge when hostName is null', () => {
+      render(<ParticipantVotes {...defaultProps} hostName={null} />)
+
+      expect(screen.queryByText('Host')).not.toBeInTheDocument()
     })
   })
 

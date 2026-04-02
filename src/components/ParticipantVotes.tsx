@@ -10,6 +10,7 @@ interface ParticipantVotesProps {
   votes: EstimationVote[]
   revealed: boolean
   currentParticipantName: string | null
+  hostName: string | null
 }
 
 // Map vote values to display text
@@ -25,6 +26,7 @@ export default function ParticipantVotes({
   votes,
   revealed,
   currentParticipantName,
+  hostName,
 }: ParticipantVotesProps) {
   // Create a map of participant name to their vote
   const votesByParticipant = new Map<string, EstimationVote>()
@@ -57,6 +59,7 @@ export default function ParticipantVotes({
           const vote = votesByParticipant.get(participant.name)
           const hasVoted = vote?.vote !== null && vote?.vote !== undefined
           const isCurrentUser = participant.name === currentParticipantName
+          const isHostParticipant = participant.name === hostName
 
           return (
             <div
@@ -111,6 +114,11 @@ export default function ParticipantVotes({
                 {participant.name}
                 {isCurrentUser && ' (you)'}
               </p>
+              {isHostParticipant && (
+                <span className="inline-flex items-center text-[10px] font-medium text-indigo-600">
+                  Host
+                </span>
+              )}
 
               {/* Status indicator for accessibility */}
               <span className="sr-only">

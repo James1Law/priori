@@ -9,9 +9,12 @@ import CurrentEstimationItem from '../components/CurrentEstimationItem'
 import ParticipantVotes from '../components/ParticipantVotes'
 import EstimationResults from '../components/EstimationResults'
 import NamePromptModal from '../components/NamePromptModal'
+import MobileChatModal from '../components/MobileChatModal'
 import { useEstimationVotes } from '../hooks/useEstimationVotes'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
+import { useMessages } from '../hooks/useMessages'
+import { useUnreadCount } from '../hooks/useUnreadCount'
 
 interface Participant {
   name: string
@@ -57,6 +60,20 @@ export default function EstimationFlowPage() {
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
   const { participants } = usePresence(session?.id || null, participantName)
 
+  // Chat
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const { messages, loading: messagesLoading, sendMessage } = useMessages(session?.id || null, participantName)
+  const { unreadCount } = useUnreadCount(session?.id || null, messages, isChatOpen)
+
+  // Host role — the person who navigated here with selectedItemIds is the host
+  const isHost = session?.estimation_host === participantName && participantName !== null
+  // Track whether this client initiated the estimation (navigated with selectedItemIds)
+  const isInitiator = navigationSelectedIds.length > 0
+
+  // Session ended state — when host clears estimation but participant is still on page
+  const [sessionEnded, setSessionEnded] = useState(false)
+  const [prevEstimationSessionId, setPrevEstimationSessionId] = useState<string | null>(null)
+
   // Planning Poker state (synced to session)
   const currentEstimationItemId = session?.current_estimation_item_id || null
   const estimationRevealed = session?.estimation_revealed || false
@@ -100,27 +117,62 @@ export default function EstimationFlowPage() {
   }, [session?.estimation_item_ids, navigationSelectedIds])
 
   // Sync estimation_item_ids to session so other participants can see the queue
+  // Also set host and estimation_session_id when initiator enters
   useEffect(() => {
     if (!session || initializedEstimation) return
 
     const hasNavigationIds = navigationSelectedIds.length > 0
 
-    if (hasNavigationIds) {
-      // Always save fresh selection to session, overwriting any stale IDs
+    if (hasNavigationIds && participantName) {
+      // Host is entering — save selection, set host, generate new session ID
+      const newSessionId = crypto.randomUUID()
       supabase
         .from('sessions')
-        .update({ estimation_item_ids: navigationSelectedIds } as never)
+        .update({
+          estimation_item_ids: navigationSelectedIds,
+          estimation_host: participantName,
+          estimation_session_id: newSessionId,
+        } as never)
         .eq('id', session.id)
         .then(({ error }) => {
           if (error) {
-            console.error('Error saving estimation item IDs:', error)
+            console.error('Error saving estimation state:', error)
           } else {
-            setSession(prev => prev ? { ...prev, estimation_item_ids: navigationSelectedIds } : null)
+            setSession(prev => prev ? {
+              ...prev,
+              estimation_item_ids: navigationSelectedIds,
+              estimation_host: participantName,
+              estimation_session_id: newSessionId,
+            } : null)
           }
         })
     }
     setInitializedEstimation(true)
-  }, [session, navigationSelectedIds, initializedEstimation])
+  }, [session, navigationSelectedIds, initializedEstimation, participantName])
+
+  // Detect estimation session changes — when the host starts a new round or ends the session
+  useEffect(() => {
+    const currentSessionId = session?.estimation_session_id || null
+
+    if (prevEstimationSessionId === null) {
+      // First render — just record the session ID
+      setPrevEstimationSessionId(currentSessionId)
+      return
+    }
+
+    if (currentSessionId !== prevEstimationSessionId) {
+      if (currentSessionId === null) {
+        // Host ended the session
+        if (!isInitiator) {
+          setSessionEnded(true)
+        }
+      } else {
+        // New estimation round started — clear session ended state
+        setSessionEnded(false)
+      }
+      setPrevEstimationSessionId(currentSessionId)
+    }
+  }, [session?.estimation_session_id, prevEstimationSessionId, isInitiator])
 
   // Get items for estimation (either selected items or all items)
   const itemsToEstimate = useMemo(() => {
@@ -443,13 +495,15 @@ export default function EstimationFlowPage() {
   // Handler: Navigate back to backlog (clears estimation state)
   const handleBackToBacklog = async () => {
     if (session) {
-      // Clear estimation item IDs so next estimation starts fresh
+      // Clear estimation state so next estimation starts fresh
       await supabase
         .from('sessions')
         .update({
           estimation_item_ids: [],
           current_estimation_item_id: null,
           estimation_revealed: false,
+          estimation_host: null,
+          estimation_session_id: null,
         } as never)
         .eq('id', session.id)
     }
@@ -535,13 +589,36 @@ export default function EstimationFlowPage() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Participant count */}
-              {participantsList.length > 0 && (
-                <span className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-600">
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  <span className="hidden sm:inline">{participantsList.length} online</span>
-                  <span className="sm:hidden">{participantsList.length}</span>
+              {/* Host badge */}
+              {isHost && (
+                <span className="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l3.057-3L12 3.5 15.943 0 19 3l-2 7H7L5 3zM12 13.5V21M8 21h8" />
+                  </svg>
+                  Host
                 </span>
+              )}
+
+              {/* Participant count with chat button */}
+              {participantsList.length > 0 && (
+                <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  title="Open team chat"
+                >
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span>{participantsList.length}</span>
+                  <span className="relative">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </span>
+                </button>
               )}
 
               {/* Copy URL button */}
@@ -565,7 +642,28 @@ export default function EstimationFlowPage() {
       )}
 
       <main className="max-w-7xl mx-auto">
-        {itemsToEstimate.length === 0 ? (
+        {sessionEnded ? (
+          // Session ended state for non-host participants
+          <div className="flex items-center justify-center min-h-[60vh] p-8">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Estimation session ended</h2>
+              <p className="text-gray-600 mb-6">
+                The host has ended this estimation session. A new round will appear here automatically when started.
+              </p>
+              <button
+                onClick={() => navigate(`/s/${slug}`)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                Back to Backlog
+              </button>
+            </div>
+          </div>
+        ) : itemsToEstimate.length === 0 ? (
           // No items state
           <div className="flex items-center justify-center min-h-[60vh] p-8">
             <div className="text-center">
@@ -599,6 +697,7 @@ export default function EstimationFlowPage() {
                 currentItemId={currentEstimationItemId}
                 onStartEstimation={handleStartEstimation}
                 onSelectItem={handleCurrentItemChange}
+                isHost={isHost}
               />
             </div>
 
@@ -623,6 +722,7 @@ export default function EstimationFlowPage() {
                     votes={votes}
                     revealed={estimationRevealed}
                     currentParticipantName={participantName}
+                    hostName={session?.estimation_host || null}
                   />
 
                   {/* Reveal button and results */}
@@ -634,6 +734,7 @@ export default function EstimationFlowPage() {
                     onSkip={handleSkip}
                     revealed={estimationRevealed}
                     hasNextItem={hasNextItem}
+                    isHost={isHost}
                   />
                 </div>
               ) : itemsToEstimate.every(item => item.story_points !== null && item.story_points !== undefined) ? (
@@ -662,14 +763,16 @@ export default function EstimationFlowPage() {
                     The story points have been saved to your backlog.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
+                    {isHost && (
+                      <button
+                        onClick={handleResetAndRestartEstimation}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-5 rounded-lg transition-colors"
+                      >
+                        Re-estimate Items
+                      </button>
+                    )}
                     <button
-                      onClick={handleResetAndRestartEstimation}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-5 rounded-lg transition-colors"
-                    >
-                      Re-estimate Items
-                    </button>
-                    <button
-                      onClick={handleBackToBacklog}
+                      onClick={isHost ? handleBackToBacklog : () => navigate(`/s/${slug}`)}
                       className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors"
                     >
                       Back to Backlog
@@ -712,6 +815,19 @@ export default function EstimationFlowPage() {
           </div>
         )}
       </main>
+
+      {/* Chat modal */}
+      {session && (
+        <MobileChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          sessionId={session.id}
+          currentUser={participantName || 'Anonymous'}
+          messages={messages}
+          loading={messagesLoading}
+          onSendMessage={sendMessage}
+        />
+      )}
     </div>
   )
 }

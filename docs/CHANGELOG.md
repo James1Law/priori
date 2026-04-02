@@ -4,6 +4,20 @@ Detailed history of features implemented across all phases.
 
 ---
 
+## Estimation Host Control, Realtime Sync & Chat
+
+### Features
+- **Host Role**: The person who starts estimation becomes the host — only the host can Reveal, Accept, Re-vote, Skip, and select items. Participants can only vote.
+- **Host Badge**: Host is clearly identified in the header and participant votes grid
+- **Session Sync**: Each estimation round gets a unique session ID. When the host ends a session, participants see a clean "Session ended" state instead of a blank screen. New rounds auto-sync without requiring a page refresh.
+- **Chat in Estimation**: Team chat is now accessible during estimation via the participant count button in the header
+- **Waiting States**: Non-host participants see "Waiting for host to reveal..." and "Waiting for host to decide..." messages
+
+### Database Changes
+- `supabase/017_estimation_host_session.sql` — `estimation_host` (text), `estimation_session_id` (uuid)
+
+---
+
 ## Estimation Flow Fix
 
 ### Bug Fix

@@ -27,6 +27,7 @@ describe('EstimationQueue', () => {
     currentItemId: null,
     onStartEstimation: vi.fn(),
     onSelectItem: vi.fn(),
+    isHost: true,
   }
 
   it('renders empty state when no items', () => {
@@ -184,5 +185,49 @@ describe('EstimationQueue', () => {
     render(<EstimationQueue {...defaultProps} items={items} />)
 
     expect(screen.getByText('This is a description')).toBeInTheDocument()
+  })
+
+  describe('Host Control', () => {
+    it('hides Start Estimation button for non-host participants', () => {
+      const items = [createMockItem({ id: '1', title: 'Item 1' })]
+
+      render(<EstimationQueue {...defaultProps} items={items} isHost={false} />)
+
+      expect(screen.queryByRole('button', { name: /start estimation/i })).not.toBeInTheDocument()
+    })
+
+    it('shows "Waiting for host..." for non-host when estimation not started', () => {
+      const items = [createMockItem({ id: '1', title: 'Item 1' })]
+
+      render(<EstimationQueue {...defaultProps} items={items} isHost={false} />)
+
+      expect(screen.getByText('Waiting for host...')).toBeInTheDocument()
+    })
+
+    it('does not call onSelectItem when non-host clicks an item', () => {
+      const onSelectItem = vi.fn()
+      const items = [createMockItem({ id: '1', title: 'Item 1' })]
+
+      render(
+        <EstimationQueue
+          {...defaultProps}
+          items={items}
+          onSelectItem={onSelectItem}
+          isHost={false}
+        />
+      )
+
+      fireEvent.click(screen.getByText('Item 1'))
+
+      expect(onSelectItem).not.toHaveBeenCalled()
+    })
+
+    it('shows Start Estimation button for host', () => {
+      const items = [createMockItem({ id: '1', title: 'Item 1' })]
+
+      render(<EstimationQueue {...defaultProps} items={items} isHost={true} />)
+
+      expect(screen.getByRole('button', { name: /start estimation/i })).toBeInTheDocument()
+    })
   })
 })

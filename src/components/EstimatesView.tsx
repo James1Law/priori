@@ -135,6 +135,7 @@ export default function EstimatesView({
           currentItemId={currentEstimationItemId}
           onStartEstimation={handleStartEstimation}
           onSelectItem={handleSelectItem}
+          isHost={true}
         />
       </div>
 
@@ -159,6 +160,7 @@ export default function EstimatesView({
               votes={votes}
               revealed={estimationRevealed}
               currentParticipantName={participantName}
+              hostName={null}
             />
 
             {/* Reveal button and results */}
@@ -170,6 +172,7 @@ export default function EstimatesView({
               onSkip={handleSkip}
               revealed={estimationRevealed}
               hasNextItem={hasNextItem}
+              isHost={true}
             />
           </div>
         ) : (

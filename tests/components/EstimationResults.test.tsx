@@ -24,6 +24,7 @@ describe('EstimationResults', () => {
     onSkip: vi.fn(),
     revealed: false,
     hasNextItem: true,
+    isHost: true,
   }
 
   describe('Reveal Button', () => {
@@ -206,6 +207,46 @@ describe('EstimationResults', () => {
       render(<EstimationResults {...defaultProps} votes={[]} revealed={true} />)
 
       expect(screen.queryByRole('button', { name: /accept/i })).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Host Control', () => {
+    it('hides Reveal button for non-host and shows waiting message', () => {
+      const votes = [createVote('Alice', 5)]
+      render(<EstimationResults {...defaultProps} votes={votes} isHost={false} />)
+
+      expect(screen.queryByRole('button', { name: /reveal votes/i })).not.toBeInTheDocument()
+      expect(screen.getByText('Waiting for host to reveal votes...')).toBeInTheDocument()
+    })
+
+    it('hides action buttons for non-host when revealed', () => {
+      const votes = [
+        createVote('Alice', 5),
+        createVote('Bob', 5),
+      ]
+      render(<EstimationResults {...defaultProps} votes={votes} revealed={true} isHost={false} />)
+
+      expect(screen.queryByRole('button', { name: /accept/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /re-vote/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /skip/i })).not.toBeInTheDocument()
+      expect(screen.getByText('Waiting for host to decide...')).toBeInTheDocument()
+    })
+
+    it('shows action buttons for host when revealed', () => {
+      const votes = [
+        createVote('Alice', 5),
+        createVote('Bob', 5),
+      ]
+      render(<EstimationResults {...defaultProps} votes={votes} revealed={true} isHost={true} />)
+
+      expect(screen.getByRole('button', { name: /accept 5 sp/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /re-vote/i })).toBeInTheDocument()
+    })
+
+    it('does not show waiting message for non-host when no votes yet', () => {
+      render(<EstimationResults {...defaultProps} votes={[]} isHost={false} />)
+
+      expect(screen.queryByText('Waiting for host to reveal votes...')).not.toBeInTheDocument()
     })
   })
 })

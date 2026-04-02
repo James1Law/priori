@@ -44,6 +44,8 @@ export interface Session {
   current_estimation_item_id: string | null
   estimation_revealed: boolean
   estimation_item_ids: string[] // Array of item IDs selected for estimation
+  estimation_host: string | null // Participant name of the estimation host
+  estimation_session_id: string | null // Unique ID per estimation round
   // Capacity planning settings
   capacity_team_size: number
   capacity_working_days: number

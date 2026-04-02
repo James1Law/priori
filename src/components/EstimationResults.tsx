@@ -8,6 +8,7 @@ interface EstimationResultsProps {
   onSkip: () => void
   revealed: boolean
   hasNextItem: boolean
+  isHost: boolean
 }
 
 // Fibonacci sequence for determining "adjacent" values
@@ -123,6 +124,7 @@ export default function EstimationResults({
   onSkip,
   revealed,
   hasNextItem,
+  isHost,
 }: EstimationResultsProps) {
   // Count how many have voted (excluding null votes)
   const votedCount = votes.filter((v) => v.vote !== null).length
@@ -132,23 +134,29 @@ export default function EstimationResults({
   const consensus = revealed ? calculateConsensus(votes) : null
 
   if (!revealed) {
-    // Show Reveal button
+    // Show Reveal button for host, waiting message for participants
     return (
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={onReveal}
-          disabled={!hasVotes}
-          className={`
-            px-6 py-3 rounded-lg font-semibold text-lg transition-all
-            ${
-              hasVotes
-                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }
-          `}
-        >
-          Reveal Votes
-        </button>
+      <div className="mt-6 flex flex-col items-center gap-2">
+        {isHost ? (
+          <button
+            onClick={onReveal}
+            disabled={!hasVotes}
+            className={`
+              px-6 py-3 rounded-lg font-semibold text-lg transition-all
+              ${
+                hasVotes
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }
+            `}
+          >
+            Reveal Votes
+          </button>
+        ) : (
+          hasVotes && (
+            <p className="text-sm text-gray-500">Waiting for host to reveal votes...</p>
+          )
+        )}
       </div>
     )
   }
@@ -195,36 +203,40 @@ export default function EstimationResults({
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="flex flex-wrap justify-center gap-3">
-        {/* Accept & Next button */}
-        {suggestedValue !== undefined && (
-          <button
-            onClick={() => onAccept(suggestedValue)}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
-          >
-            Accept {suggestedValue} SP{hasNextItem ? ' & Next' : ''}
-          </button>
-        )}
+      {/* Action buttons — host only */}
+      {isHost ? (
+        <div className="flex flex-wrap justify-center gap-3">
+          {/* Accept & Next button */}
+          {suggestedValue !== undefined && (
+            <button
+              onClick={() => onAccept(suggestedValue)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+            >
+              Accept {suggestedValue} SP{hasNextItem ? ' & Next' : ''}
+            </button>
+          )}
 
-        {/* Re-vote button */}
-        <button
-          onClick={onRevote}
-          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors shadow-sm"
-        >
-          Re-vote
-        </button>
-
-        {/* Skip button */}
-        {hasNextItem && (
+          {/* Re-vote button */}
           <button
-            onClick={onSkip}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+            onClick={onRevote}
+            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors shadow-sm"
           >
-            Skip
+            Re-vote
           </button>
-        )}
-      </div>
+
+          {/* Skip button */}
+          {hasNextItem && (
+            <button
+              onClick={onSkip}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+            >
+              Skip
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-center text-sm text-gray-500">Waiting for host to decide...</p>
+      )}
     </div>
   )
 }
