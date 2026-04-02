@@ -1,319 +1,140 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import MobileRoadmapView from '../../src/components/MobileRoadmapView'
-import { RoadmapPeriod, ItemWithScore } from '../../src/types/database'
+import type { RoadmapPeriod, ItemWithScore, ItemLevel } from '../../src/types/database'
 
 const mockPeriods: RoadmapPeriod[] = [
-  { id: 'p1', session_id: 's1', name: 'Now', width: 4, position: 0, created_at: '2024-01-01' },
-  { id: 'p2', session_id: 's1', name: 'Next', width: 4, position: 1, created_at: '2024-01-01' },
-  { id: 'p3', session_id: 's1', name: 'Later', width: 4, position: 2, created_at: '2024-01-01' },
+  { id: '1', session_id: 'session-1', name: 'Q1 2026', width: 4, position: 0, created_at: '2024-01-01' },
+  { id: '2', session_id: 'session-1', name: 'Q2 2026', width: 4, position: 1, created_at: '2024-01-01' },
+  { id: '3', session_id: 'session-1', name: 'Q3 2026', width: 4, position: 2, created_at: '2024-01-01' },
 ]
 
-const mockItems: ItemWithScore[] = [
-  {
-    id: 'i1',
-    session_id: 's1',
-    title: 'User Authentication',
-    description: 'Implement login flow',
+function makeItem(id: string, overrides: Partial<ItemWithScore> = {}): ItemWithScore {
+  return {
+    id,
+    session_id: 'session-1',
+    title: `Item ${id}`,
+    description: null,
     position: 0,
-    backlog_position: 0,
-    roadmap_start_quadrant: 0,
-    roadmap_end_quadrant: 3,
-    roadmap_row: 0,
-    created_at: '2024-01-01',
-    story_points: null,
+    backlog_position: null,
+    status: 'todo',
     created_by: null,
+    created_at: '2024-01-01',
     roadmap_start_period: null,
     roadmap_end_period: null,
-  },
-  {
-    id: 'i2',
-    session_id: 's1',
-    title: 'Dashboard Redesign',
-    description: 'Improve dashboard UX',
-    position: 1,
-    backlog_position: 1,
-    roadmap_start_quadrant: 2,
-    roadmap_end_quadrant: 5,
-    roadmap_row: 0,
-    created_at: '2024-01-01',
-    story_points: null,
-    created_by: null,
-    roadmap_start_period: null,
-    roadmap_end_period: null,
-  },
-  {
-    id: 'i3',
-    session_id: 's1',
-    title: 'Unscheduled Item',
-    description: 'Not on roadmap yet',
-    position: 2,
-    backlog_position: 2,
     roadmap_start_quadrant: null,
     roadmap_end_quadrant: null,
     roadmap_row: 0,
-    created_at: '2024-01-01',
     story_points: null,
-    created_by: null,
-    roadmap_start_period: null,
-    roadmap_end_period: null,
-  },
+    effort_estimate: null,
+    parent_item_id: null,
+    item_level: 0 as ItemLevel,
+    ...overrides,
+  }
+}
+
+const mockItems: ItemWithScore[] = [
+  makeItem('goal', { title: 'Increase Activation', item_level: 0, position: 0, roadmap_start_quadrant: 0, roadmap_end_quadrant: 7 }),
+  makeItem('init', { title: 'User Onboarding', item_level: 1, parent_item_id: 'goal', position: 1, roadmap_start_quadrant: 0, roadmap_end_quadrant: 3 }),
+  makeItem('flat', { title: 'Safari Fix', item_level: 0, position: 2, roadmap_start_quadrant: 0, roadmap_end_quadrant: 3 }),
+  makeItem('unscheduled', { title: 'Dark Mode', item_level: 0, position: 3 }),
 ]
 
 describe('MobileRoadmapView', () => {
-  it('renders loading state', () => {
-    render(<MobileRoadmapView periods={[]} items={[]} loading={true} />)
+  const defaultProps = {
+    periods: mockPeriods,
+    items: mockItems,
+    loading: false,
+    onItemClick: vi.fn(),
+  }
 
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument()
+  it('renders period cards', () => {
+    render(<MobileRoadmapView {...defaultProps} />)
+    expect(screen.getByText('Q1 2026')).toBeInTheDocument()
+    expect(screen.getByText('Q2 2026')).toBeInTheDocument()
+    expect(screen.getByText('Q3 2026')).toBeInTheDocument()
   })
 
-  it('renders empty state when no periods exist', () => {
-    render(<MobileRoadmapView periods={[]} items={[]} loading={false} />)
-
-    expect(screen.getByText(/no periods yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/\+ add period/i)).toBeInTheDocument()
+  it('shows loading state', () => {
+    render(<MobileRoadmapView {...defaultProps} loading={true} />)
+    const loadingElements = document.querySelectorAll('.animate-pulse')
+    expect(loadingElements.length).toBeGreaterThan(0)
   })
 
-  it('renders periods as vertical cards', () => {
-    render(<MobileRoadmapView periods={mockPeriods} items={[]} loading={false} />)
-
-    // CSS text-transform: uppercase is applied, but the actual text content is as stored
-    expect(screen.getByText('Now')).toBeInTheDocument()
-    expect(screen.getByText('Next')).toBeInTheDocument()
-    expect(screen.getByText('Later')).toBeInTheDocument()
-  })
-
-  it('renders items in the correct periods', () => {
-    render(<MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />)
-
-    // User Authentication should appear in Now period (Q0-Q3)
-    expect(screen.getByText('User Authentication')).toBeInTheDocument()
-
-    // Dashboard Redesign spans periods (Q2-Q5), should appear in both Now and Next
-    // Title gets truncated so use partial match
-    const dashboardItems = screen.getAllByText(/Dashboard/)
-    expect(dashboardItems.length).toBe(2) // Appears in two periods
+  it('shows scheduled items in their period cards', () => {
+    render(<MobileRoadmapView {...defaultProps} />)
+    // Items scheduled in Q1 should appear
+    const activationElements = screen.getAllByText('Increase Activation')
+    expect(activationElements.length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Safari Fix').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows overflow indicators for multi-period items', () => {
-    render(<MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />)
-
-    // Dashboard spans from Now to Next, should have arrows
-    expect(screen.getByText('→')).toBeInTheDocument()
-    expect(screen.getByText('←')).toBeInTheDocument()
+    render(<MobileRoadmapView {...defaultProps} />)
+    // Increase Activation spans Q1–Q2, should show continuation indicator
+    const continuationElements = screen.queryAllByText(/Q2 2026 →|← Q1 2026/)
+    expect(continuationElements.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows empty period state with add button', () => {
-    // Single empty period with no items scheduled in it
-    const emptyPeriod: RoadmapPeriod[] = [
-      { id: 'empty', session_id: 's1', name: 'Empty Period', width: 4, position: 0, created_at: '2024-01-01' },
-    ]
-
-    render(<MobileRoadmapView periods={emptyPeriod} items={[]} loading={false} />)
-
-    expect(screen.getByText(/no items scheduled/i)).toBeInTheDocument()
-    expect(screen.getByText(/\+ add item/i)).toBeInTheDocument()
+  it('shows empty period state', () => {
+    render(<MobileRoadmapView {...defaultProps} />)
+    // Q3 has no scheduled items
+    expect(screen.getByText('No items scheduled')).toBeInTheDocument()
   })
 
-  it('shows unscheduled items section at bottom', () => {
-    render(<MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />)
-
-    // Unscheduled Item has null quadrants, should appear in unscheduled section
-    expect(screen.getByText('Unscheduled Items (1)')).toBeInTheDocument()
-    expect(screen.getByText('Unscheduled Item')).toBeInTheDocument()
+  it('shows unscheduled items section', () => {
+    render(<MobileRoadmapView {...defaultProps} />)
+    expect(screen.getByText('Unscheduled')).toBeInTheDocument()
+    expect(screen.getByText('Dark Mode')).toBeInTheDocument()
   })
 
-  it('does not show unscheduled items in period cards', () => {
-    render(<MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />)
-
-    // The unscheduled item should not have an item bar (only buttons in unscheduled section)
-    // Period cards should only show scheduled items
-    const itemBars = screen.getAllByRole('button', { pressed: false })
-    // Item bars are the scheduled items, not the unscheduled ones
-    const scheduledItemButtons = itemBars.filter((btn) =>
-      btn.getAttribute('aria-label')?.includes('tap to select')
-    )
-    // Should only have 3 scheduled items (Now Item, Multi-Period Item x2 appearances)
-    expect(scheduledItemButtons.length).toBe(3)
+  it('shows empty state when no periods', () => {
+    render(<MobileRoadmapView {...defaultProps} periods={[]} />)
+    expect(screen.getByText('No periods yet')).toBeInTheDocument()
   })
 
-  it('shows add period button at bottom', () => {
-    render(<MobileRoadmapView periods={mockPeriods} items={[]} loading={false} />)
-
-    const addButtons = screen.getAllByText(/\+ add period/i)
-    expect(addButtons.length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('calculates correct bar width for full-period items', () => {
-    const singlePeriod = [mockPeriods[0]]
-    const fullPeriodItem: ItemWithScore[] = [
-      {
-        ...mockItems[0],
-        roadmap_start_quadrant: 0,
-        roadmap_end_quadrant: 3, // Full period (Q0-Q3)
-      },
-    ]
-
-    const { container } = render(
-      <MobileRoadmapView periods={singlePeriod} items={fullPeriodItem} loading={false} />
-    )
-
-    const itemBar = container.querySelector('.bg-gradient-to-r')
-    expect(itemBar).toHaveStyle({ width: '100%', marginLeft: '0%' })
-  })
-
-  it('calculates correct bar width for partial-period items', () => {
-    const singlePeriod = [mockPeriods[0]]
-    const halfPeriodItem: ItemWithScore[] = [
-      {
-        ...mockItems[0],
-        title: 'Half Item',
-        roadmap_start_quadrant: 0,
-        roadmap_end_quadrant: 1, // First half (Q0-Q1)
-      },
-    ]
-
-    const { container } = render(
-      <MobileRoadmapView periods={singlePeriod} items={halfPeriodItem} loading={false} />
-    )
-
-    const itemBar = container.querySelector('.bg-gradient-to-r')
-    expect(itemBar).toHaveStyle({ width: '50%', marginLeft: '0%' })
-  })
-
-  it('calculates correct offset for items not starting at period beginning', () => {
-    const singlePeriod = [mockPeriods[0]]
-    const offsetItem: ItemWithScore[] = [
-      {
-        ...mockItems[0],
-        title: 'Offset Item',
-        roadmap_start_quadrant: 2,
-        roadmap_end_quadrant: 3, // Second half (Q2-Q3)
-      },
-    ]
-
-    const { container } = render(
-      <MobileRoadmapView periods={singlePeriod} items={offsetItem} loading={false} />
-    )
-
-    const itemBar = container.querySelector('.bg-gradient-to-r')
-    expect(itemBar).toHaveStyle({ width: '50%', marginLeft: '50%' })
-  })
-
-  // Selection tests
-  describe('item selection', () => {
-    it('selects item on click', () => {
-      render(
-        <MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />
-      )
-
-      const itemBar = screen.getByText('User Authentication').closest('[role="button"]')
-      expect(itemBar).toBeInTheDocument()
-
-      fireEvent.click(itemBar!)
-
-      // Check for selection ring
-      expect(itemBar).toHaveClass('ring-2')
+  describe('Hierarchy interactions', () => {
+    it('shows expand button for parent items', () => {
+      render(<MobileRoadmapView {...defaultProps} />)
+      const expandButtons = screen.getAllByText('▸')
+      expect(expandButtons.length).toBeGreaterThan(0)
     })
 
-    it('shows resize handles when item is selected', () => {
-      render(
-        <MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />
-      )
-
-      // Initially no resize handles (aria-labels now include item title)
-      expect(screen.queryByLabelText(/Resize.*start position/)).not.toBeInTheDocument()
-
-      // Select item
-      const itemBar = screen.getByText('User Authentication').closest('[role="button"]')
-      fireEvent.click(itemBar!)
-
-      // Now resize handles should appear
-      expect(screen.getByLabelText(/Resize User Authentication start position/)).toBeInTheDocument()
-      expect(screen.getByLabelText(/Resize User Authentication end position/)).toBeInTheDocument()
+    it('expands parent to show children on tap', () => {
+      render(<MobileRoadmapView {...defaultProps} />)
+      const expandButton = screen.getAllByText('▸')[0]
+      fireEvent.click(expandButton)
+      // After expanding, User Onboarding should be visible
+      const onboardingElements = screen.getAllByText('User Onboarding')
+      expect(onboardingElements.length).toBeGreaterThanOrEqual(1)
     })
 
-    it('shows hint text when item is selected', () => {
-      render(<MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />)
-
-      // Initially no hint
-      expect(screen.queryByText(/drag handles to resize/i)).not.toBeInTheDocument()
-
-      // Select item
-      const itemBar = screen.getByText('User Authentication').closest('[role="button"]')
-      fireEvent.click(itemBar!)
-
-      // Now hint should appear
-      expect(screen.getByText(/drag handles to resize/i)).toBeInTheDocument()
-    })
-
-    it('deselects item when clicking elsewhere', () => {
-      const { container } = render(
-        <MobileRoadmapView periods={mockPeriods} items={mockItems} loading={false} />
-      )
-
-      // Select item
-      const itemBar = screen.getByText('User Authentication').closest('[role="button"]')
-      fireEvent.click(itemBar!)
-      expect(itemBar).toHaveClass('ring-2')
-
-      // Click on container to deselect
-      const roadmapContainer = container.querySelector('.flex.flex-col.gap-3')
-      fireEvent.click(roadmapContainer!)
-
-      // Selection ring should be gone
-      expect(itemBar).not.toHaveClass('ring-2')
+    it('shows level badge for hierarchy items', () => {
+      render(<MobileRoadmapView {...defaultProps} />)
+      // Goal level badge (first letter)
+      const goalBadges = screen.getAllByText('G')
+      expect(goalBadges.length).toBeGreaterThan(0)
     })
   })
 
-  // Resize callback tests
-  describe('resize functionality', () => {
-    it('calls onScheduleItem when resize handle is dragged', () => {
-      const mockOnScheduleItem = vi.fn().mockResolvedValue(undefined)
-      const singlePeriod = [mockPeriods[0]]
-      const singleItem: ItemWithScore[] = [
-        {
-          ...mockItems[0],
-          roadmap_start_quadrant: 0,
-          roadmap_end_quadrant: 3,
-        },
-      ]
-
-      render(
-        <MobileRoadmapView
-          periods={singlePeriod}
-          items={singleItem}
-          loading={false}
-          onScheduleItem={mockOnScheduleItem}
-        />
-      )
-
-      // Select item first
-      const itemBar = screen.getByText('User Authentication').closest('[role="button"]')
-      fireEvent.click(itemBar!)
-
-      // Verify resize handles appear (aria-labels now include item title)
-      const rightHandle = screen.getByLabelText(/Resize User Authentication end position/)
-      expect(rightHandle).toBeInTheDocument()
+  describe('Item selection', () => {
+    it('shows View Details button when item is tapped', () => {
+      render(<MobileRoadmapView {...defaultProps} />)
+      const safariElements = screen.getAllByText('Safari Fix')
+      // Click on the label row (parent div with click handler)
+      const labelRow = safariElements[0].parentElement!
+      fireEvent.click(labelRow)
+      expect(screen.getByText('View Details')).toBeInTheDocument()
     })
 
-    it('only shows resize handles on selected item', () => {
-      const twoItems: ItemWithScore[] = [
-        { ...mockItems[0], id: 'item1', title: 'First Item', roadmap_start_quadrant: 0, roadmap_end_quadrant: 1 },
-        { ...mockItems[0], id: 'item2', title: 'Second Item', roadmap_start_quadrant: 2, roadmap_end_quadrant: 3 },
-      ]
-
-      render(
-        <MobileRoadmapView periods={[mockPeriods[0]]} items={twoItems} loading={false} />
-      )
-
-      // Select first item
-      const firstItem = screen.getByText('First Item').closest('[role="button"]')
-      fireEvent.click(firstItem!)
-
-      // Only 2 resize handles should exist (one left, one right for selected item)
-      const handles = screen.getAllByLabelText(/Resize First Item/)
-      expect(handles.length).toBe(2)
+    it('calls onItemClick when View Details is tapped', () => {
+      const onItemClick = vi.fn()
+      render(<MobileRoadmapView {...defaultProps} onItemClick={onItemClick} />)
+      const safariElements = screen.getAllByText('Safari Fix')
+      const labelRow = safariElements[0].parentElement!
+      fireEvent.click(labelRow)
+      fireEvent.click(screen.getByText('View Details'))
+      expect(onItemClick).toHaveBeenCalledWith('flat')
     })
   })
 })

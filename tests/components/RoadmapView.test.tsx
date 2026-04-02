@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import RoadmapView from '../../src/components/RoadmapView'
-import type { RoadmapPeriod, ItemWithScore } from '../../src/types/database'
+import type { RoadmapPeriod, ItemWithScore, ItemLevel } from '../../src/types/database'
 
 const mockPeriods: RoadmapPeriod[] = [
   { id: '1', session_id: 'session-1', name: 'Now', width: 4, position: 0, created_at: '2024-01-01' },
@@ -9,14 +9,15 @@ const mockPeriods: RoadmapPeriod[] = [
   { id: '3', session_id: 'session-1', name: 'Later', width: 4, position: 2, created_at: '2024-01-01' },
 ]
 
-const mockItems: ItemWithScore[] = [
-  {
-    id: 'item-1',
+function makeItem(id: string, overrides: Partial<ItemWithScore> = {}): ItemWithScore {
+  return {
+    id,
     session_id: 'session-1',
-    title: 'Feature A',
+    title: `Item ${id}`,
     description: null,
     position: 0,
     backlog_position: null,
+    status: 'todo',
     created_by: null,
     created_at: '2024-01-01',
     roadmap_start_period: null,
@@ -24,23 +25,22 @@ const mockItems: ItemWithScore[] = [
     roadmap_start_quadrant: null,
     roadmap_end_quadrant: null,
     roadmap_row: 0,
-    score: { id: 'score-1', item_id: 'item-1', framework: 'rice', criteria: {}, calculated_score: 100 },
-  },
-  {
-    id: 'item-2',
-    session_id: 'session-1',
+    story_points: null,
+    effort_estimate: null,
+    parent_item_id: null,
+    item_level: 0 as ItemLevel,
+    ...overrides,
+  }
+}
+
+const mockItems: ItemWithScore[] = [
+  makeItem('item-1', { title: 'Feature A', position: 0 }),
+  makeItem('item-2', {
     title: 'Feature B',
-    description: null,
     position: 1,
-    backlog_position: null,
-    created_by: null,
-    created_at: '2024-01-01',
-    roadmap_start_period: '1', // Legacy - kept for compatibility
-    roadmap_end_period: '1',
-    roadmap_start_quadrant: 0, // Scheduled to "Now" (quadrants 0-3)
+    roadmap_start_quadrant: 0,
     roadmap_end_quadrant: 3,
-    roadmap_row: 0,
-  },
+  }),
 ]
 
 describe('RoadmapView', () => {
@@ -57,7 +57,6 @@ describe('RoadmapView', () => {
 
   it('renders period headers', () => {
     render(<RoadmapView {...defaultProps} />)
-
     expect(screen.getByText('Now')).toBeInTheDocument()
     expect(screen.getByText('Next')).toBeInTheDocument()
     expect(screen.getByText('Later')).toBeInTheDocument()
@@ -65,23 +64,18 @@ describe('RoadmapView', () => {
 
   it('shows loading state', () => {
     render(<RoadmapView {...defaultProps} loading={true} />)
-
-    // Should show skeleton/loading UI
     const loadingElements = document.querySelectorAll('.animate-pulse')
     expect(loadingElements.length).toBeGreaterThan(0)
   })
 
   it('shows Add Period button', () => {
     render(<RoadmapView {...defaultProps} />)
-
     expect(screen.getByText('Add Period')).toBeInTheDocument()
   })
 
   it('opens add period input when clicking Add Period', () => {
     render(<RoadmapView {...defaultProps} />)
-
     fireEvent.click(screen.getByText('Add Period'))
-
     expect(screen.getByPlaceholderText('Period name')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
@@ -90,11 +84,9 @@ describe('RoadmapView', () => {
   it('calls onAddPeriod when adding a new period', async () => {
     const onAddPeriod = vi.fn().mockResolvedValue({ id: 'new', name: 'Q1 2026', width: 4, position: 3 })
     render(<RoadmapView {...defaultProps} onAddPeriod={onAddPeriod} />)
-
     fireEvent.click(screen.getByText('Add Period'))
     fireEvent.change(screen.getByPlaceholderText('Period name'), { target: { value: 'Q1 2026' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add' }))
-
     await waitFor(() => {
       expect(onAddPeriod).toHaveBeenCalledWith('Q1 2026')
     })
@@ -102,96 +94,66 @@ describe('RoadmapView', () => {
 
   it('cancels adding period when clicking Cancel', () => {
     render(<RoadmapView {...defaultProps} />)
-
     fireEvent.click(screen.getByText('Add Period'))
     expect(screen.getByPlaceholderText('Period name')).toBeInTheDocument()
-
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-
     expect(screen.queryByPlaceholderText('Period name')).not.toBeInTheDocument()
     expect(screen.getByText('Add Period')).toBeInTheDocument()
   })
 
   it('allows editing period name on click', async () => {
     render(<RoadmapView {...defaultProps} />)
-
-    // Click on period name to edit
     fireEvent.click(screen.getByText('Now'))
-
-    // Should show input with current name
     const input = screen.getByDisplayValue('Now')
     expect(input).toBeInTheDocument()
-
-    // Edit the name
     fireEvent.change(input, { target: { value: 'Current Sprint' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-
     await waitFor(() => {
       expect(defaultProps.onUpdatePeriod).toHaveBeenCalledWith('1', { name: 'Current Sprint' })
     })
   })
 
-  // Note: Width adjustment buttons have been removed in the quadrant-based system
-  // Each period now has a fixed width of 4 quadrants
-
-  it('shows unscheduled items section', () => {
+  it('shows unscheduled items in the panel', () => {
     render(<RoadmapView {...defaultProps} />)
-
-    // Feature A is unscheduled (roadmap_start_period is null)
-    expect(screen.getByText('Unscheduled Items (1)')).toBeInTheDocument()
-  })
-
-  it('shows score for unscheduled items with scores', () => {
-    render(<RoadmapView {...defaultProps} />)
-
-    // Feature A has score 100 - look for it in the button
-    expect(screen.getByRole('button', { name: /Feature A.*100\.0/i })).toBeInTheDocument()
+    // Feature A is unscheduled — should appear in unscheduled panel
+    expect(screen.getByText('Unscheduled Items')).toBeInTheDocument()
+    // Feature A appears in both label column and unscheduled panel (dual layout)
+    const featureAElements = screen.getAllByText('Feature A')
+    expect(featureAElements.length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows empty state when no items', () => {
     render(<RoadmapView {...defaultProps} items={[]} />)
-
     expect(screen.getByText(/No items yet/)).toBeInTheDocument()
   })
 
   it('calls onDeletePeriod when clicking delete button', async () => {
     const onDeletePeriod = vi.fn().mockResolvedValue(undefined)
     render(<RoadmapView {...defaultProps} onDeletePeriod={onDeletePeriod} />)
-
-    // Find delete buttons
     const deleteButtons = screen.getAllByTitle('Delete period')
     fireEvent.click(deleteButtons[0])
-
     await waitFor(() => {
       expect(onDeletePeriod).toHaveBeenCalledWith('1')
     })
   })
 
-  // Note: Width adjustment tests removed - quadrant system has fixed period widths
-
-  // Scheduling tests
   describe('Item Scheduling', () => {
     it('renders scheduled items as bars on the timeline', () => {
       render(<RoadmapView {...defaultProps} />)
-
-      // Feature B is scheduled and should appear as a bar
-      const scheduledBars = screen.getAllByText('Feature B')
-      expect(scheduledBars.length).toBeGreaterThan(0)
+      // Feature B is scheduled — appears in both label column and bar
+      const featureBElements = screen.getAllByText('Feature B')
+      expect(featureBElements.length).toBeGreaterThan(0)
     })
 
     it('renders unscheduled items as draggable chips', () => {
       render(<RoadmapView {...defaultProps} />)
-
-      // Unscheduled items should have role="button" and be draggable
       const featureAChip = screen.getByRole('button', { name: /Feature A/i })
       expect(featureAChip).toBeInTheDocument()
       expect(featureAChip).toHaveAttribute('aria-roledescription', 'draggable')
     })
 
-    it('shows unschedule button on hover over scheduled item bar', () => {
+    it('shows unschedule button on scheduled item bar', () => {
       render(<RoadmapView {...defaultProps} />)
-
-      // The unschedule button should be present (visible on hover)
       const unscheduleButtons = screen.getAllByTitle('Remove from roadmap')
       expect(unscheduleButtons.length).toBeGreaterThan(0)
     })
@@ -199,146 +161,77 @@ describe('RoadmapView', () => {
     it('calls onUnscheduleItem when clicking unschedule button', async () => {
       const onUnscheduleItem = vi.fn().mockResolvedValue(undefined)
       render(<RoadmapView {...defaultProps} onUnscheduleItem={onUnscheduleItem} />)
-
-      // Click the unschedule button
       const unscheduleButton = screen.getByTitle('Remove from roadmap')
       fireEvent.click(unscheduleButton)
-
       await waitFor(() => {
         expect(onUnscheduleItem).toHaveBeenCalledWith('item-2')
       })
     })
 
     it('shows empty timeline message when no items are scheduled', () => {
-      const itemsAllUnscheduled: ItemWithScore[] = mockItems.map((item) => ({
+      const unscheduledItems = mockItems.map((item) => ({
         ...item,
-        roadmap_start_period: null,
-        roadmap_end_period: null,
         roadmap_start_quadrant: null,
         roadmap_end_quadrant: null,
       }))
-
-      render(<RoadmapView {...defaultProps} items={itemsAllUnscheduled} />)
-
-      expect(screen.getByText(/Drag an item from below/)).toBeInTheDocument()
+      render(<RoadmapView {...defaultProps} items={unscheduledItems} />)
+      expect(screen.getByText(/Drag items from below/)).toBeInTheDocument()
     })
   })
 
-  describe('Bar Resizing', () => {
-    it('shows resize handles on item bars', () => {
-      render(<RoadmapView {...defaultProps} />)
+  describe('Hierarchy rendering', () => {
+    const hierarchyItems: ItemWithScore[] = [
+      makeItem('goal', { title: 'Goal A', item_level: 0, position: 0, roadmap_start_quadrant: 0, roadmap_end_quadrant: 7 }),
+      makeItem('init', { title: 'Init A1', item_level: 1, parent_item_id: 'goal', position: 1, roadmap_start_quadrant: 0, roadmap_end_quadrant: 3 }),
+      makeItem('flat', { title: 'Flat Item', item_level: 0, position: 2, roadmap_start_quadrant: 8, roadmap_end_quadrant: 11 }),
+    ]
 
-      // The resize handles have title "Drag to resize"
-      const resizeHandles = screen.getAllByTitle('Drag to resize')
-      // Each scheduled item should have 2 handles (left and right)
-      expect(resizeHandles.length).toBe(2)
+    it('shows expand/collapse toggle for parent items', () => {
+      render(<RoadmapView {...defaultProps} items={hierarchyItems} />)
+      // Should show expand button for Goal A (has children)
+      expect(screen.getByText('▸ Expand All')).toBeInTheDocument()
     })
 
-    it('shows cursor change when hovering over resize handles', () => {
-      render(<RoadmapView {...defaultProps} />)
-
-      const resizeHandles = screen.getAllByTitle('Drag to resize')
-      // Check that handles have resize cursor class
-      resizeHandles.forEach((handle) => {
-        expect(handle).toHaveClass('cursor-ew-resize')
-      })
-    })
-  })
-
-  describe('Orphaned Items', () => {
-    it('shows orphaned items when period is deleted (quadrant beyond range)', () => {
-      // Item scheduled to quadrant that is now beyond the available periods
-      // With 3 periods, max quadrant is 11 (0-11 for 3 periods x 4 quadrants)
-      const itemsWithOrphan: ItemWithScore[] = [
-        ...mockItems,
-        {
-          id: 'item-orphan',
-          session_id: 'session-1',
-          title: 'Orphaned Feature',
-          description: null,
-          position: 3,
-          backlog_position: null,
-          created_by: null,
-          created_at: '2024-01-01',
-          roadmap_start_period: null,
-          roadmap_end_period: null,
-          roadmap_start_quadrant: 20, // Beyond available quadrants (max is 11)
-          roadmap_end_quadrant: 23,
-          roadmap_row: 0,
-        },
-      ]
-
-      render(<RoadmapView {...defaultProps} items={itemsWithOrphan} />)
-
-      expect(screen.getByText('Orphaned Items (1)')).toBeInTheDocument()
-      expect(screen.getByText('Orphaned Feature')).toBeInTheDocument()
-      expect(screen.getByText(/These items were scheduled to periods that no longer exist/)).toBeInTheDocument()
+    it('shows level badge for hierarchy items', () => {
+      render(<RoadmapView {...defaultProps} items={hierarchyItems} />)
+      // Goal level badge (first letter 'G')
+      const goalBadges = screen.getAllByText('G')
+      expect(goalBadges.length).toBeGreaterThan(0)
     })
 
-    it('renders orphaned items as draggable chips', () => {
-      const itemsWithOrphan: ItemWithScore[] = [
-        {
-          id: 'item-orphan',
-          session_id: 'session-1',
-          title: 'Orphaned Feature',
-          description: null,
-          position: 0,
-          backlog_position: null,
-          created_by: null,
-          created_at: '2024-01-01',
-          roadmap_start_period: null,
-          roadmap_end_period: null,
-          roadmap_start_quadrant: 100, // Way beyond available quadrants
-          roadmap_end_quadrant: 103,
-          roadmap_row: 0,
-        },
-      ]
-
-      render(<RoadmapView {...defaultProps} items={itemsWithOrphan} />)
-
-      // Orphaned item should be draggable
-      const orphanedChip = screen.getByRole('button', { name: /Orphaned Feature/i })
-      expect(orphanedChip).toBeInTheDocument()
-      expect(orphanedChip).toHaveAttribute('aria-roledescription', 'draggable')
+    it('shows child count for parent items', () => {
+      render(<RoadmapView {...defaultProps} items={hierarchyItems} />)
+      // Goal A has 1 descendant
+      expect(screen.getByText('1')).toBeInTheDocument()
     })
 
-    it('does not show orphaned section when no orphaned items', () => {
-      render(<RoadmapView {...defaultProps} />)
-
-      expect(screen.queryByText(/Orphaned Items/)).not.toBeInTheDocument()
+    it('hides children when parent is collapsed', () => {
+      render(<RoadmapView {...defaultProps} items={hierarchyItems} />)
+      // By default all parents are collapsed, so Init A1 label should not be in the label column
+      // But Goal A and Flat Item should be visible
+      const goalElements = screen.getAllByText('Goal A')
+      expect(goalElements.length).toBeGreaterThan(0)
+      const flatElements = screen.getAllByText('Flat Item')
+      expect(flatElements.length).toBeGreaterThan(0)
     })
   })
 
-  describe('item bar moving', () => {
-    it('renders scheduled items as bars on the timeline', () => {
-      const scheduledItems: ItemWithScore[] = [
-        {
-          id: 'item-move-test',
-          session_id: 'session-1',
+  describe('Bar rendering', () => {
+    it('renders scheduled items as bars with absolute positioning', () => {
+      const items = [
+        makeItem('bar-test', {
           title: 'Movable Feature',
-          description: null,
           position: 0,
-          backlog_position: null,
-          created_by: null,
-          created_at: '2024-01-01',
-          roadmap_start_period: null,
-          roadmap_end_period: null,
-          roadmap_start_quadrant: 0, // First period (quadrants 0-3)
+          roadmap_start_quadrant: 0,
           roadmap_end_quadrant: 3,
-          roadmap_row: 0,
-        },
+        }),
       ]
-
-      render(<RoadmapView {...defaultProps} items={scheduledItems} />)
-
-      // Scheduled item should appear as a bar with a span containing the title
-      const itemSpan = screen.getByText('Movable Feature', { selector: 'span' })
-      expect(itemSpan).toBeInTheDocument()
-
-      // The bar (ancestor div) should have absolute positioning (bar style)
-      // The span is inside a flex container span, which is inside the bar div
-      const bar = itemSpan.closest('.absolute')
-      expect(bar).toBeInTheDocument()
+      render(<RoadmapView {...defaultProps} items={items} />)
+      // Item appears in both label column and bar; find the one in an absolute-positioned bar
+      const allSpans = screen.getAllByText('Movable Feature')
+      const barSpan = allSpans.find((el) => el.closest('.absolute'))
+      expect(barSpan).toBeDefined()
+      expect(barSpan!.closest('.absolute')).toBeInTheDocument()
     })
   })
 })

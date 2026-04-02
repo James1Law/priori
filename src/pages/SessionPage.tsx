@@ -7,6 +7,8 @@ import ItemForm from '../components/ItemForm'
 import BacklogList from '../components/BacklogList'
 import { type FilterState, applyFilters } from '../components/BacklogToolbar'
 import CapacityView from '../components/CapacityView'
+import RoadmapView from '../components/RoadmapView'
+import MobileRoadmapView from '../components/MobileRoadmapView'
 import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
@@ -107,6 +109,10 @@ export default function SessionPage() {
   // Roadmap periods
   const {
     periods: roadmapPeriods,
+    loading: roadmapPeriodsLoading,
+    addPeriod,
+    updatePeriod,
+    deletePeriod,
   } = useRoadmapPeriods(localView === 'roadmap' ? (session?.id ?? null) : null)
 
   // Cutoffs hook
@@ -793,34 +799,53 @@ export default function SessionPage() {
     let clampedStart = startQuadrant
     let clampedEnd = endQuadrant
 
-    // If this is a child item, clamp within parent's period
+    // Clamp within ALL ancestor bounds (parent, grandparent, etc.)
     if (scheduledItem?.parent_item_id) {
-      const parent = items.find((i) => i.id === scheduledItem.parent_item_id)
-      if (parent && parent.roadmap_start_quadrant != null && parent.roadmap_end_quadrant != null) {
-        clampedStart = Math.max(clampedStart, parent.roadmap_start_quadrant)
-        clampedEnd = Math.min(clampedEnd, parent.roadmap_end_quadrant)
-        // Ensure start <= end after clamping
-        if (clampedStart > clampedEnd) {
+      let currentParentId: string | null = scheduledItem.parent_item_id
+      while (currentParentId) {
+        const ancestor = items.find((i) => i.id === currentParentId)
+        if (ancestor && ancestor.roadmap_start_quadrant != null && ancestor.roadmap_end_quadrant != null) {
+          clampedStart = Math.max(clampedStart, ancestor.roadmap_start_quadrant)
+          clampedEnd = Math.min(clampedEnd, ancestor.roadmap_end_quadrant)
+        }
+        currentParentId = ancestor?.parent_item_id ?? null
+      }
+      // Ensure start <= end after clamping
+      if (clampedStart > clampedEnd) {
+        // Find the tightest ancestor bounds to fall back to
+        const parent = items.find((i) => i.id === scheduledItem.parent_item_id)
+        if (parent && parent.roadmap_start_quadrant != null && parent.roadmap_end_quadrant != null) {
           clampedStart = parent.roadmap_start_quadrant
           clampedEnd = parent.roadmap_end_quadrant
         }
       }
     }
 
-    // Collect children that need to be constrained within the new parent range
-    const childUpdates: { id: string; start: number; end: number }[] = []
+    // Collect ALL descendants (not just direct children) that need constraining
+    const descendantUpdates: { id: string; start: number; end: number }[] = []
     if (scheduledItem) {
-      const children = getDirectChildren(itemId, items)
-      for (const child of children) {
-        if (child.roadmap_start_quadrant != null && child.roadmap_end_quadrant != null) {
-          const newStart = Math.max(child.roadmap_start_quadrant, clampedStart)
-          const newEnd = Math.min(child.roadmap_end_quadrant, clampedEnd)
-          if (newStart !== child.roadmap_start_quadrant || newEnd !== child.roadmap_end_quadrant) {
-            childUpdates.push({ id: child.id, start: Math.min(newStart, newEnd), end: Math.max(newStart, newEnd) })
+      const collectDescendantUpdates = (parentId: string, parentStart: number, parentEnd: number) => {
+        const children = getDirectChildren(parentId, items)
+        for (const child of children) {
+          if (child.roadmap_start_quadrant != null && child.roadmap_end_quadrant != null) {
+            const newStart = Math.max(child.roadmap_start_quadrant, parentStart)
+            const newEnd = Math.min(child.roadmap_end_quadrant, parentEnd)
+            if (newStart !== child.roadmap_start_quadrant || newEnd !== child.roadmap_end_quadrant) {
+              const safeStart = Math.min(newStart, newEnd)
+              const safeEnd = Math.max(newStart, newEnd)
+              descendantUpdates.push({ id: child.id, start: safeStart, end: safeEnd })
+              // Recurse to constrain this child's children too
+              collectDescendantUpdates(child.id, safeStart, safeEnd)
+            } else {
+              // Even if this child didn't move, check its children
+              collectDescendantUpdates(child.id, child.roadmap_start_quadrant, child.roadmap_end_quadrant)
+            }
           }
         }
       }
+      collectDescendantUpdates(itemId, clampedStart, clampedEnd)
     }
+    const childUpdates = descendantUpdates
 
     // Optimistically update local state
     const childUpdateMap = new Map(childUpdates.map((u) => [u.id, u]))
@@ -868,6 +893,85 @@ export default function SessionPage() {
           roadmap_end_quadrant: cu.end,
         } as never)
         .eq('id', cu.id)
+    }
+  }
+
+  const handleMoveItem = async (itemId: string, newStart: number, newEnd: number) => {
+    const movedItem = items.find((i) => i.id === itemId)
+    if (!movedItem) return
+
+    const oldStart = movedItem.roadmap_start_quadrant
+
+    // Clamp within ancestor bounds (if this is a child)
+    let clampedStart = newStart
+    let clampedEnd = newEnd
+    if (movedItem.parent_item_id) {
+      let currentParentId: string | null = movedItem.parent_item_id
+      while (currentParentId) {
+        const ancestor = items.find((i) => i.id === currentParentId)
+        if (ancestor && ancestor.roadmap_start_quadrant != null && ancestor.roadmap_end_quadrant != null) {
+          clampedStart = Math.max(clampedStart, ancestor.roadmap_start_quadrant)
+          clampedEnd = Math.min(clampedEnd, ancestor.roadmap_end_quadrant)
+        }
+        currentParentId = ancestor?.parent_item_id ?? null
+      }
+      if (clampedStart > clampedEnd) {
+        clampedStart = newStart
+        clampedEnd = newEnd
+      }
+    }
+
+    // Calculate delta for proportional descendant moves
+    const delta = oldStart != null ? clampedStart - oldStart : 0
+
+    // Collect all descendants that need to move proportionally
+    const allUpdates: { id: string; start: number; end: number }[] = [
+      { id: itemId, start: clampedStart, end: clampedEnd },
+    ]
+
+    const collectMoves = (parentId: string, parentDelta: number) => {
+      const children = getDirectChildren(parentId, items)
+      for (const child of children) {
+        if (child.roadmap_start_quadrant != null && child.roadmap_end_quadrant != null) {
+          allUpdates.push({
+            id: child.id,
+            start: child.roadmap_start_quadrant + parentDelta,
+            end: child.roadmap_end_quadrant + parentDelta,
+          })
+          collectMoves(child.id, parentDelta)
+        }
+      }
+    }
+
+    if (delta !== 0) {
+      collectMoves(itemId, delta)
+    }
+
+    // Optimistically update local state — all items at once
+    const updateMap = new Map(allUpdates.map((u) => [u.id, u]))
+    setItems((prevItems) =>
+      prevItems.map((item) => {
+        const upd = updateMap.get(item.id)
+        if (upd) {
+          return { ...item, roadmap_start_quadrant: upd.start, roadmap_end_quadrant: upd.end }
+        }
+        return item
+      })
+    )
+
+    // Persist all updates to database
+    for (const upd of allUpdates) {
+      const { error } = await supabase
+        .from('items')
+        .update({
+          roadmap_start_quadrant: upd.start,
+          roadmap_end_quadrant: upd.end,
+        } as never)
+        .eq('id', upd.id)
+
+      if (error) {
+        console.error('Error moving item:', error)
+      }
     }
   }
 
@@ -1245,26 +1349,32 @@ export default function SessionPage() {
               </div>
             )}
 
-            {/* Roadmap View — temporarily disabled while being redesigned for hierarchy */}
+            {/* Roadmap View — desktop */}
             {localView === 'roadmap' && (
-              <div className="bg-white rounded-xl border border-gray-200 shadow p-8 sm:p-12 text-center">
-                <div className="max-w-sm mx-auto">
-                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center">
-                    <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Roadmap is being redesigned
-                  </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
-                    We&apos;re updating the roadmap view to support the new parent–child item hierarchy. It&apos;ll be back soon with a much better experience.
-                  </p>
-                  <p className="text-xs text-gray-400 mt-4">
-                    In the meantime, use the <strong>List</strong> and <strong>Capacity</strong> views to manage your items.
-                  </p>
+              <>
+                <div className="hidden sm:block">
+                  <RoadmapView
+                    periods={roadmapPeriods}
+                    items={items}
+                    loading={roadmapPeriodsLoading}
+                    onAddPeriod={addPeriod}
+                    onUpdatePeriod={updatePeriod}
+                    onDeletePeriod={deletePeriod}
+                    onScheduleItem={handleScheduleItem}
+                    onMoveItem={handleMoveItem}
+                    onUnscheduleItem={handleUnscheduleItem}
+                    onItemClick={(itemId) => navigate(`/s/${slug}/item/${itemId}`)}
+                  />
                 </div>
-              </div>
+                <div className="sm:hidden">
+                  <MobileRoadmapView
+                    periods={roadmapPeriods}
+                    items={items}
+                    loading={roadmapPeriodsLoading}
+                    onItemClick={(itemId) => navigate(`/s/${slug}/item/${itemId}`)}
+                  />
+                </div>
+              </>
             )}
 
             {/* Capacity Planning View */}

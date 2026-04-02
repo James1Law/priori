@@ -4,6 +4,13 @@ Detailed history of features implemented across all phases.
 
 ---
 
+## Estimation Flow Fix
+
+### Bug Fix
+- **Fresh Selection Priority**: Estimation flow now prioritises fresh item selections over stale session IDs, fixing an issue where re-entering estimation with a new selection would show previously selected items instead
+
+---
+
 ## Phase 15 - Hierarchical Items (Complete)
 
 ### Overview

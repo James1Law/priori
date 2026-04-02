@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori — Hierarchical Roadmap (Desktop)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb; color: #111827; min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    /* === Concept Header === */
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 640px; margin: 0 auto; line-height: 1.5; }
+
+    /* === Section Dividers === */
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; max-width: 600px; margin: 0 auto; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    /* === App Frame === */
+    .app-frame {
+      max-width: 1200px; margin: 2rem auto;
+      background: white; border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      overflow: hidden; position: relative;
+      padding-bottom: 56px;
+    }
+    .app-header {
+      padding: 0.85rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .app-header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .logo {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 0.95rem;
+    }
+    .session-name { font-weight: 600; font-size: 1.1rem; color: #111827; }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .presence-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; }
+    .presence-count { font-size: 0.85rem; color: #6b7280; }
+    .add-item-btn {
+      background: #4f46e5; color: white;
+      border: none; padding: 0.4rem 0.8rem;
+      border-radius: 8px; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .add-period-btn {
+      font-size: 0.8rem; color: #4f46e5; font-weight: 500;
+      background: none; border: none; cursor: pointer;
+    }
+    .add-period-btn:hover { text-decoration: underline; }
+
+    .toolbar-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.6rem 1.5rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: 0.75rem; }
+    .collapse-all-btn {
+      font-size: 0.75rem; color: #6b7280; background: #f3f4f6;
+      border: 1px solid #e5e7eb; padding: 0.3rem 0.6rem;
+      border-radius: 6px; cursor: pointer; font-weight: 500;
+    }
+    .collapse-all-btn:hover { background: #e5e7eb; }
+    .filter-hint {
+      font-size: 0.72rem; color: #9ca3af;
+    }
+
+    /* === Timeline === */
+    .roadmap-container {
+      margin: 0 1.5rem 1rem; background: white;
+      border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden;
+    }
+
+    /* Period header row */
+    .timeline-header {
+      display: grid;
+      grid-template-columns: 200px repeat(3, 1fr);
+      border-bottom: 1px solid #e5e7eb;
+      background: #fafbff;
+    }
+    .timeline-header-corner {
+      padding: 0.65rem 0.75rem;
+      font-size: 0.65rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      display: flex; align-items: center;
+    }
+    .timeline-header-period {
+      padding: 0.65rem 0.75rem;
+      font-size: 0.85rem; font-weight: 600; color: #111827;
+      text-align: center; border-left: 1px solid #e5e7eb;
+      cursor: pointer; position: relative;
+    }
+    .timeline-header-period:hover { background: #f0f0ff; }
+    .period-edit-icon {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      font-size: 0.6rem; color: #9ca3af; opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .timeline-header-period:hover .period-edit-icon { opacity: 1; }
+
+    /* Quadrant sub-headers */
+    .timeline-quadrants {
+      display: grid;
+      grid-template-columns: 200px repeat(12, 1fr);
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .q-header {
+      padding: 0.15rem; font-size: 0.5rem; color: #d1d5db;
+      text-align: center; border-left: 1px solid #f3f4f6;
+    }
+    .q-header:nth-child(5n+2) { border-left: 1px solid #e5e7eb; }
+
+    /* === Item Rows === */
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 200px repeat(12, 1fr);
+      min-height: 42px; align-items: center;
+      border-bottom: 1px solid #f3f4f6;
+      position: relative;
+      transition: background 0.1s;
+    }
+    .timeline-row:hover { background: #fafbff; }
+
+    /* Level-specific row styling */
+    .timeline-row.level-0 { background: #f8f9ff; min-height: 48px; }
+    .timeline-row.level-0:hover { background: #f0f2ff; }
+    .timeline-row.level-1 { min-height: 42px; }
+    .timeline-row.level-2 { min-height: 38px; }
+    .timeline-row.level-3 { min-height: 34px; }
+    .timeline-row.level-4 { min-height: 32px; }
+    .timeline-row.flat-item { min-height: 42px; }
+
+    /* Row label (left column) */
+    .row-label {
+      padding: 0.4rem 0.5rem;
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.78rem; font-weight: 500; color: #374151;
+      overflow: hidden; white-space: nowrap;
+    }
+    .row-label .indent { flex-shrink: 0; }
+    .row-label .expand-btn {
+      width: 18px; height: 18px; border: none; background: transparent;
+      cursor: pointer; font-size: 0.6rem; color: #6b7280;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .row-label .expand-btn:hover { background: #e5e7eb; }
+    .row-label .expand-btn.collapsed { transform: rotate(-90deg); }
+    .row-label .no-expand { width: 18px; flex-shrink: 0; }
+
+    .level-badge {
+      font-size: 0.48rem; font-weight: 600; padding: 0.06rem 0.3rem;
+      border-radius: 999px; text-transform: uppercase; flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+    .level-badge.goal { background: #fce7f3; color: #9d174d; }
+    .level-badge.initiative { background: #dbeafe; color: #1d4ed8; }
+    .level-badge.epic { background: #ede9fe; color: #6d28d9; }
+    .level-badge.story { background: #d1fae5; color: #065f46; }
+    .level-badge.subtask { background: #f3f4f6; color: #6b7280; }
+
+    .row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .child-count {
+      font-size: 0.55rem; color: #9ca3af; flex-shrink: 0;
+      background: #f3f4f6; padding: 0.05rem 0.3rem; border-radius: 4px;
+    }
+
+    /* === Timeline Bars === */
+    .bar-container {
+      position: relative; display: flex; align-items: center;
+      padding: 0 3px;
+    }
+    .timeline-bar {
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 500; color: white;
+      cursor: pointer; transition: filter 0.15s;
+      position: relative; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis;
+    }
+    .timeline-bar:hover { filter: brightness(1.08); }
+    .timeline-bar .bar-label { padding: 0 0.4rem; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Resize handles */
+    .resize-handle {
+      position: absolute; top: 0; bottom: 0; width: 8px;
+      cursor: col-resize; z-index: 2;
+    }
+    .resize-handle.left { left: 0; border-radius: 6px 0 0 6px; }
+    .resize-handle.right { right: 0; border-radius: 0 6px 6px 0; }
+    .timeline-bar:hover .resize-handle { background: rgba(255,255,255,0.2); }
+
+    /* Level-specific bar styles */
+    .bar-level-0 {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      height: 32px; border-radius: 8px; font-weight: 600;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+      font-size: 0.72rem;
+    }
+    .bar-level-1 {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      height: 26px; border-radius: 6px; font-weight: 500;
+      box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2);
+    }
+    .bar-level-2 {
+      background: linear-gradient(135deg, #818cf8, #a5b4fc);
+      height: 22px; border-radius: 5px;
+    }
+    .bar-level-3 {
+      background: linear-gradient(135deg, #a5b4fc, #c7d2fe);
+      height: 18px; border-radius: 4px; font-size: 0.6rem; color: #4338ca;
+    }
+    .bar-level-4 {
+      background: #e0e7ff;
+      height: 16px; border-radius: 4px; font-size: 0.55rem; color: #4338ca;
+    }
+    .bar-flat {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      height: 24px; border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Auto-calculated parent bar (dashed outline showing calculated span) */
+    .bar-auto {
+      border: 2px dashed rgba(79, 70, 229, 0.3);
+      background: rgba(79, 70, 229, 0.04);
+    }
+    .bar-level-0.bar-auto { height: 32px; box-shadow: none; }
+
+    /* Grid column spans — offset by 2 because col 1 is the label */
+    .span-1-2   { grid-column: 2 / 4; }
+    .span-1-3   { grid-column: 2 / 5; }
+    .span-1-4   { grid-column: 2 / 6; }
+    .span-1-6   { grid-column: 2 / 8; }
+    .span-1-8   { grid-column: 2 / 10; }
+    .span-1-10  { grid-column: 2 / 12; }
+    .span-1-12  { grid-column: 2 / 14; }
+    .span-2-4   { grid-column: 3 / 6; }
+    .span-2-6   { grid-column: 3 / 8; }
+    .span-3-4   { grid-column: 4 / 6; }
+    .span-3-5   { grid-column: 4 / 7; }
+    .span-3-6   { grid-column: 4 / 8; }
+    .span-3-8   { grid-column: 4 / 10; }
+    .span-4-6   { grid-column: 5 / 8; }
+    .span-5-6   { grid-column: 6 / 8; }
+    .span-5-8   { grid-column: 6 / 10; }
+    .span-5-10  { grid-column: 6 / 12; }
+    .span-5-12  { grid-column: 6 / 14; }
+    .span-6-8   { grid-column: 7 / 10; }
+    .span-7-8   { grid-column: 8 / 10; }
+    .span-7-10  { grid-column: 8 / 12; }
+    .span-7-12  { grid-column: 8 / 14; }
+    .span-9-10  { grid-column: 10 / 12; }
+    .span-9-12  { grid-column: 10 / 14; }
+    .span-10-12 { grid-column: 11 / 14; }
+    .span-11-12 { grid-column: 12 / 14; }
+
+    /* === Unscheduled Panel === */
+    .unscheduled-panel {
+      background: #f9fafb; border-top: 2px solid #e5e7eb;
+      padding: 0.85rem 1rem;
+    }
+    .unscheduled-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .unscheduled-title {
+      font-size: 0.7rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .unscheduled-count {
+      font-size: 0.65rem; color: #9ca3af;
+      background: #e5e7eb; padding: 0.1rem 0.4rem; border-radius: 4px;
+    }
+    .unscheduled-group { margin-bottom: 0.75rem; }
+    .unscheduled-group:last-child { margin-bottom: 0; }
+    .unscheduled-group-header {
+      font-size: 0.72rem; font-weight: 600; color: #374151;
+      margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;
+    }
+    .unscheduled-group-header.standalone {
+      color: #6b7280; font-weight: 500;
+    }
+    .unscheduled-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; padding-left: 0.25rem; }
+    .unscheduled-chip {
+      padding: 0.25rem 0.55rem;
+      background: white; border: 1px solid #d1d5db;
+      border-radius: 6px; font-size: 0.72rem; color: #374151;
+      cursor: grab; transition: all 0.15s;
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .unscheduled-chip:hover { border-color: #4f46e5; background: #eef2ff; box-shadow: 0 1px 3px rgba(79,70,229,0.1); }
+    .unscheduled-chip.dragging { opacity: 0.5; border-color: #4f46e5; background: #eef2ff; }
+    .unscheduled-context {
+      font-size: 0.6rem; color: #9ca3af; font-weight: 400;
+    }
+
+    /* === Drag Preview / Constraint Indicators === */
+    .constraint-indicator {
+      position: absolute; top: 0; bottom: 0; width: 3px;
+      z-index: 5;
+    }
+    .constraint-indicator.parent-bound {
+      background: repeating-linear-gradient(
+        0deg, #ef4444, #ef4444 3px, transparent 3px, transparent 6px
+      );
+    }
+    .drag-ghost {
+      opacity: 0.6; outline: 2px dashed #4f46e5; outline-offset: 2px;
+    }
+    .drag-children-preview {
+      opacity: 0.4; outline: 1px dashed #818cf8;
+    }
+
+    /* === Bottom Tab Bar === */
+    .bottom-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 1px solid #e5e7eb;
+      padding: 0.6rem 1rem; display: flex; gap: 0.5rem;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+    }
+    .bottom-tab {
+      flex: 1; padding: 0.45rem 0.75rem;
+      font-size: 0.8rem; font-weight: 500; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+      cursor: pointer; border: none; transition: all 0.15s;
+    }
+    .bottom-tab.active { background: #4f46e5; color: white; }
+    .bottom-tab.inactive { background: #f3f4f6; color: #6b7280; }
+    .bottom-tab.inactive:hover { background: #e5e7eb; }
+    .tab-icon { width: 15px; height: 15px; }
+
+    /* === Annotations === */
+    .annotation {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 0.85rem 1rem;
+      font-size: 0.78rem; color: #92400e;
+      max-width: 1200px; margin: 1rem auto 0;
+      line-height: 1.5;
+    }
+    .annotation strong { color: #78350f; }
+    .annotation ul { margin-top: 0.3rem; padding-left: 1.2rem; }
+    .annotation li { margin-bottom: 0.2rem; }
+
+    .wrapper { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+
+    /* === Interaction State Indicators === */
+    .state-label {
+      position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+      font-size: 0.55rem; font-weight: 600; color: white;
+      background: #4f46e5; padding: 0.1rem 0.4rem; border-radius: 3px;
+      white-space: nowrap; z-index: 10;
+    }
+    .bar-highlight {
+      outline: 2px solid #4f46e5; outline-offset: 1px;
+      z-index: 3;
+    }
+    .bar-constrained {
+      outline: 2px solid #ef4444; outline-offset: 1px;
+    }
+
+    /* Subtle period column borders for visual alignment */
+    .period-gridlines {
+      display: grid;
+      grid-template-columns: 200px repeat(12, 1fr);
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; z-index: 0;
+    }
+    .period-gridlines .gridline {
+      border-left: 1px solid #f3f4f6;
+    }
+    .period-gridlines .gridline:nth-child(5n+2) {
+      border-left: 1px solid #e5e7eb;
+    }
+    .period-gridlines .gridline:first-child { border-left: none; }
+  </style>
+</head>
+<body>
+
+  <div class="concept-header">
+    <h1 class="font-display">Hierarchical Roadmap — Desktop</h1>
+    <p>Roadmap view redesigned for the 5-level item hierarchy. Parent bars contain children, with expand/collapse, drag constraints, and an updated unscheduled panel.</p>
+  </div>
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 1: FULLY EXPANDED HIERARCHY                      -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 1</span>
+    <h2>Expanded Hierarchy — 3 Levels Deep</h2>
+    <p>Goal expanded to show Initiatives, one Initiative expanded to show Epics. Bars get thinner and lighter at each level. Parent bars auto-span their children.</p>
+  </div>
+
+  <div class="wrapper">
+    <div class="app-frame">
+      <div class="app-header">
+        <div class="app-header-left">
+          <div class="logo font-display">P</div>
+          <span class="session-name font-display">Q2 Product Roadmap</span>
+        </div>
+        <div class="header-right">
+          <span class="presence-dot"></span>
+          <span class="presence-count">3 online</span>
+          <button class="add-item-btn">+ Add Item</button>
+        </div>
+      </div>
+
+      <div class="toolbar-row">
+        <div class="toolbar-left">
+          <button class="collapse-all-btn">▾ Collapse All</button>
+          <span class="filter-hint">Showing 11 items across 3 periods</span>
+        </div>
+        <div>
+          <button class="add-period-btn">+ Add Period</button>
+        </div>
+      </div>
+
+      <div class="roadmap-container" style="position: relative;">
+        <!-- Period Headers -->
+        <div class="timeline-header">
+          <div class="timeline-header-corner">Items</div>
+          <div class="timeline-header-period">Q1 2026 <span class="period-edit-icon">✎</span></div>
+          <div class="timeline-header-period">Q2 2026 <span class="period-edit-icon">✎</span></div>
+          <div class="timeline-header-period">Q3 2026 <span class="period-edit-icon">✎</span></div>
+        </div>
+
+        <!-- Quadrant sub-headers -->
+        <div class="timeline-quadrants">
+          <div class="q-header"></div>
+          <div class="q-header">Jan</div><div class="q-header">Feb</div><div class="q-header">Mar</div><div class="q-header"></div>
+          <div class="q-header">Apr</div><div class="q-header">May</div><div class="q-header">Jun</div><div class="q-header"></div>
+          <div class="q-header">Jul</div><div class="q-header">Aug</div><div class="q-header">Sep</div><div class="q-header"></div>
+        </div>
+
+        <!-- GOAL: Increase Activation (expanded) — auto-spans Q1-Q2 based on children -->
+        <div class="timeline-row level-0">
+          <div class="row-label">
+            <button class="expand-btn">▾</button>
+            <span class="level-badge goal">Goal</span>
+            <span class="row-title">Increase Activation</span>
+            <span class="child-count">4</span>
+          </div>
+          <div class="timeline-bar bar-level-0 span-1-8">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Increase Activation Rate</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!--   Initiative: User Onboarding (expanded) — spans Q1 -->
+        <div class="timeline-row level-1">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <button class="expand-btn">▾</button>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title">User Onboarding</span>
+            <span class="child-count">2</span>
+          </div>
+          <div class="timeline-bar bar-level-1 span-1-4">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">User Onboarding</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!--     Epic: Welcome Flow — Q1 first half -->
+        <div class="timeline-row level-2">
+          <div class="row-label">
+            <span class="indent" style="width: 36px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge epic">Epic</span>
+            <span class="row-title">Welcome Flow</span>
+          </div>
+          <div class="timeline-bar bar-level-2 span-1-2">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Welcome</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!--     Epic: Email Drip Sequence — Q1 second half -->
+        <div class="timeline-row level-2">
+          <div class="row-label">
+            <span class="indent" style="width: 36px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge epic">Epic</span>
+            <span class="row-title">Email Drip Sequence</span>
+          </div>
+          <div class="timeline-bar bar-level-2 span-3-4">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Email Drips</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!--   Initiative: Growth Analytics (collapsed) — spans Q2 -->
+        <div class="timeline-row level-1">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <button class="expand-btn collapsed">▾</button>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title">Growth Analytics</span>
+            <span class="child-count">3</span>
+          </div>
+          <div class="timeline-bar bar-level-1 span-5-8">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Growth Analytics</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- FLAT ITEM: Safari Login Fix -->
+        <div class="timeline-row flat-item">
+          <div class="row-label">
+            <span class="no-expand"></span>
+            <span class="row-title">Safari Login Fix</span>
+          </div>
+          <div class="timeline-bar bar-flat span-1-3">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Safari Login Fix</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- GOAL: Reduce Churn (collapsed) — spans Q2-Q3 -->
+        <div class="timeline-row level-0">
+          <div class="row-label">
+            <button class="expand-btn collapsed">▾</button>
+            <span class="level-badge goal">Goal</span>
+            <span class="row-title">Reduce Churn</span>
+            <span class="child-count">5</span>
+          </div>
+          <div class="timeline-bar bar-level-0 span-5-12">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Reduce Churn Below 3%</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- FLAT ITEM: Privacy Policy Update -->
+        <div class="timeline-row flat-item">
+          <div class="row-label">
+            <span class="no-expand"></span>
+            <span class="row-title">Privacy Policy Update</span>
+          </div>
+          <div class="timeline-bar bar-flat span-9-10">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Privacy Policy</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- FLAT ITEM: Update API Docs -->
+        <div class="timeline-row flat-item">
+          <div class="row-label">
+            <span class="no-expand"></span>
+            <span class="row-title">Update API Docs</span>
+          </div>
+          <div class="timeline-bar bar-flat span-7-8">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">API Docs</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Unscheduled Items -->
+        <div class="unscheduled-panel">
+          <div class="unscheduled-header">
+            <div class="unscheduled-title">Unscheduled Items</div>
+            <span class="unscheduled-count">5 items</span>
+          </div>
+          <div class="unscheduled-group">
+            <div class="unscheduled-group-header">
+              <span class="level-badge goal">Goal</span>
+              Scale Infrastructure
+            </div>
+            <div class="unscheduled-chips">
+              <div class="unscheduled-chip"><span class="level-badge initiative">Init</span> Database Migration</div>
+              <div class="unscheduled-chip"><span class="level-badge initiative">Init</span> CDN Rollout</div>
+            </div>
+          </div>
+          <div class="unscheduled-group">
+            <div class="unscheduled-group-header standalone">Standalone Items</div>
+            <div class="unscheduled-chips">
+              <div class="unscheduled-chip">Analytics Dashboard</div>
+              <div class="unscheduled-chip">Dark Mode Support</div>
+              <div class="unscheduled-chip">Export to CSV</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <button class="bottom-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          Backlog
+        </button>
+        <button class="bottom-tab active">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Roadmap
+        </button>
+        <button class="bottom-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Capacity
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation wrapper">
+    <strong>Scenario 1 — Design notes:</strong>
+    <ul>
+      <li><strong>Visual hierarchy through bar size:</strong> Goal bars are 32px tall with bold gradient and shadow. Initiatives are 26px, Epics 22px, Stories 18px. Each level gets progressively lighter. Flat items use green (distinct from the indigo hierarchy).</li>
+      <li><strong>Auto-spanning parent:</strong> "Increase Activation" spans Q1–Q2 because its children (Onboarding in Q1, Analytics in Q2) define the range. The parent bar is not independently draggable to a smaller range than its children.</li>
+      <li><strong>Collapse/expand:</strong> "Growth Analytics" is collapsed — it shows a single bar covering its children's aggregate span. "Reduce Churn" is collapsed at goal level.</li>
+      <li><strong>Left sidebar indentation:</strong> Level 0 at 0px, Level 1 at 18px, Level 2 at 36px — compact enough for the 200px column while still showing hierarchy.</li>
+      <li><strong>Flat items (green bars):</strong> "Safari Login Fix", "Privacy Policy Update", "API Docs" — no hierarchy badge, no expand button. Look identical to the previous roadmap behaviour.</li>
+      <li><strong>"Collapse All" button</strong> in toolbar collapses all parents to show only top-level items + flat items.</li>
+    </ul>
+  </div>
+
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 2: DRAG CONSTRAINTS                              -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 2</span>
+    <h2>Drag Constraints — Parent &amp; Child Bounds</h2>
+    <p>When resizing or moving items, hierarchy constraints are enforced visually. Children can't escape parents. Parents can't shrink past children.</p>
+  </div>
+
+  <div class="wrapper">
+    <div class="app-frame" style="padding-bottom: 20px;">
+
+      <!-- Constraint Example 1: Child hitting parent bound -->
+      <div style="padding: 1.25rem 1.5rem 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <span style="background: #fef2f2; color: #dc2626; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;">Constraint A</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #374151;">Child resize blocked by parent boundary</span>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; position: relative;">
+          <!-- Parent bar -->
+          <div style="margin-bottom: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.4rem;">
+              <span class="level-badge goal">Goal</span>
+              <span style="font-size: 0.78rem; font-weight: 500; color: #374151;">Increase Activation</span>
+            </div>
+            <div style="position: relative; height: 32px; background: #f3f4f6; border-radius: 8px; overflow: hidden;">
+              <div style="position: absolute; left: 0%; width: 66%; height: 100%; background: linear-gradient(135deg, #4f46e5, #6366f1); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 0.72rem; font-weight: 600;">Parent span: Q1–Q2</span>
+              </div>
+              <!-- Parent right boundary marker -->
+              <div style="position: absolute; left: 66%; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(0deg, #ef4444, #ef4444 3px, transparent 3px, transparent 6px); z-index: 5;"></div>
+            </div>
+          </div>
+
+          <!-- Child bar being resized -->
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.4rem;">
+              <span class="level-badge initiative">Init</span>
+              <span style="font-size: 0.78rem; font-weight: 500; color: #374151;">Growth Analytics</span>
+              <span style="font-size: 0.65rem; color: #ef4444; font-weight: 500;">⚠ Can't extend past parent</span>
+            </div>
+            <div style="position: relative; height: 26px; background: #f3f4f6; border-radius: 6px; overflow: visible;">
+              <!-- Current position -->
+              <div style="position: absolute; left: 33%; width: 33%; height: 100%; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 6px; display: flex; align-items: center; justify-content: center; outline: 2px solid #4f46e5; outline-offset: 1px; z-index: 2;">
+                <span style="color: white; font-size: 0.68rem; font-weight: 500;">Analytics</span>
+                <!-- Right resize handle active -->
+                <div style="position: absolute; right: -4px; top: 2px; bottom: 2px; width: 8px; background: #4f46e5; border-radius: 3px; cursor: col-resize;"></div>
+              </div>
+              <!-- Ghost showing attempted position -->
+              <div style="position: absolute; left: 33%; width: 50%; height: 100%; border: 2px dashed #ef4444; border-radius: 6px; opacity: 0.5; z-index: 1;"></div>
+              <!-- Attempted arrow -->
+              <div style="position: absolute; left: 68%; top: 50%; transform: translateY(-50%); font-size: 0.8rem; z-index: 3;">→</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Constraint Example 2: Parent can't shrink past children -->
+      <div style="padding: 0.75rem 1.5rem 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <span style="background: #fef2f2; color: #dc2626; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;">Constraint B</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #374151;">Parent can't shrink past children's span</span>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem;">
+          <!-- Children bars (showing what must be contained) -->
+          <div style="margin-bottom: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.72rem; color: #6b7280;">Children occupy:</span>
+            </div>
+            <div style="position: relative; height: 22px; background: #f3f4f6; border-radius: 6px; overflow: hidden;">
+              <div style="position: absolute; left: 8%; width: 20%; height: 100%; background: #818cf8; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 0.6rem;">Onboarding</span>
+              </div>
+              <div style="position: absolute; left: 50%; width: 25%; height: 100%; background: #818cf8; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: white; font-size: 0.6rem;">Analytics</span>
+              </div>
+            </div>
+          </div>
+          <!-- Parent bar being resized -->
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.4rem;">
+              <span class="level-badge goal">Goal</span>
+              <span style="font-size: 0.78rem; font-weight: 500; color: #374151;">Increase Activation</span>
+              <span style="font-size: 0.65rem; color: #ef4444; font-weight: 500;">⚠ Min span locked to children</span>
+            </div>
+            <div style="position: relative; height: 32px; background: #f3f4f6; border-radius: 8px; overflow: visible;">
+              <!-- Current parent position -->
+              <div style="position: absolute; left: 0%; width: 83%; height: 100%; background: linear-gradient(135deg, #4f46e5, #6366f1); border-radius: 8px; display: flex; align-items: center; justify-content: center; outline: 2px solid #4f46e5; outline-offset: 1px;">
+                <span style="color: white; font-size: 0.72rem; font-weight: 600;">Current span</span>
+                <!-- Left resize handle active -->
+                <div style="position: absolute; left: -4px; top: 3px; bottom: 3px; width: 8px; background: #4f46e5; border-radius: 3px; cursor: col-resize;"></div>
+              </div>
+              <!-- Ghost showing attempted shrink -->
+              <div style="position: absolute; left: 25%; width: 58%; height: 100%; border: 2px dashed #ef4444; border-radius: 8px; opacity: 0.5;"></div>
+              <!-- Min bound indicator -->
+              <div style="position: absolute; left: 8%; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(0deg, #ef4444, #ef4444 3px, transparent 3px, transparent 6px);"></div>
+              <div style="position: absolute; left: 8%; top: -16px; font-size: 0.55rem; color: #ef4444; font-weight: 600; white-space: nowrap;">← min bound (earliest child)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Constraint Example 3: Moving parent moves children -->
+      <div style="padding: 0.75rem 1.5rem 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <span style="background: #dbeafe; color: #1d4ed8; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;">Behaviour C</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #374151;">Moving parent shifts all children by the same delta</span>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem;">
+            <span style="font-size: 0.72rem; color: #6b7280; font-weight: 500;">Before (dashed) → After (solid)</span>
+            <span style="font-size: 0.65rem; color: #4f46e5; font-weight: 500;">Moved +2 quadrants →</span>
+          </div>
+
+          <!-- Parent bar -->
+          <div style="position: relative; height: 32px; background: #f3f4f6; border-radius: 8px; margin-bottom: 0.35rem; overflow: hidden;">
+            <!-- Before (ghost) -->
+            <div style="position: absolute; left: 0%; width: 50%; height: 100%; border: 2px dashed #c7d2fe; border-radius: 8px; opacity: 0.5;"></div>
+            <!-- After -->
+            <div style="position: absolute; left: 16.7%; width: 50%; height: 100%; background: linear-gradient(135deg, #4f46e5, #6366f1); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 0.72rem; font-weight: 600;">Goal: Increase Activation</span>
+            </div>
+          </div>
+
+          <!-- Child 1 -->
+          <div style="position: relative; height: 24px; background: #f3f4f6; border-radius: 6px; margin-bottom: 0.25rem; margin-left: 18px; overflow: hidden;">
+            <div style="position: absolute; left: 0%; width: 33%; height: 100%; border: 2px dashed #e0e7ff; border-radius: 5px; opacity: 0.4;"></div>
+            <div style="position: absolute; left: 17%; width: 33%; height: 100%; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 0.62rem;">Onboarding</span>
+            </div>
+          </div>
+
+          <!-- Child 2 -->
+          <div style="position: relative; height: 24px; background: #f3f4f6; border-radius: 6px; margin-left: 18px; overflow: hidden;">
+            <div style="position: absolute; left: 33%; width: 17%; height: 100%; border: 2px dashed #e0e7ff; border-radius: 5px; opacity: 0.4;"></div>
+            <div style="position: absolute; left: 50%; width: 17%; height: 100%; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 0.62rem;">Analytics</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="annotation wrapper">
+    <strong>Scenario 2 — Constraint design notes:</strong>
+    <ul>
+      <li><strong>Constraint A — Child resize:</strong> When the user drags a child's edge past the parent boundary, the bar snaps to the parent edge. A red dashed boundary line and warning message appear. No toast needed — the visual feedback is immediate.</li>
+      <li><strong>Constraint B — Parent shrink:</strong> When the user tries to shrink a parent past its children's aggregate span, the resize stops at the minimum bound. Red dashed marker shows the limit. The user must first move/shrink the children before the parent can shrink further.</li>
+      <li><strong>Behaviour C — Parent move:</strong> Moving a parent by N quadrants shifts every descendant by the same N quadrants. Dashed ghosts show previous positions. All updates are batched into a single Supabase call.</li>
+      <li><strong>Growing a parent is always allowed</strong> — extending the start or end of a parent doesn't affect children's absolute positions.</li>
+    </ul>
+  </div>
+
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 3: SCHEDULING FROM UNSCHEDULED PANEL             -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 3</span>
+    <h2>Scheduling Unscheduled Items</h2>
+    <p>Drag items from the unscheduled panel to the timeline. Hierarchy-aware placement with auto-expanding parent spans.</p>
+  </div>
+
+  <div class="wrapper">
+    <div class="app-frame" style="padding-bottom: 20px;">
+      <div style="padding: 1.25rem 1.5rem;">
+
+        <!-- Sub-scenario A: Scheduling a parent -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <span style="background: #d1fae5; color: #065f46; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;">Action A</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #374151;">Drag a parent (Goal) onto the timeline</span>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+          <!-- Timeline with drop zone -->
+          <div style="position: relative; height: 40px; background: #f3f4f6; border-radius: 8px; margin-bottom: 0.75rem; display: grid; grid-template-columns: repeat(12, 1fr); overflow: hidden;">
+            <!-- Drop zone highlight -->
+            <div style="grid-column: 5 / 9; background: rgba(79, 70, 229, 0.08); border: 2px dashed #4f46e5; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 0.65rem; color: #4f46e5; font-weight: 500;">Drop here — Q2</span>
+            </div>
+          </div>
+
+          <!-- The chip being dragged -->
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="unscheduled-chip dragging" style="opacity: 0.5;">
+              <span class="level-badge goal">Goal</span> Scale Infrastructure
+            </div>
+            <span style="font-size: 0.65rem; color: #6b7280;">→ Children remain unscheduled until individually placed</span>
+          </div>
+        </div>
+
+        <!-- Sub-scenario B: Scheduling a child within its parent -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <span style="background: #d1fae5; color: #065f46; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;">Action B</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #374151;">Drag a child (Initiative) — lands within parent's span</span>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;">
+          <!-- Parent bar showing valid drop zone -->
+          <div style="position: relative; height: 32px; background: #f3f4f6; border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden;">
+            <div style="position: absolute; left: 8%; width: 50%; height: 100%; background: linear-gradient(135deg, #4f46e5, #6366f1); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 0.72rem; font-weight: 600;">Scale Infrastructure</span>
+            </div>
+            <!-- Valid zone glow -->
+            <div style="position: absolute; left: 8%; width: 50%; height: 100%; background: rgba(79, 70, 229, 0.1); border: 2px solid rgba(79, 70, 229, 0.3); border-radius: 8px; animation: none;"></div>
+          </div>
+          <!-- Drop zone within parent bounds -->
+          <div style="position: relative; height: 26px; background: #f3f4f6; border-radius: 6px; margin-left: 18px; overflow: hidden;">
+            <div style="position: absolute; left: 8%; width: 25%; height: 100%; background: rgba(99, 102, 241, 0.08); border: 2px dashed #6366f1; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 0.6rem; color: #6366f1; font-weight: 500;">Drop here</span>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+            <div class="unscheduled-chip dragging" style="opacity: 0.5;">
+              <span class="level-badge initiative">Init</span> Database Migration
+            </div>
+            <span style="font-size: 0.65rem; color: #22c55e;">✓ Within parent bounds</span>
+          </div>
+        </div>
+
+        <!-- Sub-scenario C: Scheduling a child outside parent → auto-extends -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <span style="background: #fef3c7; color: #92400e; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;">Action C</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #374151;">Child dropped outside parent span → parent auto-extends</span>
+        </div>
+        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.72rem; color: #6b7280; font-weight: 500;">Before → After</span>
+          </div>
+          <!-- Before: parent is Q1-Q2 -->
+          <div style="position: relative; height: 32px; background: #f3f4f6; border-radius: 8px; margin-bottom: 0.3rem; overflow: hidden;">
+            <div style="position: absolute; left: 0%; width: 50%; height: 100%; border: 2px dashed #c7d2fe; border-radius: 8px; opacity: 0.4;"></div>
+            <!-- After: parent auto-extended to Q1-Q3 -->
+            <div style="position: absolute; left: 0%; width: 75%; height: 100%; background: linear-gradient(135deg, #4f46e5, #6366f1); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 0.72rem; font-weight: 600;">Parent auto-extended →</span>
+            </div>
+          </div>
+          <!-- New child dropped in Q3 -->
+          <div style="position: relative; height: 24px; background: #f3f4f6; border-radius: 6px; margin-left: 18px; overflow: hidden;">
+            <div style="position: absolute; left: 58%; width: 17%; height: 100%; background: linear-gradient(135deg, #6366f1, #818cf8); border-radius: 5px; display: flex; align-items: center; justify-content: center; outline: 2px solid #f59e0b; outline-offset: 1px;">
+              <span style="color: white; font-size: 0.6rem;">CDN Rollout</span>
+            </div>
+          </div>
+          <div style="margin-top: 0.5rem; font-size: 0.65rem; color: #92400e; display: flex; align-items: center; gap: 0.3rem;">
+            <span style="font-size: 0.8rem;">⚡</span> Parent "Scale Infrastructure" extended from Q1–Q2 → Q1–Q3 to encompass new child
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation wrapper">
+    <strong>Scenario 3 — Scheduling design notes:</strong>
+    <ul>
+      <li><strong>Action A — Scheduling a parent:</strong> Parent gets placed at the dropped position. Children remain unscheduled — the user schedules them individually within the parent's span. This avoids auto-placing children in arbitrary positions.</li>
+      <li><strong>Action B — Child within parent:</strong> If a child is dropped within its scheduled parent's span, it's placed directly. Green checkmark confirms valid placement.</li>
+      <li><strong>Action C — Child outside parent:</strong> If a child is dropped outside its parent's current span, the parent auto-extends to encompass the child. An amber highlight + message explain what happened. This avoids blocking the user's workflow.</li>
+      <li><strong>Orphan children (parent unscheduled):</strong> If a child is scheduled but its parent isn't, the child appears in the timeline independently. When the parent is later scheduled, it auto-spans to encompass the child.</li>
+    </ul>
+  </div>
+
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 4: DEEP NESTING (4 LEVELS)                      -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 4</span>
+    <h2>Deep Nesting — Goal → Initiative → Epic → Story</h2>
+    <p>How the roadmap looks with 4 levels expanded. Stories are the finest grain shown; Subtasks are hidden from the roadmap.</p>
+  </div>
+
+  <div class="wrapper">
+    <div class="app-frame" style="padding-bottom: 20px;">
+      <div class="roadmap-container">
+        <div class="timeline-header">
+          <div class="timeline-header-corner">Items</div>
+          <div class="timeline-header-period">Q1 2026</div>
+          <div class="timeline-header-period">Q2 2026</div>
+          <div class="timeline-header-period">Q3 2026</div>
+        </div>
+        <div class="timeline-quadrants">
+          <div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+        </div>
+
+        <!-- Level 0: Goal -->
+        <div class="timeline-row level-0">
+          <div class="row-label">
+            <button class="expand-btn">▾</button>
+            <span class="level-badge goal">Goal</span>
+            <span class="row-title">Increase Activation</span>
+            <span class="child-count">2</span>
+          </div>
+          <div class="timeline-bar bar-level-0 span-1-10">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Increase Activation Rate</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Level 1: Initiative -->
+        <div class="timeline-row level-1">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <button class="expand-btn">▾</button>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title">User Onboarding</span>
+            <span class="child-count">2</span>
+          </div>
+          <div class="timeline-bar bar-level-1 span-1-6">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">User Onboarding</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Level 2: Epic -->
+        <div class="timeline-row level-2">
+          <div class="row-label">
+            <span class="indent" style="width: 36px;"></span>
+            <button class="expand-btn">▾</button>
+            <span class="level-badge epic">Epic</span>
+            <span class="row-title">Welcome Flow</span>
+            <span class="child-count">3</span>
+          </div>
+          <div class="timeline-bar bar-level-2 span-1-4">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Welcome Flow</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Level 3: Story -->
+        <div class="timeline-row level-3">
+          <div class="row-label">
+            <span class="indent" style="width: 54px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge story">Story</span>
+            <span class="row-title">Design wizard screens</span>
+          </div>
+          <div class="timeline-bar bar-level-3 span-1-2">
+            <span class="bar-label">Design wizard</span>
+          </div>
+        </div>
+
+        <!-- Level 3: Story -->
+        <div class="timeline-row level-3">
+          <div class="row-label">
+            <span class="indent" style="width: 54px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge story">Story</span>
+            <span class="row-title">Build step components</span>
+          </div>
+          <div class="timeline-bar bar-level-3 span-2-3">
+            <span class="bar-label">Build steps</span>
+          </div>
+        </div>
+
+        <!-- Level 3: Story -->
+        <div class="timeline-row level-3">
+          <div class="row-label">
+            <span class="indent" style="width: 54px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge story">Story</span>
+            <span class="row-title">User testing &amp; iteration</span>
+          </div>
+          <div class="timeline-bar bar-level-3 span-3-4">
+            <span class="bar-label">User testing</span>
+          </div>
+        </div>
+
+        <!-- Level 2: Epic (collapsed) -->
+        <div class="timeline-row level-2">
+          <div class="row-label">
+            <span class="indent" style="width: 36px;"></span>
+            <button class="expand-btn collapsed">▾</button>
+            <span class="level-badge epic">Epic</span>
+            <span class="row-title">Email Drip Sequence</span>
+            <span class="child-count">2</span>
+          </div>
+          <div class="timeline-bar bar-level-2 span-5-6">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Email Drips</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Level 1: Initiative (collapsed) -->
+        <div class="timeline-row level-1">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <button class="expand-btn collapsed">▾</button>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title">Growth Analytics</span>
+            <span class="child-count">4</span>
+          </div>
+          <div class="timeline-bar bar-level-1 span-7-10">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Growth Analytics</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation wrapper">
+    <strong>Scenario 4 — Deep nesting notes:</strong>
+    <ul>
+      <li><strong>4 levels visible:</strong> Goal (32px) → Initiative (26px) → Epic (22px) → Story (18px). Bar height and colour intensity decrease at each level, creating a clear visual hierarchy.</li>
+      <li><strong>Subtasks (Level 4) hidden:</strong> Subtasks are too granular for a roadmap view. They're visible in the backlog and capacity views but not rendered on the timeline. This keeps the roadmap strategically focused.</li>
+      <li><strong>Indentation caps at 54px:</strong> Level 0 = 0px, Level 1 = 18px, Level 2 = 36px, Level 3 = 54px. The 200px label column handles this comfortably.</li>
+      <li><strong>Mixed expand states:</strong> Goal expanded, first Initiative expanded with its Epic expanded (showing Stories), second Epic collapsed, second Initiative collapsed. Users control exactly how much detail they see.</li>
+      <li><strong>Story bars have no resize handles:</strong> Stories are the smallest schedulable unit on the roadmap. They can be moved but are typically sized to 1-2 quadrants.</li>
+    </ul>
+  </div>
+
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 5: PARTIALLY SCHEDULED HIERARCHY                 -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 5</span>
+    <h2>Partially Scheduled Hierarchy</h2>
+    <p>A parent is scheduled but some children aren't. Unscheduled children appear in the panel with parent context.</p>
+  </div>
+
+  <div class="wrapper">
+    <div class="app-frame" style="padding-bottom: 20px;">
+      <div class="roadmap-container">
+        <div class="timeline-header">
+          <div class="timeline-header-corner">Items</div>
+          <div class="timeline-header-period">Now</div>
+          <div class="timeline-header-period">Next</div>
+          <div class="timeline-header-period">Later</div>
+        </div>
+        <div class="timeline-quadrants">
+          <div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+          <div class="q-header"></div><div class="q-header"></div><div class="q-header"></div><div class="q-header"></div>
+        </div>
+
+        <!-- Goal: scheduled, expanded -->
+        <div class="timeline-row level-0">
+          <div class="row-label">
+            <button class="expand-btn">▾</button>
+            <span class="level-badge goal">Goal</span>
+            <span class="row-title">Scale Infrastructure</span>
+            <span class="child-count">3</span>
+          </div>
+          <div class="timeline-bar bar-level-0 span-1-8">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Scale Infrastructure</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Initiative 1: scheduled -->
+        <div class="timeline-row level-1">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title">Database Migration</span>
+          </div>
+          <div class="timeline-bar bar-level-1 span-1-4">
+            <div class="resize-handle left"></div>
+            <span class="bar-label">Database Migration</span>
+            <div class="resize-handle right"></div>
+          </div>
+        </div>
+
+        <!-- Initiative 2: NOT scheduled (empty row with hint) -->
+        <div class="timeline-row level-1" style="background: #fffbeb;">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title" style="color: #92400e;">CDN Rollout</span>
+          </div>
+          <div style="grid-column: 2 / 14; display: flex; align-items: center; padding: 0 0.5rem;">
+            <span style="font-size: 0.6rem; color: #d97706; font-style: italic;">Not yet scheduled — drag from below or click to place</span>
+          </div>
+        </div>
+
+        <!-- Initiative 3: NOT scheduled -->
+        <div class="timeline-row level-1" style="background: #fffbeb;">
+          <div class="row-label">
+            <span class="indent" style="width: 18px;"></span>
+            <span class="no-expand"></span>
+            <span class="level-badge initiative">Init</span>
+            <span class="row-title" style="color: #92400e;">Monitoring Setup</span>
+          </div>
+          <div style="grid-column: 2 / 14; display: flex; align-items: center; padding: 0 0.5rem;">
+            <span style="font-size: 0.6rem; color: #d97706; font-style: italic;">Not yet scheduled — drag from below or click to place</span>
+          </div>
+        </div>
+
+        <!-- Unscheduled panel — partially scheduled group -->
+        <div class="unscheduled-panel">
+          <div class="unscheduled-header">
+            <div class="unscheduled-title">Unscheduled Items</div>
+            <span class="unscheduled-count">3 items</span>
+          </div>
+          <div class="unscheduled-group">
+            <div class="unscheduled-group-header">
+              <span class="level-badge goal">Goal</span>
+              Scale Infrastructure
+              <span style="font-size: 0.6rem; color: #d97706; font-weight: 400; margin-left: 0.25rem;">— 2 of 3 children unscheduled</span>
+            </div>
+            <div class="unscheduled-chips">
+              <div class="unscheduled-chip">
+                <span class="level-badge initiative">Init</span> CDN Rollout
+                <span class="unscheduled-context">within Scale Infrastructure</span>
+              </div>
+              <div class="unscheduled-chip">
+                <span class="level-badge initiative">Init</span> Monitoring Setup
+                <span class="unscheduled-context">within Scale Infrastructure</span>
+              </div>
+            </div>
+          </div>
+          <div class="unscheduled-group">
+            <div class="unscheduled-group-header standalone">Standalone Items</div>
+            <div class="unscheduled-chips">
+              <div class="unscheduled-chip">Export to CSV</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation wrapper" style="margin-bottom: 3rem;">
+    <strong>Scenario 5 — Partially scheduled notes:</strong>
+    <ul>
+      <li><strong>Unscheduled children in expanded view:</strong> When a parent is expanded and some children aren't scheduled, those children appear as amber-highlighted rows with a "Not yet scheduled" hint. This makes gaps visible in context.</li>
+      <li><strong>Unscheduled panel context:</strong> Chips for children of scheduled parents include a "within [parent name]" context label, so the user knows where they belong.</li>
+      <li><strong>Partially scheduled parents in the panel:</strong> The group header shows "2 of 3 children unscheduled" to communicate progress.</li>
+      <li><strong>Click to place:</strong> Clicking the "Not yet scheduled" hint row opens a quick-place interaction (place at cursor position within parent bounds).</li>
+      <li><strong>Period names:</strong> This scenario uses "Now / Next / Later" defaults — showing the roadmap works with any naming convention.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

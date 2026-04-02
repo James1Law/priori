@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori — Hierarchical Roadmap (Mobile)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb; color: #111827; min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 640px; margin: 0 auto; line-height: 1.5; }
+
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; max-width: 600px; margin: 0 auto; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    /* === Mobile Frame === */
+    .mobile-frame {
+      width: 390px; margin: 2rem auto;
+      background: white; border-radius: 24px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      overflow: hidden; position: relative;
+      min-height: 780px;
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: white; padding: 0.4rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.7rem; font-weight: 600; color: #111827;
+    }
+    .status-bar-right { display: flex; align-items: center; gap: 0.35rem; font-size: 0.65rem; }
+
+    /* App header */
+    .mobile-header {
+      padding: 0.6rem 1rem;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .mobile-header-left { display: flex; align-items: center; gap: 0.5rem; }
+    .mobile-logo {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 0.85rem;
+    }
+    .mobile-session-name { font-weight: 600; font-size: 0.95rem; color: #111827; }
+    .mobile-header-right { display: flex; align-items: center; gap: 0.5rem; }
+    .mobile-presence {
+      display: flex; align-items: center; gap: 0.25rem;
+      font-size: 0.75rem; color: #6b7280;
+    }
+    .mobile-presence-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
+
+    /* Content area */
+    .mobile-content {
+      padding-bottom: 60px; /* space for bottom bar */
+      overflow-y: auto;
+    }
+
+    /* === Period Cards === */
+    .period-card {
+      margin: 0.75rem 0.75rem 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .period-card:last-of-type { margin-bottom: 0.75rem; }
+    .period-header {
+      padding: 0.65rem 0.85rem;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fafbff;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .period-name {
+      font-size: 0.9rem; font-weight: 600; color: #111827;
+    }
+    .period-item-count {
+      font-size: 0.65rem; color: #9ca3af;
+      background: #f3f4f6; padding: 0.15rem 0.45rem; border-radius: 4px;
+    }
+
+    /* === Timeline Items Inside Period === */
+    .period-items {
+      padding: 0.5rem 0.65rem;
+    }
+
+    /* Item row within a period card */
+    .mobile-item-row {
+      display: flex; flex-direction: column;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid #f9fafb;
+    }
+    .mobile-item-row:last-child { border-bottom: none; }
+
+    .mobile-item-label {
+      display: flex; align-items: center; gap: 0.3rem;
+      margin-bottom: 0.3rem;
+    }
+    .mobile-expand-btn {
+      width: 20px; height: 20px; border: none; background: transparent;
+      cursor: pointer; font-size: 0.65rem; color: #6b7280;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; flex-shrink: 0;
+    }
+    .mobile-expand-btn:active { background: #e5e7eb; }
+    .mobile-expand-btn.collapsed { transform: rotate(-90deg); }
+    .mobile-no-expand { width: 20px; flex-shrink: 0; }
+
+    .level-badge {
+      font-size: 0.5rem; font-weight: 600; padding: 0.08rem 0.3rem;
+      border-radius: 999px; text-transform: uppercase; flex-shrink: 0;
+    }
+    .level-badge.goal { background: #fce7f3; color: #9d174d; }
+    .level-badge.initiative { background: #dbeafe; color: #1d4ed8; }
+    .level-badge.epic { background: #ede9fe; color: #6d28d9; }
+    .level-badge.story { background: #d1fae5; color: #065f46; }
+
+    .mobile-item-title {
+      font-size: 0.78rem; font-weight: 500; color: #374151;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      min-width: 0;
+    }
+    .mobile-child-count {
+      font-size: 0.55rem; color: #9ca3af; flex-shrink: 0;
+      background: #f3f4f6; padding: 0.05rem 0.3rem; border-radius: 3px;
+    }
+
+    /* Timeline bar within period */
+    .mobile-bar-track {
+      height: 6px; background: #f3f4f6; border-radius: 3px;
+      position: relative; overflow: hidden;
+    }
+    .mobile-bar-track.level-0-track { height: 8px; border-radius: 4px; }
+
+    .mobile-bar-fill {
+      position: absolute; top: 0; bottom: 0;
+      border-radius: 3px;
+    }
+    .mobile-bar-fill.level-0-fill {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 4px;
+    }
+    .mobile-bar-fill.level-1-fill {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+    }
+    .mobile-bar-fill.level-2-fill {
+      background: linear-gradient(135deg, #818cf8, #a5b4fc);
+    }
+    .mobile-bar-fill.level-3-fill {
+      background: linear-gradient(135deg, #a5b4fc, #c7d2fe);
+    }
+    .mobile-bar-fill.flat-fill {
+      background: linear-gradient(135deg, #10b981, #34d399);
+    }
+
+    /* Overflow indicators */
+    .overflow-indicator {
+      font-size: 0.55rem; color: #9ca3af; font-weight: 500;
+      margin-top: 0.15rem;
+    }
+
+    /* Indent for child items */
+    .mobile-indent-1 { padding-left: 0.75rem; }
+    .mobile-indent-2 { padding-left: 1.5rem; }
+    .mobile-indent-3 { padding-left: 2.25rem; }
+
+    /* Unscheduled children hint */
+    .mobile-unscheduled-hint {
+      display: flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.5rem;
+      background: #fffbeb; border-radius: 6px;
+      font-size: 0.65rem; color: #92400e;
+      margin-top: 0.15rem;
+    }
+
+    /* === Unscheduled Section === */
+    .mobile-unscheduled {
+      margin: 0 0.75rem 0.75rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 0.75rem;
+    }
+    .mobile-unscheduled-title {
+      font-size: 0.7rem; font-weight: 600; color: #9ca3af;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .mobile-unscheduled-count {
+      font-size: 0.6rem; color: #9ca3af;
+      background: #e5e7eb; padding: 0.1rem 0.35rem; border-radius: 4px;
+      text-transform: none; letter-spacing: 0; font-weight: 500;
+    }
+    .mobile-unscheduled-group { margin-bottom: 0.6rem; }
+    .mobile-unscheduled-group:last-child { margin-bottom: 0; }
+    .mobile-unscheduled-group-header {
+      font-size: 0.72rem; font-weight: 600; color: #374151;
+      margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .mobile-unscheduled-group-header.standalone {
+      color: #6b7280; font-weight: 500;
+    }
+    .mobile-unscheduled-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .mobile-unscheduled-chip {
+      padding: 0.35rem 0.55rem;
+      background: white; border: 1px solid #d1d5db;
+      border-radius: 8px; font-size: 0.72rem; color: #374151;
+      display: flex; align-items: center; gap: 0.25rem;
+      /* Larger touch target */
+      min-height: 36px;
+    }
+
+    /* === Bottom Tab Bar === */
+    .mobile-bottom-bar {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 1px solid #e5e7eb;
+      padding: 0.5rem 0.75rem;
+      display: flex; gap: 0.4rem;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+    }
+    .mobile-tab {
+      flex: 1; padding: 0.5rem 0;
+      font-size: 0.7rem; font-weight: 500; border-radius: 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+      cursor: pointer; border: none;
+    }
+    .mobile-tab.active { background: #4f46e5; color: white; }
+    .mobile-tab.inactive { background: #f3f4f6; color: #6b7280; }
+    .tab-icon { width: 16px; height: 16px; }
+
+    /* === FAB === */
+    .fab {
+      position: absolute; bottom: 72px; right: 16px;
+      width: 48px; height: 48px;
+      background: #4f46e5; color: white;
+      border-radius: 14px; border: none;
+      font-size: 1.5rem; font-weight: 300;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      cursor: pointer;
+    }
+
+    /* === Annotations === */
+    .annotation {
+      background: #fffbeb; border: 1px solid #fcd34d;
+      border-radius: 8px; padding: 0.85rem 1rem;
+      font-size: 0.78rem; color: #92400e;
+      max-width: 800px; margin: 1rem auto 0;
+      line-height: 1.5;
+    }
+    .annotation strong { color: #78350f; }
+    .annotation ul { margin-top: 0.3rem; padding-left: 1.2rem; }
+    .annotation li { margin-bottom: 0.2rem; }
+
+    .wrapper { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
+
+    /* Side-by-side mobile frames */
+    .dual-frame {
+      display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
+      padding: 0 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="concept-header">
+    <h1 class="font-display">Hierarchical Roadmap — Mobile</h1>
+    <p>Read-only mobile roadmap with vertical period cards, nested hierarchy bars, and tap-to-expand interaction. Optimised for viewing on the go.</p>
+  </div>
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 1: EXPANDED HIERARCHY                            -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 1</span>
+    <h2>Vertical Period Cards with Hierarchy</h2>
+    <p>Each period is a card. Items appear as indented rows with mini timeline bars. Parents expand to show children.</p>
+  </div>
+
+  <div class="dual-frame">
+    <!-- Frame 1: Expanded view -->
+    <div class="mobile-frame">
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-bar-right">
+          <span>●●●●</span>
+          <span>WiFi</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <div class="mobile-header">
+        <div class="mobile-header-left">
+          <div class="mobile-logo font-display">P</div>
+          <span class="mobile-session-name font-display">Q2 Roadmap</span>
+        </div>
+        <div class="mobile-header-right">
+          <div class="mobile-presence">
+            <span class="mobile-presence-dot"></span>
+            <span>3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mobile-content">
+        <!-- Period 1: Q1 2026 -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q1 2026</span>
+            <span class="period-item-count">4 items</span>
+          </div>
+          <div class="period-items">
+
+            <!-- Goal: Increase Activation (expanded) -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Increase Activation</span>
+                <span class="mobile-child-count">2</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">Continues → Q2</div>
+            </div>
+
+            <!--   Initiative: User Onboarding (expanded) -->
+            <div class="mobile-item-row mobile-indent-1">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn">▾</button>
+                <span class="level-badge initiative">Init</span>
+                <span class="mobile-item-title">User Onboarding</span>
+                <span class="mobile-child-count">2</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill level-1-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+            </div>
+
+            <!--     Epic: Welcome Flow -->
+            <div class="mobile-item-row mobile-indent-2">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="level-badge epic">Epic</span>
+                <span class="mobile-item-title">Welcome Flow</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill level-2-fill" style="left: 0%; width: 50%;"></div>
+              </div>
+            </div>
+
+            <!--     Epic: Email Drip Sequence -->
+            <div class="mobile-item-row mobile-indent-2">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="level-badge epic">Epic</span>
+                <span class="mobile-item-title">Email Drip Sequence</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill level-2-fill" style="left: 50%; width: 50%;"></div>
+              </div>
+            </div>
+
+            <!-- Flat item: Safari Login Fix -->
+            <div class="mobile-item-row" style="margin-top: 0.2rem; padding-top: 0.5rem; border-top: 1px solid #f3f4f6;">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Safari Login Fix</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 0%; width: 75%;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Period 2: Q2 2026 -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q2 2026</span>
+            <span class="period-item-count">3 items</span>
+          </div>
+          <div class="period-items">
+
+            <!-- Goal continuation -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Increase Activation</span>
+                <span class="mobile-child-count">2</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">← From Q1</div>
+            </div>
+
+            <!--   Initiative: Growth Analytics (collapsed) -->
+            <div class="mobile-item-row mobile-indent-1">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge initiative">Init</span>
+                <span class="mobile-item-title">Growth Analytics</span>
+                <span class="mobile-child-count">3</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill level-1-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+            </div>
+
+            <!-- Goal: Reduce Churn (collapsed) -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Reduce Churn</span>
+                <span class="mobile-child-count">5</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">Continues → Q3</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Period 3: Q3 2026 -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q3 2026</span>
+            <span class="period-item-count">3 items</span>
+          </div>
+          <div class="period-items">
+
+            <!-- Goal: Reduce Churn continued -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Reduce Churn</span>
+                <span class="mobile-child-count">5</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">← From Q2</div>
+            </div>
+
+            <!-- Flat items -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Privacy Policy Update</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 0%; width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Update API Docs</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 25%; width: 50%;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Unscheduled section -->
+        <div class="mobile-unscheduled">
+          <div class="mobile-unscheduled-title">
+            Unscheduled
+            <span class="mobile-unscheduled-count">5</span>
+          </div>
+          <div class="mobile-unscheduled-group">
+            <div class="mobile-unscheduled-group-header">
+              <span class="level-badge goal">Goal</span>
+              Scale Infrastructure
+            </div>
+            <div class="mobile-unscheduled-chips">
+              <div class="mobile-unscheduled-chip"><span class="level-badge initiative">Init</span> Database Migration</div>
+              <div class="mobile-unscheduled-chip"><span class="level-badge initiative">Init</span> CDN Rollout</div>
+            </div>
+          </div>
+          <div class="mobile-unscheduled-group">
+            <div class="mobile-unscheduled-group-header standalone">Standalone</div>
+            <div class="mobile-unscheduled-chips">
+              <div class="mobile-unscheduled-chip">Analytics Dashboard</div>
+              <div class="mobile-unscheduled-chip">Dark Mode Support</div>
+              <div class="mobile-unscheduled-chip">Export to CSV</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FAB -->
+      <button class="fab">+</button>
+
+      <!-- Bottom Bar -->
+      <div class="mobile-bottom-bar">
+        <button class="mobile-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          Backlog
+        </button>
+        <button class="mobile-tab active">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Roadmap
+        </button>
+        <button class="mobile-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Capacity
+        </button>
+      </div>
+    </div>
+
+    <!-- Frame 2: Tap interaction states -->
+    <div class="mobile-frame">
+      <div class="status-bar">
+        <span>9:41</span>
+        <div class="status-bar-right">
+          <span>●●●●</span>
+          <span>WiFi</span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <div class="mobile-header">
+        <div class="mobile-header-left">
+          <div class="mobile-logo font-display">P</div>
+          <span class="mobile-session-name font-display">Q2 Roadmap</span>
+        </div>
+        <div class="mobile-header-right">
+          <div class="mobile-presence">
+            <span class="mobile-presence-dot"></span>
+            <span>3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mobile-content">
+
+        <!-- Period 1 with tapped item -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q1 2026</span>
+            <span class="period-item-count">4 items</span>
+          </div>
+          <div class="period-items">
+
+            <!-- Goal: collapsed to show compact view -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Increase Activation</span>
+                <span class="mobile-child-count">2</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">Continues → Q2</div>
+            </div>
+
+            <!-- Flat item tapped → highlighted with action hint -->
+            <div class="mobile-item-row" style="background: #eef2ff; border-radius: 8px; padding: 0.5rem; margin: 0.15rem -0.25rem;">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title" style="color: #4f46e5; font-weight: 600;">Safari Login Fix</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 0%; width: 75%;"></div>
+              </div>
+              <!-- Tapped state: action row -->
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.4rem;">
+                <button style="flex: 1; padding: 0.4rem; font-size: 0.7rem; font-weight: 500; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer;">View Details</button>
+                <button style="flex: 1; padding: 0.4rem; font-size: 0.7rem; font-weight: 500; background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">Open in Backlog</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Period 2 -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q2 2026</span>
+            <span class="period-item-count">3 items</span>
+          </div>
+          <div class="period-items">
+
+            <!-- All collapsed for compact view -->
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Increase Activation</span>
+                <span class="mobile-child-count">2</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">← From Q1</div>
+            </div>
+
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Reduce Churn</span>
+                <span class="mobile-child-count">5</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">Continues → Q3</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Period 3: Partially scheduled -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q3 2026</span>
+            <span class="period-item-count">3 items</span>
+          </div>
+          <div class="period-items">
+
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Reduce Churn</span>
+                <span class="mobile-child-count">5</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+              <div class="overflow-indicator">← From Q2</div>
+            </div>
+
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Privacy Policy Update</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 0%; width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="mobile-item-row">
+              <div class="mobile-item-label">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Update API Docs</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 25%; width: 50%;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Empty period -->
+        <div class="period-card">
+          <div class="period-header">
+            <span class="period-name">Q4 2026</span>
+            <span class="period-item-count">0 items</span>
+          </div>
+          <div style="padding: 1.5rem; text-align: center;">
+            <div style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 0.5rem;">No items scheduled</div>
+            <div style="font-size: 0.7rem; color: #6b7280;">Add items from the backlog on desktop</div>
+          </div>
+        </div>
+
+        <!-- Unscheduled -->
+        <div class="mobile-unscheduled">
+          <div class="mobile-unscheduled-title">
+            Unscheduled
+            <span class="mobile-unscheduled-count">5</span>
+          </div>
+          <div class="mobile-unscheduled-group">
+            <div class="mobile-unscheduled-group-header">
+              <span class="level-badge goal">Goal</span>
+              Scale Infrastructure
+            </div>
+            <div class="mobile-unscheduled-chips">
+              <div class="mobile-unscheduled-chip"><span class="level-badge initiative">Init</span> DB Migration</div>
+              <div class="mobile-unscheduled-chip"><span class="level-badge initiative">Init</span> CDN Rollout</div>
+            </div>
+          </div>
+          <div class="mobile-unscheduled-group">
+            <div class="mobile-unscheduled-group-header standalone">Standalone</div>
+            <div class="mobile-unscheduled-chips">
+              <div class="mobile-unscheduled-chip">Analytics Dashboard</div>
+              <div class="mobile-unscheduled-chip">Dark Mode</div>
+              <div class="mobile-unscheduled-chip">Export CSV</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FAB -->
+      <button class="fab">+</button>
+
+      <!-- Bottom Bar -->
+      <div class="mobile-bottom-bar">
+        <button class="mobile-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          Backlog
+        </button>
+        <button class="mobile-tab active">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Roadmap
+        </button>
+        <button class="mobile-tab inactive">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Capacity
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation wrapper">
+    <strong>Mobile design notes:</strong>
+    <ul>
+      <li><strong>Vertical period cards:</strong> Each period is a self-contained card. Items spanning multiple periods appear in each relevant card with overflow indicators ("← From Q1", "Continues → Q2").</li>
+      <li><strong>Mini timeline bars:</strong> Thin horizontal bars (6-8px) show relative position within the period's 4 quadrants. Parent bars are slightly thicker (8px) with bolder colour.</li>
+      <li><strong>Tap to expand/collapse:</strong> The ▾ toggle works the same as desktop. Indentation (0.75rem per level, max 2.25rem) provides hierarchy context within the narrow screen.</li>
+      <li><strong>Tap item for actions (right frame):</strong> Tapping an item highlights it and reveals action buttons — "View Details" opens the item drawer, "Open in Backlog" navigates to backlog with that item selected.</li>
+      <li><strong>Read-only for v1:</strong> No drag/resize on mobile. The empty period shows "Add items from the backlog on desktop" to set expectations. The FAB (+) creates new items but doesn't schedule them — scheduling happens on desktop.</li>
+      <li><strong>Unscheduled section:</strong> Same grouped layout as desktop, with larger touch targets (min 36px chip height) for tappability.</li>
+      <li><strong>Collapsed default:</strong> Right frame shows all parents collapsed — the typical mobile view. Users expand only what they need. This keeps the scroll manageable.</li>
+    </ul>
+  </div>
+
+  <!-- ========================================================== -->
+  <!--  SCENARIO 2: LANDSCAPE / WIDE MOBILE                      -->
+  <!-- ========================================================== -->
+  <div class="section-divider">
+    <span class="scenario-label">Scenario 2</span>
+    <h2>Landscape / Tablet — Hybrid View</h2>
+    <p>On wider screens (640px+), the mobile view gains a mini horizontal timeline within each period card for better spatial context.</p>
+  </div>
+
+  <div style="max-width: 700px; margin: 2rem auto; padding: 0 1rem;">
+    <div style="background: white; border-radius: 16px; border: 1px solid #d1d5db; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; position: relative; padding-bottom: 56px;">
+
+      <div class="mobile-header">
+        <div class="mobile-header-left">
+          <div class="mobile-logo font-display">P</div>
+          <span class="mobile-session-name font-display">Q2 Product Roadmap</span>
+        </div>
+        <div class="mobile-header-right">
+          <div class="mobile-presence">
+            <span class="mobile-presence-dot"></span>
+            <span>3</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding-bottom: 8px;">
+        <!-- Period card with wider bar tracks -->
+        <div class="period-card" style="margin: 0.75rem;">
+          <div class="period-header">
+            <span class="period-name">Q1 2026</span>
+            <div style="display: flex; gap: 1rem; font-size: 0.6rem; color: #9ca3af;">
+              <span>Jan</span><span>Feb</span><span>Mar</span>
+            </div>
+          </div>
+          <div class="period-items">
+
+            <div class="mobile-item-row" style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem; align-items: center;">
+              <div class="mobile-item-label" style="margin-bottom: 0;">
+                <button class="mobile-expand-btn">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Increase Activation</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="mobile-item-row mobile-indent-1" style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem; align-items: center;">
+              <div class="mobile-item-label" style="margin-bottom: 0; padding-left: 0.75rem;">
+                <span class="mobile-no-expand"></span>
+                <span class="level-badge initiative">Init</span>
+                <span class="mobile-item-title">User Onboarding</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill level-1-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="mobile-item-row" style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem; align-items: center;">
+              <div class="mobile-item-label" style="margin-bottom: 0;">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Safari Login Fix</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 0%; width: 75%;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="period-card" style="margin: 0.75rem;">
+          <div class="period-header">
+            <span class="period-name">Q2 2026</span>
+            <div style="display: flex; gap: 1rem; font-size: 0.6rem; color: #9ca3af;">
+              <span>Apr</span><span>May</span><span>Jun</span>
+            </div>
+          </div>
+          <div class="period-items">
+
+            <div class="mobile-item-row" style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem; align-items: center;">
+              <div class="mobile-item-label" style="margin-bottom: 0;">
+                <button class="mobile-expand-btn collapsed">▾</button>
+                <span class="level-badge goal">Goal</span>
+                <span class="mobile-item-title">Reduce Churn</span>
+                <span class="mobile-child-count">5</span>
+              </div>
+              <div class="mobile-bar-track level-0-track">
+                <div class="mobile-bar-fill level-0-fill" style="left: 0%; width: 100%;"></div>
+              </div>
+            </div>
+
+            <div class="mobile-item-row" style="display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem; align-items: center;">
+              <div class="mobile-item-label" style="margin-bottom: 0;">
+                <span class="mobile-no-expand"></span>
+                <span class="mobile-item-title">Privacy Policy Update</span>
+              </div>
+              <div class="mobile-bar-track">
+                <div class="mobile-bar-fill flat-fill" style="left: 25%; width: 50%;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="mobile-bottom-bar">
+        <button class="mobile-tab inactive" style="font-size: 0.8rem;">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          Backlog
+        </button>
+        <button class="mobile-tab active" style="font-size: 0.8rem;">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/></svg>
+          Roadmap
+        </button>
+        <button class="mobile-tab inactive" style="font-size: 0.8rem;">
+          <svg class="tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Capacity
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annotation wrapper" style="margin-bottom: 3rem;">
+    <strong>Landscape / tablet notes:</strong>
+    <ul>
+      <li><strong>Hybrid layout at 640px+:</strong> Item label and timeline bar sit side-by-side (grid: 180px label + 1fr bar), similar to the desktop layout but within vertical period cards.</li>
+      <li><strong>Sub-period labels:</strong> Period headers show month names (Jan, Feb, Mar) as reference points for the bar positions.</li>
+      <li><strong>Same touch interactions:</strong> Tap to expand/collapse, tap item for actions. No drag/resize even on tablet for v1.</li>
+      <li><strong>Progressive enhancement:</strong> At 1024px+ (desktop), switch to the full horizontal timeline. This is the existing `sm:` breakpoint pattern used elsewhere in the app.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

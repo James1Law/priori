@@ -67,7 +67,7 @@ describe('LandingPage', () => {
     )
 
     expect(
-      screen.getByText(/Score, estimate, plan and ship together in real-time/)
+      screen.getByText(/Score, estimate, plan and ship .* together in real-time/)
     ).toBeInTheDocument()
   })
 
