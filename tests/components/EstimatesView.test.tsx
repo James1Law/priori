@@ -69,10 +69,10 @@ describe('EstimatesView', () => {
     onRevote: vi.fn(),
   }
 
-  it('renders the Planning Poker heading', () => {
+  it('renders the Poker Planner heading', () => {
     render(<EstimatesView {...defaultProps} />)
 
-    expect(screen.getByText('Planning Poker')).toBeInTheDocument()
+    expect(screen.getByText('Poker Planner')).toBeInTheDocument()
   })
 
   it('renders the Estimation Queue heading', () => {

@@ -19,10 +19,10 @@ import { CSS } from '@dnd-kit/utilities'
 import type { ItemWithScore, Framework, RoadmapPeriod, ItemStatus, Cutoff, CutoffColor, ItemLevel } from '../types/database'
 import { ITEM_LEVEL_LABELS, ITEM_LEVEL_CHILD_LABELS, MAX_ITEM_LEVEL } from '../types/database'
 import { getQuadrant } from '../lib/valueEffort'
-import { buildTree, flattenTree, getStatusRollup, getRolledUpEstimate, getMobileIndent } from '../lib/hierarchy'
+import { buildTree, flattenTree, getStatusRollup, getRolledUpEstimate, getRolledUpScore, getMobileIndent, hasChildren as hasChildrenFn } from '../lib/hierarchy'
 import ActionBar from './ActionBar'
 
-type SortOption = 'manual' | 'score' | 'estimate' | 'status' | 'period' | 'title'
+type SortOption = 'manual' | 'score' | 'story_points' | 'status' | 'period' | 'title'
 
 interface BacklogListProps {
   items: ItemWithScore[]
@@ -40,13 +40,32 @@ interface BacklogListProps {
   onStatusChange?: (itemId: string, status: ItemStatus) => void
   onStatusChangeMultiple?: (itemIds: string[], status: ItemStatus) => void
   onAssignPeriod?: (itemIds: string[], periodPosition: number) => void
-  onScore?: (selectedItemIds: string[]) => void
-  onEstimate?: (selectedItemIds: string[]) => void
   onAddChild?: (parentId: string, parentLevel: number, title: string) => void
 }
 
 // Format score for display based on framework
-function formatScore(item: ItemWithScore, framework: Framework): string {
+function formatScore(item: ItemWithScore, framework: Framework, allItems?: ItemWithScore[]): string {
+  // Check if this is a parent item — if so, show rolled-up score
+  const isParent = allItems ? hasChildrenFn(item.id, allItems) : false
+
+  if (isParent && allItems) {
+    const rollup = getRolledUpScore(item.id, allItems)
+    if (framework === 'moscow') {
+      if (!rollup.moscowCategory) return '—'
+      const categoryLabels: Record<string, string> = {
+        must: 'Must Have', should: 'Should Have', could: 'Could Have', wont: "Won't Have",
+      }
+      return `${categoryLabels[rollup.moscowCategory] || rollup.moscowCategory} avg`
+    }
+    if (rollup.score === null || rollup.score === 0) return '—'
+    switch (framework) {
+      case 'rice': return `RICE: ${Math.round(rollup.score)} avg`
+      case 'ice': return `ICE: ${rollup.score.toFixed(1)} avg`
+      case 'weighted': return `Score: ${rollup.score.toFixed(2)} avg`
+      default: return `${rollup.score} avg`
+    }
+  }
+
   const score = item.score?.calculated_score
   const criteria = item.score?.criteria
 
@@ -65,7 +84,6 @@ function formatScore(item: ItemWithScore, framework: Framework): string {
       // For MoSCoW, show the category with proper formatting
       const category = criteria?.category as string
       if (!category) return '—'
-      // Format: "must" -> "Must Have", "should" -> "Should Have", etc.
       const categoryLabels: Record<string, string> = {
         must: 'Must Have',
         should: 'Should Have',
@@ -367,7 +385,7 @@ function SortableItem({
             )}
             {showScoreColumn && (
               <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-medium">
-                {formatScore(item, framework)}
+                {formatScore(item, framework, allItems)}
               </span>
             )}
             {showEstimateColumn && item.story_points !== null && item.story_points !== undefined && (
@@ -539,7 +557,7 @@ function SortableItem({
         {showScoreColumn && (
           <div className="flex-shrink-0 w-20 flex justify-center">
             <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md text-xs font-medium">
-              {formatScore(item, framework)}
+              {formatScore(item, framework, allItems)}
             </span>
           </div>
         )}
@@ -816,8 +834,6 @@ export default function BacklogList({
   onStatusChange,
   onStatusChangeMultiple,
   onAssignPeriod,
-  onScore,
-  onEstimate,
   onAddChild,
 }: BacklogListProps) {
   const [sortOption, setSortOption] = useState<SortOption>(isManualOrder ? 'manual' : 'score')
@@ -939,7 +955,7 @@ export default function BacklogList({
         const scoreA = a.score?.calculated_score ?? 0
         const scoreB = b.score?.calculated_score ?? 0
         return scoreB - scoreA // Descending
-      case 'estimate':
+      case 'story_points':
         const estA = a.story_points ?? Number.MAX_SAFE_INTEGER
         const estB = b.story_points ?? Number.MAX_SAFE_INTEGER
         return estA - estB // Ascending (smaller estimates first)
@@ -1094,8 +1110,8 @@ export default function BacklogList({
   // Build sort options based on available data
   const sortOptions: { value: SortOption; label: string; available: boolean }[] = [
     { value: 'manual', label: 'Manual', available: true },
-    { value: 'score', label: 'Score', available: hasAnyScores },
-    { value: 'estimate', label: 'Estimate', available: hasAnyEstimates },
+    { value: 'score', label: 'Priority Score', available: hasAnyScores },
+    { value: 'story_points', label: 'Story Points', available: hasAnyEstimates },
     { value: 'status', label: 'Status', available: true },
     { value: 'period', label: 'Period', available: hasAnyPeriods },
     { value: 'title', label: 'Title (A-Z)', available: true },
@@ -1110,8 +1126,6 @@ export default function BacklogList({
         <ActionBar
           selectedCount={selectedIds.size}
           onClearSelection={handleClearSelection}
-          onScore={onScore ? () => onScore(Array.from(selectedIds)) : undefined}
-          onEstimate={onEstimate ? () => onEstimate(Array.from(selectedIds)) : undefined}
           onSetStatus={handleBulkStatusChange}
           onAssignPeriod={handleBulkAssignPeriod}
           onDelete={handleBulkDelete}

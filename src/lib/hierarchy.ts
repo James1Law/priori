@@ -331,3 +331,57 @@ export function isAncestorOf(
   const ancestors = getAncestors(itemId, items)
   return ancestors.some((a) => a.id === potentialAncestorId)
 }
+
+/**
+ * Calculate rolled-up prioritisation score for a parent item.
+ * Returns the average calculated_score of scored leaf descendants, or null if none are scored.
+ * For MoSCoW, returns the highest-priority category among leaf descendants.
+ */
+export function getRolledUpScore(
+  itemId: string,
+  items: ItemWithScore[]
+): { score: number | null; moscowCategory: string | null } {
+  const descendants = getDescendants(itemId, items)
+  if (descendants.length === 0) return { score: null, moscowCategory: null }
+
+  // Build set of parent IDs to identify leaves
+  const parentIds = new Set<string>()
+  for (const item of items) {
+    if (item.parent_item_id) {
+      parentIds.add(item.parent_item_id)
+    }
+  }
+
+  const leaves = descendants.filter((d) => !parentIds.has(d.id))
+
+  // Numeric score: average of scored leaves
+  const scoredLeaves = leaves.filter(
+    (d) => d.score?.calculated_score !== undefined && d.score?.calculated_score !== null && d.score.calculated_score > 0
+  )
+
+  const avgScore = scoredLeaves.length > 0
+    ? Math.round((scoredLeaves.reduce((sum, d) => sum + (d.score?.calculated_score ?? 0), 0) / scoredLeaves.length) * 100) / 100
+    : null
+
+  // MoSCoW: highest priority category among leaves
+  const moscowPriority: Record<string, number> = { must: 4, should: 3, could: 2, wont: 1 }
+  let highestMoscow: string | null = null
+  let highestMoscowPriority = 0
+
+  for (const leaf of leaves) {
+    const category = (leaf.score?.criteria as Record<string, unknown>)?.category as string | undefined
+    if (category && (moscowPriority[category] ?? 0) > highestMoscowPriority) {
+      highestMoscow = category
+      highestMoscowPriority = moscowPriority[category] ?? 0
+    }
+  }
+
+  return { score: avgScore, moscowCategory: highestMoscow }
+}
+
+/**
+ * Check whether an item has children in the given items array.
+ */
+export function hasChildren(itemId: string, items: ItemWithScore[]): boolean {
+  return items.some((i) => i.parent_item_id === itemId)
+}

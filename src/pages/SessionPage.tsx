@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Framework, Score, ViewMode } from '../types/database'
 import { exportToCsv } from '../lib/exportCsv'
@@ -24,6 +24,7 @@ import { useCutoffs } from '../hooks/useCutoffs'
 import { useMessages } from '../hooks/useMessages'
 import { useUnreadCount } from '../hooks/useUnreadCount'
 import { getCascadedStatusUpdates, getDirectChildren } from '../lib/hierarchy'
+import { useSessionContext } from '../contexts/SessionContext'
 
 // Lazy load components that are only used for specific views
 
@@ -51,10 +52,22 @@ function Logo({ className = '', id = 'header-brand' }: { className?: string; id?
 export default function SessionPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const [session, setSession] = useState<Session | null>(null)
-  const [items, setItems] = useState<ItemWithScore[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const location = useLocation()
+
+  // Derive active view from the route path
+  const getViewFromPath = (pathname: string): ViewMode => {
+    if (pathname.endsWith('/roadmap')) return 'roadmap'
+    if (pathname.endsWith('/capacity')) return 'capacity'
+    return 'list'
+  }
+  // Use shared session data from SessionLayout context
+  const sessionContext = useSessionContext()
+  const session = sessionContext.session
+  const items = sessionContext.items
+  const setItems = sessionContext.setItems
+  const setSession = sessionContext.setSession
+
+
   const [editingItem, setEditingItem] = useState<ItemWithScore | null>(null)
   const [editingSessionName, setEditingSessionName] = useState(false)
   const [sessionNameInput, setSessionNameInput] = useState('')
@@ -73,8 +86,8 @@ export default function SessionPage() {
     title: string
     message: string
   } | null>(null)
-  // Local view state - stored per-participant, not synced to database
-  const [localView, setLocalView] = useState<ViewMode>('list')
+  // View derived from route (desktop uses sidebar nav, mobile uses bottom bar)
+  const localView = getViewFromPath(location.pathname)
   // Filter state for backlog toolbar
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -146,7 +159,7 @@ export default function SessionPage() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // Helper function to fetch items with scores
+  // Helper function to fetch items with scores (used by realtime score subscription)
   const fetchItems = useCallback(async (sessionId: string, framework?: Framework) => {
     const { data: itemsData, error: itemsError } = await supabase
       .from('items')
@@ -161,7 +174,6 @@ export default function SessionPage() {
 
     const items = (itemsData as Item[]) || []
 
-    // Fetch scores for all items
     if (items.length > 0 && framework) {
       const itemIds = items.map((item) => item.id)
       const { data: scoresData } = await supabase
@@ -172,7 +184,6 @@ export default function SessionPage() {
 
       const scores = (scoresData as Score[]) || []
 
-      // Attach scores to items
       const itemsWithScores: ItemWithScore[] = items.map((item) => ({
         ...item,
         score: scores.find((s) => s.item_id === item.id),
@@ -193,43 +204,7 @@ export default function SessionPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!slug) {
-      navigate('/')
-      return
-    }
-
-    const fetchSession = async () => {
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('sessions')
-          .select('*')
-          .eq('slug', slug)
-          .single()
-
-        if (fetchError) {
-          if (fetchError.code === 'PGRST116') {
-            setError('Session not found')
-          } else {
-            throw fetchError
-          }
-          return
-        }
-
-        const sessionData = data as Session
-        // Default view to 'scoring' if not set (backwards compatibility)
-        setSession({ ...sessionData, view: sessionData.view || 'scoring' })
-        await fetchItems(sessionData.id, sessionData.framework)
-      } catch (err) {
-        console.error('Error fetching session:', err)
-        setError('Failed to load session')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSession()
-  }, [slug, navigate, fetchItems])
+  // Session data is loaded by SessionLayout — no fetch needed here
 
   // Update browser tab title when session name changes
   useEffect(() => {
@@ -243,67 +218,10 @@ export default function SessionPage() {
     }
   }, [session?.name, session?.slug])
 
-  // Real-time subscriptions for collaborative editing
+  // Real-time subscription for scores (items handled by SessionLayout)
   useEffect(() => {
     if (!session) return
 
-    // Subscribe to items table changes for this session
-    const itemsChannel = supabase
-      .channel(`items:session_id=eq.${session.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'items',
-          filter: `session_id=eq.${session.id}`,
-        },
-        (payload) => {
-          const newItem = payload.new as Item
-          setItems((prevItems) => {
-            // Avoid duplicates (in case we added it ourselves)
-            if (prevItems.some((item) => item.id === newItem.id)) {
-              return prevItems
-            }
-            return [...prevItems, newItem]
-          })
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'items',
-          filter: `session_id=eq.${session.id}`,
-        },
-        (payload) => {
-          const updatedItem = payload.new as Item
-          setItems((prevItems) =>
-            prevItems.map((item) =>
-              item.id === updatedItem.id ? { ...item, ...updatedItem } : item
-            )
-          )
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'items',
-          filter: `session_id=eq.${session.id}`,
-        },
-        (payload) => {
-          const deletedItem = payload.old as Item
-          setItems((prevItems) =>
-            prevItems.filter((item) => item.id !== deletedItem.id)
-          )
-        }
-      )
-      .subscribe()
-
-    // Subscribe to scores table changes
     const scoresChannel = supabase
       .channel(`scores:session_${session.id}`)
       .on(
@@ -395,7 +313,6 @@ export default function SessionPage() {
 
     // Cleanup subscriptions on unmount
     return () => {
-      supabase.removeChannel(itemsChannel)
       supabase.removeChannel(scoresChannel)
       supabase.removeChannel(sessionChannel)
     }
@@ -723,26 +640,12 @@ export default function SessionPage() {
     navigate(`/s/${slug}`)
   }
 
-  // Initialize local view from localStorage on mount
-  useEffect(() => {
-    if (!slug) return
-    const savedView = localStorage.getItem(`priori_view_${slug}`)
-    // Support new view modes, and migrate legacy views to 'list'
-    if (savedView === 'roadmap') {
-      setLocalView('roadmap')
-    } else if (savedView === 'capacity') {
-      setLocalView('capacity')
-    } else if (savedView && ['list', 'scoring', 'estimates', 'backlog'].includes(savedView)) {
-      // Migrate legacy views to 'list'
-      setLocalView('list')
-    }
-  }, [slug])
-
   const handleViewChange = (view: ViewMode) => {
-    setLocalView(view)
-    // Persist to localStorage for this session only (not synced across participants)
-    if (slug) {
-      localStorage.setItem(`priori_view_${slug}`, view)
+    if (!slug) return
+    switch (view) {
+      case 'roadmap': navigate(`/s/${slug}/roadmap`); break
+      case 'capacity': navigate(`/s/${slug}/capacity`); break
+      default: navigate(`/s/${slug}`); break
     }
   }
 
@@ -1045,80 +948,13 @@ export default function SessionPage() {
   // They will be re-added when Phase 3 (Dedicated Flows) is implemented.
   // The handlers can be restored from git history if needed.
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading session...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error || !session) {
-    const isNetworkError = error?.toLowerCase().includes('network') || error?.toLowerCase().includes('fetch')
-
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full text-center">
-          <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isNetworkError ? 'bg-amber-100' : 'bg-gray-100'}`}>
-            <svg
-              className={`w-8 h-8 ${isNetworkError ? 'text-amber-600' : 'text-gray-400'}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {isNetworkError ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              )}
-            </svg>
-          </div>
-          {!isNetworkError && <h1 className="text-6xl font-bold text-gray-300 mb-2">404</h1>}
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            {isNetworkError ? 'Connection problem' : 'Session not found'}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {isNetworkError
-              ? 'Unable to connect. Please check your internet connection and try again.'
-              : "This session doesn't exist or may have been deleted."}
-          </p>
-          <div className="flex gap-3 justify-center">
-            {isNetworkError && (
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-              >
-                Try Again
-              </button>
-            )}
-            <button
-              onClick={() => navigate('/')}
-              className={`font-semibold py-2 px-4 rounded-lg transition-colors ${isNetworkError ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
-            >
-              {isNetworkError ? 'Go Home' : 'Create New Session'}
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Session data provided by SessionLayout — guard just in case
+  if (!session) return null
 
   return (
-    <div className="min-h-screen bg-gray-50 font-body">
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <>
+      {/* Mobile header — hidden on desktop where AppShell provides the header */}
+      <header className="bg-white shadow-sm border-b border-gray-200 lg:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between gap-3">
             <a href="/" className="flex-shrink-0" title="Go to home">
@@ -1233,19 +1069,6 @@ export default function SessionPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Main content area */}
         <div className="space-y-4 sm:space-y-6 pb-24">
-            {/* Desktop Add Item button - shown across all views */}
-            <div className="hidden lg:flex justify-end">
-              <button
-                onClick={() => setIsAddSheetOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Item
-              </button>
-            </div>
-
             {/* List View - the main backlog-centric view */}
             {localView === 'list' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
@@ -1335,8 +1158,6 @@ export default function SessionPage() {
                   onStatusChange={handleStatusChange}
                   onStatusChangeMultiple={handleStatusChangeMultiple}
                   onAssignPeriod={handleAssignPeriod}
-                  onScore={(selectedItemIds) => navigate(`/s/${slug}/score`, { state: { selectedItemIds } })}
-                  onEstimate={(selectedItemIds) => navigate(`/s/${slug}/estimate`, { state: { selectedItemIds } })}
                   onAddChild={(parentId, parentLevel, title) => {
                     handleAddItem({
                       title,
@@ -1588,6 +1409,6 @@ export default function SessionPage() {
         onSendMessage={sendMessage}
       />
 
-    </div>
+    </>
   )
 }

@@ -10,6 +10,8 @@ import {
   canReparent,
   canAddChild,
   getRolledUpEstimate,
+  getRolledUpScore,
+  hasChildren,
   getStatusRollup,
   isAncestorOf,
 } from '../../src/lib/hierarchy'
@@ -329,5 +331,87 @@ describe('isAncestorOf', () => {
 
   it('returns false for self', () => {
     expect(isAncestorOf('A', 'A', sampleItems)).toBe(false)
+  })
+})
+
+describe('getRolledUpScore', () => {
+  it('returns average score of scored leaf descendants', () => {
+    const items = [
+      makeItem('parent', { item_level: 0 as ItemLevel }),
+      makeItem('child1', { parent_item_id: 'parent', item_level: 1 as ItemLevel, score: { id: 's1', item_id: 'child1', framework: 'rice', criteria: {}, calculated_score: 10 } }),
+      makeItem('child2', { parent_item_id: 'parent', item_level: 1 as ItemLevel, score: { id: 's2', item_id: 'child2', framework: 'rice', criteria: {}, calculated_score: 20 } }),
+    ]
+    const result = getRolledUpScore('parent', items)
+    expect(result.score).toBe(15) // (10 + 20) / 2
+  })
+
+  it('ignores unscored leaves in average', () => {
+    const items = [
+      makeItem('parent', { item_level: 0 as ItemLevel }),
+      makeItem('child1', { parent_item_id: 'parent', item_level: 1 as ItemLevel, score: { id: 's1', item_id: 'child1', framework: 'rice', criteria: {}, calculated_score: 12 } }),
+      makeItem('child2', { parent_item_id: 'parent', item_level: 1 as ItemLevel }),
+    ]
+    const result = getRolledUpScore('parent', items)
+    expect(result.score).toBe(12) // only child1 is scored
+  })
+
+  it('returns null when no descendants are scored', () => {
+    const items = [
+      makeItem('parent', { item_level: 0 as ItemLevel }),
+      makeItem('child1', { parent_item_id: 'parent', item_level: 1 as ItemLevel }),
+    ]
+    const result = getRolledUpScore('parent', items)
+    expect(result.score).toBeNull()
+  })
+
+  it('returns null for items with no children', () => {
+    const items = [makeItem('leaf', { item_level: 0 as ItemLevel })]
+    const result = getRolledUpScore('leaf', items)
+    expect(result.score).toBeNull()
+  })
+
+  it('only averages leaf items, not intermediate parents', () => {
+    const items = [
+      makeItem('grandparent', { item_level: 0 as ItemLevel }),
+      makeItem('parent', { parent_item_id: 'grandparent', item_level: 1 as ItemLevel, score: { id: 's1', item_id: 'parent', framework: 'rice', criteria: {}, calculated_score: 99 } }),
+      makeItem('leaf1', { parent_item_id: 'parent', item_level: 2 as ItemLevel, score: { id: 's2', item_id: 'leaf1', framework: 'rice', criteria: {}, calculated_score: 10 } }),
+      makeItem('leaf2', { parent_item_id: 'parent', item_level: 2 as ItemLevel, score: { id: 's3', item_id: 'leaf2', framework: 'rice', criteria: {}, calculated_score: 20 } }),
+    ]
+    const result = getRolledUpScore('grandparent', items)
+    expect(result.score).toBe(15) // (10 + 20) / 2, parent's 99 is ignored
+  })
+
+  it('returns highest MoSCoW category among leaves', () => {
+    const items = [
+      makeItem('parent', { item_level: 0 as ItemLevel }),
+      makeItem('child1', { parent_item_id: 'parent', item_level: 1 as ItemLevel, score: { id: 's1', item_id: 'child1', framework: 'moscow', criteria: { category: 'could' }, calculated_score: 0 } }),
+      makeItem('child2', { parent_item_id: 'parent', item_level: 1 as ItemLevel, score: { id: 's2', item_id: 'child2', framework: 'moscow', criteria: { category: 'must' }, calculated_score: 0 } }),
+    ]
+    const result = getRolledUpScore('parent', items)
+    expect(result.moscowCategory).toBe('must')
+  })
+
+  it('returns null moscowCategory when no children have categories', () => {
+    const items = [
+      makeItem('parent', { item_level: 0 as ItemLevel }),
+      makeItem('child1', { parent_item_id: 'parent', item_level: 1 as ItemLevel }),
+    ]
+    const result = getRolledUpScore('parent', items)
+    expect(result.moscowCategory).toBeNull()
+  })
+})
+
+describe('hasChildren', () => {
+  it('returns true for parent items', () => {
+    const items = [
+      makeItem('parent'),
+      makeItem('child', { parent_item_id: 'parent' }),
+    ]
+    expect(hasChildren('parent', items)).toBe(true)
+  })
+
+  it('returns false for leaf items', () => {
+    const items = [makeItem('leaf')]
+    expect(hasChildren('leaf', items)).toBe(false)
   })
 })

@@ -78,8 +78,8 @@ describe('LandingPage', () => {
       </BrowserRouter>
     )
 
-    expect(screen.getByText('Scoring Frameworks')).toBeInTheDocument()
-    expect(screen.getByText('Planning Poker')).toBeInTheDocument()
+    expect(screen.getByText('Prioritisation')).toBeInTheDocument()
+    expect(screen.getByText('Poker Planner')).toBeInTheDocument()
     expect(screen.getByText('Backlog Management')).toBeInTheDocument()
     expect(screen.getByText('Visual Roadmap')).toBeInTheDocument()
     expect(screen.getByText('Capacity Planning')).toBeInTheDocument()

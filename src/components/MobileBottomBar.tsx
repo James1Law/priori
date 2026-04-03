@@ -47,7 +47,7 @@ export default function MobileBottomBar({
 }: MobileBottomBarProps) {
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40"
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 lg:hidden"
       style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
       {/* View Toggle */}

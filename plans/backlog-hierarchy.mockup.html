@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priori – Backlog with Hierarchy Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; color: #111827; }
+  h1, h2, h3, h4 { font-family: 'Poppins', system-ui, sans-serif; }
+
+  /* ── Mockup Switcher ── */
+  .mockup-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e1b4b; color: white; padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px; font-size: 13px;
+  }
+  .mockup-bar span.sep { opacity: 0.4; }
+
+  /* ── App Shell ── */
+  .app { display: flex; height: 100vh; padding-top: 44px; }
+
+  /* ── Sidebar (collapsed) ── */
+  .sidebar {
+    width: 64px; background: white; border-right: 1px solid #e5e7eb;
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .sidebar-toggle {
+    padding: 16px 12px; border-bottom: 1px solid #e5e7eb;
+    display: flex; justify-content: center;
+  }
+  .sidebar-toggle button {
+    width: 32px; height: 32px; border-radius: 6px; border: none;
+    background: transparent; cursor: pointer; color: #6b7280;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-section { padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-item {
+    width: 48px; height: 40px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+    color: #6b7280; transition: all 0.15s; position: relative;
+  }
+  .nav-item:hover { background: #f3f4f6; color: #111827; }
+  .nav-item.active { background: #eef2ff; color: #4f46e5; }
+  .nav-item .nav-icon { width: 20px; height: 20px; }
+  .nav-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute; left: 56px; top: 50%; transform: translateY(-50%);
+    background: #1f2937; color: white; font-size: 12px; font-weight: 500;
+    padding: 4px 10px; border-radius: 6px; white-space: nowrap; z-index: 50;
+  }
+  .nav-item.disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+  .nav-divider { height: 1px; background: #e5e7eb; margin: 4px 8px; }
+  .sidebar-footer { margin-top: auto; padding: 12px 8px; }
+
+  /* ── Top Header ── */
+  .top-header {
+    height: 52px; background: white; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #4f46e5; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .presence-badge {
+    display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b7280;
+    cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  }
+  .presence-badge:hover { background: #f3f4f6; }
+  .green-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── Module Header ── */
+  .module-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .module-title { font-size: 22px; font-weight: 700; color: #111827; }
+  .add-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; border: none;
+    background: #4f46e5; color: white; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .add-btn:hover { background: #4338ca; }
+
+  /* ── Toolbar ── */
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .search-box {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 8px; background: white;
+  }
+  .search-box input {
+    border: none; outline: none; font-size: 14px; color: #111827; width: 100%;
+    font-family: 'Inter', sans-serif;
+  }
+  .search-box input::placeholder { color: #9ca3af; }
+  .search-icon { width: 16px; height: 16px; color: #9ca3af; flex-shrink: 0; }
+  .toolbar-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+    background: white; font-size: 13px; color: #4b5563; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .toolbar-btn:hover { border-color: #9ca3af; }
+  .toolbar-btn svg { width: 14px; height: 14px; }
+
+  /* ── Action Bar (shown when items selected) ── */
+  .action-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; background: #eef2ff; border: 1px solid #c7d2fe;
+    border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: #4338ca;
+    transition: all 0.2s;
+  }
+  .action-bar.hidden { display: none; }
+  .action-buttons { display: flex; gap: 8px; }
+  .action-btn {
+    padding: 5px 12px; border: 1px solid #c7d2fe; border-radius: 6px;
+    background: white; font-size: 12px; color: #4338ca; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-weight: 500;
+  }
+  .action-btn:hover { background: #eef2ff; }
+  .action-btn.danger { color: #dc2626; border-color: #fecaca; }
+  .action-btn.danger:hover { background: #fef2f2; }
+
+  /* ── Sort Bar ── */
+  .sort-bar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    font-size: 13px; color: #6b7280;
+  }
+  .sort-bar select {
+    border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 8px;
+    font-size: 13px; color: #374151; background: white; font-family: 'Inter', sans-serif;
+  }
+
+  /* ── Item List ── */
+  .item-list { display: flex; flex-direction: column; gap: 2px; }
+
+  /* ── Item Row ── */
+  .item-row {
+    display: flex; align-items: center; gap: 0;
+    background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+    transition: all 0.1s; overflow: hidden;
+  }
+  .item-row:hover { border-color: #d1d5db; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+
+  /* Left accent bar */
+  .accent-bar {
+    width: 3px; align-self: stretch; flex-shrink: 0; border-radius: 3px 0 0 3px;
+  }
+  .accent-goal { background: #f472b6; }       /* pink-400 */
+  .accent-initiative { background: #60a5fa; }  /* blue-400 */
+  .accent-epic { background: #a78bfa; }        /* purple-400 */
+  .accent-story { background: #fbbf24; }       /* amber-400 */
+  .accent-subtask { background: #94a3b8; }     /* slate-400 */
+  .accent-none { background: transparent; }
+
+  .item-inner {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px 10px 0; min-width: 0;
+  }
+
+  /* Chevron */
+  .chevron-btn {
+    width: 24px; height: 24px; border-radius: 4px; border: none;
+    background: transparent; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+    color: #9ca3af; transition: all 0.15s;
+  }
+  .chevron-btn:hover { background: #f3f4f6; color: #6b7280; }
+  .chevron-btn svg { width: 14px; height: 14px; transition: transform 0.15s; }
+  .chevron-btn.expanded svg { transform: rotate(90deg); }
+  .chevron-spacer { width: 24px; flex-shrink: 0; } /* when no children */
+
+  /* Checkbox */
+  .item-checkbox {
+    width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* Drag handle */
+  .drag-handle {
+    width: 16px; height: 16px; color: #d1d5db; cursor: grab; flex-shrink: 0;
+  }
+  .drag-handle:hover { color: #9ca3af; }
+
+  /* Level badge */
+  .level-badge {
+    padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.02em; flex-shrink: 0; border: 1px solid;
+  }
+  .badge-goal { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+  .badge-initiative { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+  .badge-epic { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+  .badge-story { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+  .badge-subtask { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
+  /* Item content */
+  .item-content { flex: 1; min-width: 0; }
+  .item-title-row { display: flex; align-items: center; gap: 8px; }
+  .item-title {
+    font-weight: 600; font-size: 14px; color: #111827;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .child-count {
+    font-size: 11px; color: #9ca3af; background: #f3f4f6;
+    padding: 0 5px; border-radius: 3px; font-weight: 500; flex-shrink: 0;
+  }
+  .item-meta { font-size: 12px; color: #9ca3af; margin-top: 1px; }
+
+  /* Right side badges */
+  .item-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .item-status {
+    padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .status-todo { background: #f3f4f6; color: #6b7280; }
+  .status-progress { background: #eef2ff; color: #4f46e5; }
+  .status-done { background: #ecfdf5; color: #059669; }
+  .item-sp {
+    font-size: 12px; font-weight: 600; color: #4f46e5; background: #eef2ff;
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .item-score {
+    font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .score-high { background: #ecfdf5; color: #059669; }
+  .score-mid { background: #fffbeb; color: #d97706; }
+
+  /* Rolled up indicator */
+  .rolled-up {
+    font-size: 10px; color: #9ca3af; font-style: italic;
+  }
+
+  /* ── Add item row ── */
+  .add-item-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; color: #9ca3af; cursor: pointer;
+    border-radius: 8px; font-size: 14px; font-weight: 500;
+  }
+  .add-item-row:hover { background: #f3f4f6; color: #6366f1; }
+
+  /* ── Cutoff line ── */
+  .cutoff-line {
+    display: flex; align-items: center; gap: 12px; padding: 8px 0;
+  }
+  .cutoff-line-bar {
+    flex: 1; height: 2px; border-radius: 1px;
+  }
+  .cutoff-red { background: #ef4444; }
+  .cutoff-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .cutoff-label-red { color: #ef4444; }
+</style>
+</head>
+<body>
+
+<div class="mockup-bar">
+  <strong style="font-family: Poppins, sans-serif;">Backlog with Hierarchy — Desktop Mockup</strong>
+  <span class="sep">|</span>
+  <span style="opacity: 0.5;">Click chevrons to expand/collapse · Checkboxes for multi-select status changes only</span>
+</div>
+
+<div class="app">
+  <!-- ── Sidebar (collapsed) ── -->
+  <aside class="sidebar">
+    <div class="sidebar-toggle">
+      <button>
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-section">
+      <a class="nav-item active" data-tooltip="Backlog">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Roadmap">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Capacity Planning">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Prioritisation">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Poker Planner">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      </a>
+      <div class="nav-divider"></div>
+      <a class="nav-item disabled" data-tooltip="Sprints"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></a>
+      <a class="nav-item disabled" data-tooltip="Analytics"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" data-tooltip="Settings"><svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a>
+    </div>
+  </aside>
+
+  <!-- ── Main Area ── -->
+  <div class="main">
+    <header class="top-header">
+      <div class="header-left">
+        <div class="logo-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 12L36 34H12L24 12Z" fill="white"/></svg></div>
+        <span class="logo-text">Priori</span>
+      </div>
+      <div class="header-right">
+        <div class="presence-badge">
+          <span class="green-dot"></span><span>4 online</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Module Header -->
+      <div class="module-header">
+        <h1 class="module-title">Backlog</h1>
+        <button class="add-btn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Add Item
+        </button>
+      </div>
+
+      <!-- Search + Filters -->
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" placeholder="Search items...">
+        </div>
+        <button class="toolbar-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+          Filters
+        </button>
+      </div>
+
+      <!-- Action Bar (shown when items selected) -->
+      <div class="action-bar" id="actionBar">
+        <span><strong>2 items</strong> selected</span>
+        <div class="action-buttons">
+          <button class="action-btn">Set Status</button>
+          <button class="action-btn danger">Delete</button>
+          <button class="action-btn" onclick="clearSelection()" style="border-color:#c7d2fe;">Clear</button>
+        </div>
+      </div>
+
+      <!-- Sort Bar -->
+      <div class="sort-bar">
+        <span>Sort by:</span>
+        <select>
+          <option>Manual</option>
+          <option>Priority Score</option>
+          <option>Story Points</option>
+          <option>Status</option>
+          <option>Recently Added</option>
+        </select>
+        <span style="margin-left: 8px; color: #d1d5db;">|</span>
+        <span style="margin-left: 8px;">12 items</span>
+      </div>
+
+      <!-- Item List -->
+      <div class="item-list" id="itemList">
+
+        <!-- ═══ GOAL: Q2 Product Launch (Level 0) ═══ -->
+        <div class="item-row" data-id="goal-1">
+          <div class="accent-bar accent-goal"></div>
+          <div class="item-inner">
+            <button class="chevron-btn expanded" onclick="toggleExpand(this, 'goal-1-children')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+            <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+            <span class="level-badge badge-goal">Goal</span>
+            <div class="item-content">
+              <div class="item-title-row">
+                <span class="item-title">Q2 Product Launch</span>
+              </div>
+              <div class="item-meta">by James · 3 children</div>
+            </div>
+            <div class="item-badges">
+              <span class="item-status status-progress">In Progress</span>
+              <span class="item-sp rolled-up" title="Rolled up from children">21 SP</span>
+              <span class="item-score score-high">32</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Children of Goal 1 -->
+        <div id="goal-1-children">
+
+          <!-- ── Initiative: Auth & Security (Level 1) ── -->
+          <div class="item-row" data-id="init-1" style="margin-left: 1.5rem;">
+            <div class="accent-bar accent-initiative"></div>
+            <div class="item-inner">
+              <button class="chevron-btn expanded" onclick="toggleExpand(this, 'init-1-children')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+              <input type="checkbox" class="item-checkbox" checked onchange="updateSelection()">
+              <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+              <span class="level-badge badge-initiative">Initiative</span>
+              <div class="item-content">
+                <div class="item-title-row">
+                  <span class="item-title">Authentication & Security</span>
+                </div>
+                <div class="item-meta">by James · 2 children</div>
+              </div>
+              <div class="item-badges">
+                <span class="item-status status-progress">In Progress</span>
+                <span class="item-sp rolled-up" title="Rolled up from children">13 SP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Children of Initiative 1 -->
+          <div id="init-1-children">
+
+            <!-- Epic: OAuth Integration (Level 2) -->
+            <div class="item-row" data-id="epic-1" style="margin-left: 3rem;">
+              <div class="accent-bar accent-epic"></div>
+              <div class="item-inner">
+                <button class="chevron-btn" onclick="toggleExpand(this, 'epic-1-children')">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+                <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                <span class="level-badge badge-epic">Epic</span>
+                <div class="item-content">
+                  <div class="item-title-row">
+                    <span class="item-title">OAuth Integration</span>
+                    <span class="child-count">3</span>
+                  </div>
+                  <div class="item-meta">by Sarah</div>
+                </div>
+                <div class="item-badges">
+                  <span class="item-status status-progress">In Progress</span>
+                  <span class="item-sp">8 SP</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden children of Epic 1 (collapsed) -->
+            <div id="epic-1-children" style="display: none;">
+              <div class="item-row" style="margin-left: 4.5rem;">
+                <div class="accent-bar accent-story"></div>
+                <div class="item-inner">
+                  <div class="chevron-spacer"></div>
+                  <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+                  <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                  <span class="level-badge badge-story">Story</span>
+                  <div class="item-content">
+                    <div class="item-title-row"><span class="item-title">Google OAuth provider</span></div>
+                    <div class="item-meta">by Sarah</div>
+                  </div>
+                  <div class="item-badges">
+                    <span class="item-status status-done">Done</span>
+                    <span class="item-sp">3 SP</span>
+                  </div>
+                </div>
+              </div>
+              <div class="item-row" style="margin-left: 4.5rem;">
+                <div class="accent-bar accent-story"></div>
+                <div class="item-inner">
+                  <div class="chevron-spacer"></div>
+                  <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+                  <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                  <span class="level-badge badge-story">Story</span>
+                  <div class="item-content">
+                    <div class="item-title-row"><span class="item-title">GitHub OAuth provider</span></div>
+                    <div class="item-meta">by Sarah</div>
+                  </div>
+                  <div class="item-badges">
+                    <span class="item-status status-progress">In Progress</span>
+                    <span class="item-sp">3 SP</span>
+                  </div>
+                </div>
+              </div>
+              <div class="item-row" style="margin-left: 4.5rem;">
+                <div class="accent-bar accent-story"></div>
+                <div class="item-inner">
+                  <div class="chevron-spacer"></div>
+                  <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+                  <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                  <span class="level-badge badge-story">Story</span>
+                  <div class="item-content">
+                    <div class="item-title-row"><span class="item-title">Session token migration</span></div>
+                    <div class="item-meta">by James</div>
+                  </div>
+                  <div class="item-badges">
+                    <span class="item-status status-todo">To Do</span>
+                    <span class="item-sp">2 SP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Epic: API Rate Limiting (Level 2, leaf) -->
+            <div class="item-row" style="margin-left: 3rem;">
+              <div class="accent-bar accent-epic"></div>
+              <div class="item-inner">
+                <div class="chevron-spacer"></div>
+                <input type="checkbox" class="item-checkbox" checked onchange="updateSelection()">
+                <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                <span class="level-badge badge-epic">Epic</span>
+                <div class="item-content">
+                  <div class="item-title-row"><span class="item-title">API Rate Limiting</span></div>
+                  <div class="item-meta">by James</div>
+                </div>
+                <div class="item-badges">
+                  <span class="item-status status-todo">To Do</span>
+                  <span class="item-sp">5 SP</span>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /init-1-children -->
+
+          <!-- ── Initiative: Dashboard (Level 1, collapsed) ── -->
+          <div class="item-row" style="margin-left: 1.5rem;">
+            <div class="accent-bar accent-initiative"></div>
+            <div class="item-inner">
+              <button class="chevron-btn" onclick="toggleExpand(this, 'init-2-children')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+              <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+              <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+              <span class="level-badge badge-initiative">Initiative</span>
+              <div class="item-content">
+                <div class="item-title-row">
+                  <span class="item-title">Dashboard & Reporting</span>
+                  <span class="child-count">4</span>
+                </div>
+                <div class="item-meta">by Tom · 4 children</div>
+              </div>
+              <div class="item-badges">
+                <span class="item-status status-todo">To Do</span>
+                <span class="item-sp rolled-up">8 SP</span>
+              </div>
+            </div>
+          </div>
+          <div id="init-2-children" style="display: none;">
+            <div class="item-row" style="margin-left: 3rem;">
+              <div class="accent-bar accent-epic"></div>
+              <div class="item-inner">
+                <div class="chevron-spacer"></div>
+                <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+                <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                <span class="level-badge badge-epic">Epic</span>
+                <div class="item-content">
+                  <div class="item-title-row"><span class="item-title">Analytics Widget</span></div>
+                  <div class="item-meta">by Tom</div>
+                </div>
+                <div class="item-badges">
+                  <span class="item-status status-todo">To Do</span>
+                  <span class="item-sp">5 SP</span>
+                </div>
+              </div>
+            </div>
+            <div class="item-row" style="margin-left: 3rem;">
+              <div class="accent-bar accent-epic"></div>
+              <div class="item-inner">
+                <div class="chevron-spacer"></div>
+                <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+                <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                <span class="level-badge badge-epic">Epic</span>
+                <div class="item-content">
+                  <div class="item-title-row"><span class="item-title">CSV Export</span></div>
+                  <div class="item-meta">by Tom</div>
+                </div>
+                <div class="item-badges">
+                  <span class="item-status status-todo">To Do</span>
+                  <span class="item-sp">3 SP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /goal-1-children -->
+
+        <!-- ── Cutoff Line ── -->
+        <div class="cutoff-line">
+          <div class="cutoff-line-bar cutoff-red"></div>
+          <span class="cutoff-label cutoff-label-red">Release Cut-off</span>
+          <div class="cutoff-line-bar cutoff-red"></div>
+        </div>
+
+        <!-- ═══ Flat items (no hierarchy) ═══ -->
+        <div class="item-row">
+          <div class="accent-bar accent-none"></div>
+          <div class="item-inner">
+            <div class="chevron-spacer"></div>
+            <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+            <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+            <div class="item-content">
+              <div class="item-title-row"><span class="item-title">Mobile responsive navigation</span></div>
+              <div class="item-meta">by Tom</div>
+            </div>
+            <div class="item-badges">
+              <span class="item-status status-done">Done</span>
+              <span class="item-sp">3 SP</span>
+              <span class="item-score score-mid">18</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="item-row">
+          <div class="accent-bar accent-none"></div>
+          <div class="item-inner">
+            <div class="chevron-spacer"></div>
+            <input type="checkbox" class="item-checkbox" onchange="updateSelection()">
+            <svg class="drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+            <div class="item-content">
+              <div class="item-title-row"><span class="item-title">Team notification system</span></div>
+              <div class="item-meta">by Sarah</div>
+            </div>
+            <div class="item-badges">
+              <span class="item-status status-todo">To Do</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Item -->
+        <div class="add-item-row">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Item
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleExpand(btn, childrenId) {
+    const children = document.getElementById(childrenId);
+    if (!children) return;
+    const isExpanded = btn.classList.contains('expanded');
+    if (isExpanded) {
+      btn.classList.remove('expanded');
+      children.style.display = 'none';
+    } else {
+      btn.classList.add('expanded');
+      children.style.display = 'block';
+    }
+  }
+
+  function updateSelection() {
+    const checked = document.querySelectorAll('.item-checkbox:checked');
+    const bar = document.getElementById('actionBar');
+    if (checked.length > 0) {
+      bar.classList.remove('hidden');
+      bar.querySelector('span').innerHTML = `<strong>${checked.length} item${checked.length > 1 ? 's' : ''}</strong> selected`;
+    } else {
+      bar.classList.add('hidden');
+    }
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.item-checkbox:checked').forEach(cb => cb.checked = false);
+    updateSelection();
+  }
+
+  // Init
+  updateSelection();
+</script>
+</body>
+</html>

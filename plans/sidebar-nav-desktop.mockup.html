@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priori – Sidebar Navigation Mockup (Desktop)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; color: #111827; }
+  h1, h2, h3, h4 { font-family: 'Poppins', system-ui, sans-serif; }
+
+  /* ── Mockup Switcher ── */
+  .mockup-switcher {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e1b4b; color: white; padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px; font-size: 13px;
+  }
+  .mockup-switcher button {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: white; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif;
+  }
+  .mockup-switcher button.active { background: #4f46e5; border-color: #4f46e5; }
+  .mockup-switcher span { opacity: 0.6; }
+
+  /* ── App Shell ── */
+  .app { display: flex; height: 100vh; padding-top: 44px; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 260px; background: white; border-right: 1px solid #e5e7eb;
+    display: flex; flex-direction: column; flex-shrink: 0;
+    transition: width 0.2s ease;
+  }
+  .sidebar.collapsed { width: 64px; }
+
+  .sidebar-header {
+    padding: 16px; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sidebar.collapsed .sidebar-header { padding: 16px 12px; justify-content: center; }
+
+  .collapse-btn {
+    width: 32px; height: 32px; border-radius: 6px; border: none;
+    background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #6b7280; flex-shrink: 0;
+  }
+  .collapse-btn:hover { background: #f3f4f6; }
+
+  .session-info { flex: 1; min-width: 0; }
+  .sidebar.collapsed .session-info { display: none; }
+  .session-name {
+    font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 15px;
+    color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .session-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+  /* ── Nav Sections ── */
+  .nav-section { padding: 12px 8px; }
+  .sidebar.collapsed .nav-section { padding: 12px 8px; }
+  .nav-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #9ca3af; padding: 0 8px; margin-bottom: 4px;
+  }
+  .sidebar.collapsed .nav-label { display: none; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+    color: #4b5563; transition: all 0.15s; text-decoration: none; position: relative;
+  }
+  .sidebar.collapsed .nav-item { padding: 10px; justify-content: center; }
+  .nav-item:hover { background: #f3f4f6; color: #111827; }
+  .nav-item.active { background: #eef2ff; color: #4f46e5; }
+  .nav-item.active .nav-icon { color: #4f46e5; }
+  .nav-item.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+  .nav-icon { width: 20px; height: 20px; flex-shrink: 0; color: #6b7280; }
+  .nav-item.active .nav-icon { color: #4f46e5; }
+  .nav-text { white-space: nowrap; }
+  .sidebar.collapsed .nav-text { display: none; }
+
+  .coming-soon {
+    font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    background: #f3f4f6; color: #9ca3af; padding: 2px 6px; border-radius: 4px; margin-left: auto;
+  }
+  .sidebar.collapsed .coming-soon { display: none; }
+
+  .nav-divider { height: 1px; background: #e5e7eb; margin: 4px 8px; }
+
+  /* Tooltip for collapsed state */
+  .sidebar.collapsed .nav-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute; left: 56px; top: 50%; transform: translateY(-50%);
+    background: #1f2937; color: white; font-size: 12px; font-weight: 500;
+    padding: 4px 10px; border-radius: 6px; white-space: nowrap; z-index: 50;
+  }
+
+  /* ── Sidebar Footer ── */
+  .sidebar-footer {
+    margin-top: auto; padding: 12px 8px; border-top: 1px solid #e5e7eb;
+  }
+
+  /* ── Top Header ── */
+  .top-header {
+    height: 52px; background: white; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #4f46e5; }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .presence-badge {
+    display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b7280;
+    cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  }
+  .presence-badge:hover { background: #f3f4f6; }
+  .green-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .chat-icon { width: 16px; height: 16px; color: #6b7280; }
+
+  .header-btn {
+    padding: 6px; border-radius: 6px; border: none; background: transparent;
+    cursor: pointer; color: #6b7280; display: flex; align-items: center;
+  }
+  .header-btn:hover { background: #f3f4f6; color: #111827; }
+
+  /* ── Main Content ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── Module Header (in content area) ── */
+  .module-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .module-title { font-size: 22px; font-weight: 700; color: #111827; }
+  .add-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; border: none;
+    background: #4f46e5; color: white; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .add-btn:hover { background: #4338ca; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .search-box {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 8px; background: white;
+  }
+  .search-box input {
+    border: none; outline: none; font-size: 14px; color: #111827; width: 100%;
+    font-family: 'Inter', sans-serif;
+  }
+  .search-box input::placeholder { color: #9ca3af; }
+  .search-icon { width: 16px; height: 16px; color: #9ca3af; flex-shrink: 0; }
+
+  .filter-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 8px;
+    background: white; font-size: 13px; color: #4b5563; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .filter-btn:hover { border-color: #9ca3af; }
+
+  /* ── Action Bar ── */
+  .action-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: #6b7280;
+  }
+  .action-buttons { display: flex; gap: 8px; }
+  .action-btn {
+    padding: 5px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+    background: white; font-size: 12px; color: #4b5563; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .action-btn:hover { border-color: #9ca3af; background: #f9fafb; }
+
+  /* ── Sort Bar ── */
+  .sort-bar {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    font-size: 13px; color: #6b7280;
+  }
+  .sort-bar select {
+    border: 1px solid #d1d5db; border-radius: 6px; padding: 4px 8px;
+    font-size: 13px; color: #374151; background: white; font-family: 'Inter', sans-serif;
+  }
+
+  /* ── Item List ── */
+  .item-list { display: flex; flex-direction: column; gap: 2px; }
+  .item-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; background: white; border: 1px solid #e5e7eb;
+    border-radius: 8px; transition: all 0.1s;
+  }
+  .item-row:hover { border-color: #d1d5db; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .item-checkbox { width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer; }
+  .item-drag { width: 16px; height: 16px; color: #d1d5db; cursor: grab; }
+  .item-rank {
+    width: 24px; height: 24px; border-radius: 4px; background: #eef2ff;
+    color: #4f46e5; font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .item-content { flex: 1; min-width: 0; }
+  .item-title { font-weight: 600; font-size: 14px; color: #111827; }
+  .item-meta { font-size: 12px; color: #9ca3af; margin-top: 1px; }
+  .item-status {
+    padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .status-todo { background: #f3f4f6; color: #6b7280; }
+  .status-progress { background: #eef2ff; color: #4f46e5; }
+  .status-done { background: #ecfdf5; color: #059669; }
+  .item-sp {
+    font-size: 12px; font-weight: 600; color: #4f46e5; background: #eef2ff;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .item-sp.empty { color: #d1d5db; background: transparent; }
+  .item-actions { display: flex; gap: 4px; }
+  .item-action-btn {
+    padding: 4px 8px; border-radius: 4px; border: none; background: transparent;
+    font-size: 12px; color: #6b7280; cursor: pointer; font-family: 'Inter', sans-serif;
+  }
+  .item-action-btn:hover { background: #f3f4f6; color: #111827; }
+  .item-action-btn.delete { color: #ef4444; }
+  .item-action-btn.delete:hover { background: #fef2f2; }
+
+  /* ── Hidden states ── */
+  .expanded-only { }
+  .collapsed-only { display: none; }
+  .sidebar.collapsed .expanded-only { display: none; }
+  .sidebar.collapsed .collapsed-only { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- Mockup Switcher -->
+<div class="mockup-switcher">
+  <strong style="font-family: Poppins, sans-serif;">Sidebar Navigation — Desktop Mockup</strong>
+  <span>|</span>
+  <button class="active" onclick="toggleSidebar(false)">Expanded</button>
+  <button onclick="toggleSidebar(true)">Collapsed</button>
+  <span style="margin-left: auto; opacity: 0.5;">Click a nav item to see active state change</span>
+</div>
+
+<div class="app">
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Session Info -->
+    <div class="sidebar-header">
+      <button class="collapse-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+      <div class="session-info">
+        <div class="session-name">Sprint Planning Q2</div>
+        <div class="session-meta">priori.work/s/sprint-q2</div>
+      </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <nav class="nav-section">
+      <div class="nav-label">Modules</div>
+
+      <a class="nav-item active" data-tooltip="Backlog" onclick="setActive(this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+        </svg>
+        <span class="nav-text">Backlog</span>
+      </a>
+
+      <a class="nav-item" data-tooltip="Roadmap" onclick="setActive(this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+        </svg>
+        <span class="nav-text">Roadmap</span>
+      </a>
+
+      <a class="nav-item" data-tooltip="Capacity" onclick="setActive(this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span class="nav-text">Capacity Planning</span>
+      </a>
+
+      <a class="nav-item" data-tooltip="Prioritisation" onclick="setActive(this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+        </svg>
+        <span class="nav-text">Prioritisation</span>
+      </a>
+
+      <a class="nav-item" data-tooltip="Poker Planner" onclick="setActive(this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        <span class="nav-text">Poker Planner</span>
+      </a>
+
+      <div class="nav-divider"></div>
+      <div class="nav-label">Coming Soon</div>
+
+      <a class="nav-item disabled" data-tooltip="Sprints">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="nav-text">Sprints</span>
+        <span class="coming-soon">Soon</span>
+      </a>
+
+      <a class="nav-item disabled" data-tooltip="Analytics">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="nav-text">Analytics</span>
+        <span class="coming-soon">Soon</span>
+      </a>
+
+      <a class="nav-item disabled" data-tooltip="Integrations">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+        <span class="nav-text">Integrations</span>
+        <span class="coming-soon">Soon</span>
+      </a>
+
+      <a class="nav-item disabled" data-tooltip="Import / Export">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+        </svg>
+        <span class="nav-text">Import / Export</span>
+        <span class="coming-soon">Soon</span>
+      </a>
+
+      <a class="nav-item disabled" data-tooltip="Dashboards">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/>
+        </svg>
+        <span class="nav-text">Dashboards</span>
+        <span class="coming-soon">Soon</span>
+      </a>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <a class="nav-item" data-tooltip="Settings" onclick="setActive(this)">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span class="nav-text">Settings</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main Area ── -->
+  <div class="main">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <div class="logo-mark">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 12L36 34H12L24 12Z" fill="white"/></svg>
+        </div>
+        <span class="logo-text">Priori</span>
+      </div>
+      <div class="header-right">
+        <div class="presence-badge">
+          <span class="green-dot"></span>
+          <span>4 online</span>
+          <svg class="chat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+        </div>
+        <button class="header-btn" title="More options">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <div class="content">
+      <!-- Module Header -->
+      <div class="module-header">
+        <h1 class="module-title">Backlog</h1>
+        <button class="add-btn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Item
+        </button>
+      </div>
+
+      <!-- Search + Filters -->
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" placeholder="Search items...">
+        </div>
+        <button class="filter-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          Filters
+        </button>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <span>Select items to perform actions</span>
+        <div class="action-buttons">
+          <button class="action-btn">Set Status</button>
+          <button class="action-btn">Score</button>
+          <button class="action-btn">Estimate</button>
+          <button class="action-btn" style="color: #ef4444;">Delete</button>
+        </div>
+      </div>
+
+      <!-- Sort Bar -->
+      <div class="sort-bar">
+        <input type="checkbox" style="accent-color: #4f46e5;">
+        <span>Sort by:</span>
+        <select><option>Manual</option><option>Score</option><option>Story Points</option></select>
+      </div>
+
+      <!-- Item List -->
+      <div class="item-list">
+        <div class="item-row">
+          <input type="checkbox" class="item-checkbox">
+          <svg class="item-drag" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          <span class="item-rank">1</span>
+          <div class="item-content">
+            <div class="item-title">User authentication system</div>
+            <div class="item-meta">by James</div>
+          </div>
+          <span class="item-status status-progress">In Progress</span>
+          <span class="item-sp">8 SP</span>
+          <div class="item-actions">
+            <button class="item-action-btn">Edit</button>
+            <button class="item-action-btn delete">Delete</button>
+          </div>
+        </div>
+
+        <div class="item-row">
+          <input type="checkbox" class="item-checkbox">
+          <svg class="item-drag" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          <span class="item-rank">2</span>
+          <div class="item-content">
+            <div class="item-title">Dashboard analytics widget</div>
+            <div class="item-meta">by Sarah</div>
+          </div>
+          <span class="item-status status-todo">To Do</span>
+          <span class="item-sp">5 SP</span>
+          <div class="item-actions">
+            <button class="item-action-btn">Edit</button>
+            <button class="item-action-btn delete">Delete</button>
+          </div>
+        </div>
+
+        <div class="item-row">
+          <input type="checkbox" class="item-checkbox">
+          <svg class="item-drag" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          <span class="item-rank">3</span>
+          <div class="item-content">
+            <div class="item-title">API rate limiting</div>
+            <div class="item-meta">by James</div>
+          </div>
+          <span class="item-status status-todo">To Do</span>
+          <span class="item-sp empty">—</span>
+          <div class="item-actions">
+            <button class="item-action-btn">Edit</button>
+            <button class="item-action-btn delete">Delete</button>
+          </div>
+        </div>
+
+        <div class="item-row">
+          <input type="checkbox" class="item-checkbox">
+          <svg class="item-drag" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+          <span class="item-rank">4</span>
+          <div class="item-content">
+            <div class="item-title">Mobile responsive navigation</div>
+            <div class="item-meta">by Tom</div>
+          </div>
+          <span class="item-status status-done">Done</span>
+          <span class="item-sp">3 SP</span>
+          <div class="item-actions">
+            <button class="item-action-btn">Edit</button>
+            <button class="item-action-btn delete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleSidebar(forceCollapsed) {
+    const sidebar = document.getElementById('sidebar');
+    const btns = document.querySelectorAll('.mockup-switcher button');
+    if (forceCollapsed === undefined) {
+      sidebar.classList.toggle('collapsed');
+    } else if (forceCollapsed) {
+      sidebar.classList.add('collapsed');
+    } else {
+      sidebar.classList.remove('collapsed');
+    }
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    btns[0].classList.toggle('active', !isCollapsed);
+    btns[1].classList.toggle('active', isCollapsed);
+  }
+
+  function setActive(el) {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+</body>
+</html>

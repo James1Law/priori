@@ -39,33 +39,6 @@ describe('ActionBar', () => {
     expect(onClearSelection).toHaveBeenCalled()
   })
 
-  it('shows Score button when onScore is provided', () => {
-    const onScore = vi.fn()
-    render(<ActionBar {...defaultProps} onScore={onScore} />)
-
-    expect(screen.getByText('Score')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Score'))
-    expect(onScore).toHaveBeenCalled()
-  })
-
-  it('shows Estimate button when onEstimate is provided', () => {
-    const onEstimate = vi.fn()
-    render(<ActionBar {...defaultProps} onEstimate={onEstimate} />)
-
-    expect(screen.getByText('Estimate')).toBeInTheDocument()
-    fireEvent.click(screen.getByText('Estimate'))
-    expect(onEstimate).toHaveBeenCalled()
-  })
-
-  it('hides Score button when onScore not provided', () => {
-    render(<ActionBar {...defaultProps} />)
-    expect(screen.queryByText('Score')).not.toBeInTheDocument()
-  })
-
-  it('hides Estimate button when onEstimate not provided', () => {
-    render(<ActionBar {...defaultProps} />)
-    expect(screen.queryByText('Estimate')).not.toBeInTheDocument()
-  })
 
   it('shows Delete button when hasDeleteHandler is true', () => {
     render(<ActionBar {...defaultProps} />)

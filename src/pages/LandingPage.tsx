@@ -41,14 +41,14 @@ const FEATURES = [
   {
     icon: '📊',
     iconBgColor: '#dbeafe',
-    title: 'Scoring Frameworks',
+    title: 'Prioritisation',
     description:
       'RICE, ICE, Value vs Effort, MoSCoW, or create your own weighted criteria. Pick the framework that fits your team.',
   },
   {
     icon: '🃏',
     iconBgColor: '#d1fae5',
-    title: 'Planning Poker',
+    title: 'Poker Planner',
     description:
       'Estimate story points as a team with Fibonacci cards. Reveal votes together and reach consensus faster.',
   },

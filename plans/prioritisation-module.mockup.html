@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priori – Prioritisation Module Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; color: #111827; }
+  h1, h2, h3, h4 { font-family: 'Poppins', system-ui, sans-serif; }
+
+  /* ── Mockup Switcher ── */
+  .mockup-switcher {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1e1b4b; color: white; padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px; font-size: 13px;
+  }
+  .mockup-switcher button {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: white; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif;
+  }
+  .mockup-switcher button.active { background: #4f46e5; border-color: #4f46e5; }
+  .mockup-switcher span.sep { opacity: 0.4; }
+
+  /* ── App Shell ── */
+  .app { display: flex; height: 100vh; padding-top: 44px; }
+
+  /* ── Sidebar (collapsed for this mockup to focus on content) ── */
+  .sidebar {
+    width: 64px; background: white; border-right: 1px solid #e5e7eb;
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .sidebar-toggle {
+    padding: 16px 12px; border-bottom: 1px solid #e5e7eb;
+    display: flex; justify-content: center;
+  }
+  .sidebar-toggle button {
+    width: 32px; height: 32px; border-radius: 6px; border: none;
+    background: transparent; cursor: pointer; color: #6b7280;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-section { padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .nav-item {
+    width: 48px; height: 40px; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+    color: #6b7280; transition: all 0.15s; position: relative;
+  }
+  .nav-item:hover { background: #f3f4f6; color: #111827; }
+  .nav-item.active { background: #eef2ff; color: #4f46e5; }
+  .nav-item .nav-icon { width: 20px; height: 20px; }
+  .nav-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute; left: 56px; top: 50%; transform: translateY(-50%);
+    background: #1f2937; color: white; font-size: 12px; font-weight: 500;
+    padding: 4px 10px; border-radius: 6px; white-space: nowrap; z-index: 50;
+  }
+  .nav-item.disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+  .nav-divider { height: 1px; background: #e5e7eb; margin: 4px 8px; }
+  .sidebar-footer { margin-top: auto; padding: 12px 8px; }
+
+  /* ── Top Header ── */
+  .top-header {
+    height: 52px; background: white; border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; color: #4f46e5; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .presence-badge {
+    display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b7280;
+    cursor: pointer; padding: 6px 10px; border-radius: 8px;
+  }
+  .presence-badge:hover { background: #f3f4f6; }
+  .green-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+  /* ── Main Content ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── Module Header ── */
+  .module-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .module-header-left { display: flex; align-items: center; gap: 16px; }
+  .module-title { font-size: 22px; font-weight: 700; color: #111827; }
+
+  /* ── Framework Selector ── */
+  .framework-selector {
+    display: flex; align-items: center; gap: 4px;
+    background: #f3f4f6; border-radius: 8px; padding: 3px;
+  }
+  .framework-tab {
+    padding: 6px 14px; border-radius: 6px; border: none;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    background: transparent; color: #6b7280; font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+  .framework-tab:hover { color: #374151; }
+  .framework-tab.active { background: white; color: #4f46e5; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; }
+  .toolbar-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+    background: white; font-size: 13px; color: #4b5563; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .toolbar-btn:hover { border-color: #9ca3af; }
+  .toolbar-btn svg { width: 14px; height: 14px; }
+
+  .item-count { font-size: 13px; color: #9ca3af; }
+
+  /* ── Scoring Table ── */
+  .scoring-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+    overflow: hidden;
+  }
+  .scoring-table thead { background: #f9fafb; }
+  .scoring-table th {
+    padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280;
+    border-bottom: 1px solid #e5e7eb; white-space: nowrap;
+    position: relative; cursor: pointer; user-select: none;
+  }
+  .scoring-table th:hover { color: #374151; }
+  .scoring-table th.sorted { color: #4f46e5; }
+  .scoring-table th .sort-arrow { font-size: 10px; margin-left: 4px; }
+  .scoring-table th.score-col { text-align: center; }
+  .scoring-table th.rank-col { width: 50px; text-align: center; }
+
+  .scoring-table td {
+    padding: 12px 16px; border-bottom: 1px solid #f3f4f6;
+    font-size: 14px; vertical-align: middle;
+  }
+  .scoring-table tr:last-child td { border-bottom: none; }
+  .scoring-table tr:hover td { background: #fafbff; }
+  .scoring-table tr.scored td { }
+  .scoring-table tr.unscored td { opacity: 0.6; }
+  .scoring-table tr.unscored:hover td { opacity: 1; }
+
+  /* Rank cell */
+  .rank-cell {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; margin: 0 auto;
+  }
+  .rank-gold { background: #fef3c7; color: #92400e; }
+  .rank-silver { background: #f3f4f6; color: #4b5563; }
+  .rank-bronze { background: #fed7aa; color: #9a3412; }
+  .rank-default { background: #f3f4f6; color: #9ca3af; }
+
+  /* Item cell */
+  .item-cell { display: flex; align-items: center; gap: 10px; }
+  .item-title { font-weight: 600; color: #111827; }
+  .item-meta { font-size: 12px; color: #9ca3af; margin-top: 1px; }
+  .item-status {
+    padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.03em; flex-shrink: 0;
+  }
+  .status-todo { background: #f3f4f6; color: #6b7280; }
+  .status-progress { background: #eef2ff; color: #4f46e5; }
+  .status-done { background: #ecfdf5; color: #059669; }
+
+  /* Score badge */
+  .score-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 52px; padding: 4px 12px; border-radius: 8px;
+    font-size: 14px; font-weight: 700; text-align: center;
+  }
+  .score-high { background: #ecfdf5; color: #059669; border: 1.5px solid #a7f3d0; }
+  .score-mid { background: #fffbeb; color: #d97706; border: 1.5px solid #fde68a; }
+  .score-low { background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; }
+  .score-none { background: #f3f4f6; color: #d1d5db; border: 1.5px solid #e5e7eb; }
+
+  /* ── Inline Scoring Controls ── */
+  .score-control {
+    display: flex; align-items: center; gap: 3px; justify-content: center;
+  }
+  .score-pip {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid #d1d5db; background: white;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .score-pip:hover { border-color: #818cf8; transform: scale(1.2); }
+  .score-pip.filled { border-color: transparent; }
+
+  /* Colour scales per criterion */
+  .pip-reach.filled { background: #22c55e; }
+  .pip-impact.filled { background: #3b82f6; }
+  .pip-confidence.filled { background: #8b5cf6; }
+  .pip-effort.filled { background: #f43f5e; }
+
+  /* Hover preview on unfilled pips */
+  .score-control:hover .score-pip:not(.filled) { border-color: #c7d2fe; }
+
+  /* Numeric display under pips */
+  .score-value {
+    font-size: 11px; font-weight: 600; color: #9ca3af;
+    text-align: center; margin-top: 2px;
+  }
+
+  .score-cell { text-align: center; }
+
+  /* ── Empty state pip row ── */
+  .score-pip.empty { border: 2px dashed #e5e7eb; background: transparent; }
+
+  /* ── Add Item Row ── */
+  .add-item-row td {
+    padding: 12px 16px; color: #9ca3af; cursor: pointer; border-bottom: none;
+  }
+  .add-item-row:hover td { background: #fafbff; color: #6366f1; }
+  .add-item-text { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; }
+
+  /* ── Popover for editing ── */
+  .pip-popover {
+    position: absolute; z-index: 50;
+    background: white; border: 1px solid #e5e7eb; border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 12px;
+    display: none; min-width: 180px;
+  }
+  .pip-popover.show { display: block; }
+  .pip-popover-title { font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pip-popover-options { display: flex; flex-direction: column; gap: 4px; }
+  .pip-option {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+    border-radius: 6px; cursor: pointer; font-size: 13px; color: #374151;
+  }
+  .pip-option:hover { background: #f3f4f6; }
+  .pip-option.selected { background: #eef2ff; color: #4f46e5; }
+  .pip-option .pip-dots { display: flex; gap: 3px; }
+  .pip-option .pip-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pip-option .pip-check { margin-left: auto; color: #4f46e5; font-size: 14px; }
+
+  /* Animation for score change */
+  @keyframes scoreFlash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  .score-flash { animation: scoreFlash 0.3s ease; }
+
+  /* ── Responsive note ── */
+  .mobile-note {
+    display: none; padding: 40px 20px; text-align: center; color: #6b7280;
+  }
+</style>
+</head>
+<body>
+
+<!-- Mockup Switcher -->
+<div class="mockup-switcher">
+  <strong style="font-family: Poppins, sans-serif;">Prioritisation Module Mockup</strong>
+  <span class="sep">|</span>
+  <button class="active" onclick="setFramework('rice')">RICE</button>
+  <button onclick="setFramework('ice')">ICE</button>
+  <button onclick="setFramework('moscow')">MoSCoW</button>
+  <button onclick="setFramework('weighted')">Weighted</button>
+  <span class="sep">|</span>
+  <span style="opacity: 0.5;">Click pips to score inline — watch scores recalculate</span>
+</div>
+
+<div class="app">
+  <!-- ── Sidebar (collapsed) ── -->
+  <aside class="sidebar">
+    <div class="sidebar-toggle">
+      <button title="Expand sidebar">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-section">
+      <a class="nav-item" data-tooltip="Backlog">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Roadmap">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Capacity Planning">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </a>
+      <a class="nav-item active" data-tooltip="Prioritisation">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+      </a>
+      <a class="nav-item" data-tooltip="Poker Planner">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      </a>
+      <div class="nav-divider"></div>
+      <a class="nav-item disabled" data-tooltip="Sprints">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </a>
+      <a class="nav-item disabled" data-tooltip="Analytics">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" data-tooltip="Settings">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main Area ── -->
+  <div class="main">
+    <header class="top-header">
+      <div class="header-left">
+        <div class="logo-mark">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 12L36 34H12L24 12Z" fill="white"/></svg>
+        </div>
+        <span class="logo-text">Priori</span>
+      </div>
+      <div class="header-right">
+        <div class="presence-badge">
+          <span class="green-dot"></span>
+          <span>4 online</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+          </svg>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Module Header -->
+      <div class="module-header">
+        <div class="module-header-left">
+          <h1 class="module-title">Prioritisation</h1>
+          <!-- Framework Selector -->
+          <div class="framework-selector" id="frameworkSelector">
+            <button class="framework-tab active" data-fw="rice" onclick="setFramework('rice')">RICE</button>
+            <button class="framework-tab" data-fw="ice" onclick="setFramework('ice')">ICE</button>
+            <button class="framework-tab" data-fw="moscow" onclick="setFramework('moscow')">MoSCoW</button>
+            <button class="framework-tab" data-fw="weighted" onclick="setFramework('weighted')">Weighted</button>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="toolbar-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Item Count -->
+      <div class="toolbar">
+        <span class="item-count">6 items · 4 scored</span>
+      </div>
+
+      <!-- RICE Scoring Table -->
+      <div id="tableContainer">
+        <table class="scoring-table" id="scoringTable">
+          <thead id="tableHead">
+            <tr>
+              <th class="rank-col">#</th>
+              <th style="min-width: 250px;">Item</th>
+              <th class="score-col sorted">Score <span class="sort-arrow">▼</span></th>
+              <th class="score-col">Reach</th>
+              <th class="score-col">Impact</th>
+              <th class="score-col">Confidence</th>
+              <th class="score-col">Effort</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pip Popover -->
+<div class="pip-popover" id="pipPopover">
+  <div class="pip-popover-title" id="popoverTitle">Reach</div>
+  <div class="pip-popover-options" id="popoverOptions"></div>
+</div>
+
+<script>
+  // ── Item Data ──
+  const items = [
+    { id: 1, title: 'User authentication system', meta: 'by James', status: 'progress',
+      rice: { reach: 4, impact: 4, confidence: 4, effort: 2 },
+      ice: { impact: 4, confidence: 4, ease: 3 },
+      moscow: { category: 'must' },
+      weighted: { value: 4, feasibility: 3, strategic: 5 }
+    },
+    { id: 2, title: 'Dashboard analytics widget', meta: 'by Sarah', status: 'todo',
+      rice: { reach: 3, impact: 3, confidence: 3, effort: 3 },
+      ice: { impact: 3, confidence: 3, ease: 2 },
+      moscow: { category: 'should' },
+      weighted: { value: 3, feasibility: 2, strategic: 4 }
+    },
+    { id: 3, title: 'API rate limiting', meta: 'by James', status: 'todo',
+      rice: { reach: 2, impact: 4, confidence: 3, effort: 1 },
+      ice: { impact: 4, confidence: 3, ease: 4 },
+      moscow: { category: 'must' },
+      weighted: { value: 5, feasibility: 4, strategic: 3 }
+    },
+    { id: 4, title: 'Mobile responsive navigation', meta: 'by Tom', status: 'done',
+      rice: { reach: 4, impact: 2, confidence: 4, effort: 2 },
+      ice: { impact: 2, confidence: 4, ease: 3 },
+      moscow: { category: 'could' },
+      weighted: { value: 2, feasibility: 4, strategic: 2 }
+    },
+    { id: 5, title: 'Data export to CSV', meta: 'by Sarah', status: 'todo',
+      rice: { reach: 0, impact: 0, confidence: 0, effort: 0 },
+      ice: { impact: 0, confidence: 0, ease: 0 },
+      moscow: { category: null },
+      weighted: { value: 0, feasibility: 0, strategic: 0 }
+    },
+    { id: 6, title: 'Team notification system', meta: 'by Tom', status: 'todo',
+      rice: { reach: 0, impact: 0, confidence: 0, effort: 0 },
+      ice: { impact: 0, confidence: 0, ease: 0 },
+      moscow: { category: null },
+      weighted: { value: 0, feasibility: 0, strategic: 0 }
+    },
+  ];
+
+  let currentFramework = 'rice';
+
+  // ── Framework Configs ──
+  const frameworks = {
+    rice: {
+      criteria: ['reach', 'impact', 'confidence', 'effort'],
+      labels: { reach: 'Reach', impact: 'Impact', confidence: 'Confidence', effort: 'Effort' },
+      colors: { reach: '#22c55e', impact: '#3b82f6', confidence: '#8b5cf6', effort: '#f43f5e' },
+      maxPips: { reach: 5, impact: 5, confidence: 4, effort: 4 },
+      calcScore: (d) => {
+        if (!d.reach && !d.impact && !d.confidence) return 0;
+        const effort = Math.max(d.effort, 1);
+        return Math.round((d.reach * d.impact * d.confidence) / effort);
+      },
+      scoreLabel: 'RICE Score',
+    },
+    ice: {
+      criteria: ['impact', 'confidence', 'ease'],
+      labels: { impact: 'Impact', confidence: 'Confidence', ease: 'Ease' },
+      colors: { impact: '#3b82f6', confidence: '#8b5cf6', ease: '#22c55e' },
+      maxPips: { impact: 5, confidence: 5, ease: 5 },
+      calcScore: (d) => {
+        if (!d.impact && !d.confidence && !d.ease) return 0;
+        return +((d.impact + d.confidence + d.ease) / 3).toFixed(1);
+      },
+      scoreLabel: 'ICE Score',
+    },
+    moscow: {
+      criteria: ['category'],
+      labels: { category: 'Category' },
+      colors: { category: '#4f46e5' },
+      categories: ['Must', 'Should', 'Could', "Won't"],
+      calcScore: (d) => {
+        const order = { must: 4, should: 3, could: 2, wont: 1 };
+        return d.category ? (order[d.category] || 0) : 0;
+      },
+      scoreLabel: 'Priority',
+    },
+    weighted: {
+      criteria: ['value', 'feasibility', 'strategic'],
+      labels: { value: 'Value', feasibility: 'Feasibility', strategic: 'Strategic Fit' },
+      colors: { value: '#f59e0b', feasibility: '#22c55e', strategic: '#3b82f6' },
+      maxPips: { value: 5, feasibility: 5, strategic: 5 },
+      calcScore: (d) => {
+        if (!d.value && !d.feasibility && !d.strategic) return 0;
+        return +((d.value * 3 + d.feasibility * 2 + d.strategic * 1) / 6).toFixed(1);
+      },
+      scoreLabel: 'Weighted Score',
+    },
+  };
+
+  // ── Render Functions ──
+  function getStatusHTML(status) {
+    const map = {
+      todo: '<span class="item-status status-todo">To Do</span>',
+      progress: '<span class="item-status status-progress">In Progress</span>',
+      done: '<span class="item-status status-done">Done</span>',
+    };
+    return map[status] || '';
+  }
+
+  function getRankClass(i) {
+    if (i === 0) return 'rank-gold';
+    if (i === 1) return 'rank-silver';
+    if (i === 2) return 'rank-bronze';
+    return 'rank-default';
+  }
+
+  function getScoreClass(score, framework) {
+    if (score === 0) return 'score-none';
+    if (framework === 'rice') return score >= 20 ? 'score-high' : score >= 8 ? 'score-mid' : 'score-low';
+    if (framework === 'ice') return score >= 3.5 ? 'score-high' : score >= 2 ? 'score-mid' : 'score-low';
+    if (framework === 'moscow') return score >= 3 ? 'score-high' : score >= 2 ? 'score-mid' : 'score-low';
+    if (framework === 'weighted') return score >= 3 ? 'score-high' : score >= 2 ? 'score-mid' : 'score-low';
+    return 'score-none';
+  }
+
+  function renderPips(itemId, criterion, value, maxPips, color, pipClass) {
+    let html = '<div class="score-control">';
+    for (let i = 1; i <= maxPips; i++) {
+      const filled = i <= value;
+      html += `<span class="score-pip ${pipClass} ${filled ? 'filled' : ''}"
+        data-item="${itemId}" data-criterion="${criterion}" data-value="${i}"
+        onclick="setPipValue(${itemId}, '${criterion}', ${i})"
+        style="${filled ? 'background:' + color + ';' : ''}"></span>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderMoscowCell(itemId, category) {
+    const cats = ['Must', 'Should', 'Could', "Won't"];
+    const colors = { Must: '#059669', Should: '#3b82f6', Could: '#d97706', "Won't": '#9ca3af' };
+    const bgs = { Must: '#ecfdf5', Should: '#eff6ff', Could: '#fffbeb', "Won't": '#f3f4f6' };
+    if (!category) {
+      return `<select class="moscow-select" onchange="setMoscow(${itemId}, this.value)" style="
+        border: 1px dashed #d1d5db; border-radius: 6px; padding: 4px 8px; font-size: 12px;
+        color: #9ca3af; background: white; font-family: Inter, sans-serif; cursor: pointer;">
+        <option value="">Select...</option>
+        ${cats.map(c => `<option value="${c.toLowerCase().replace("'", '')}">${c}</option>`).join('')}
+      </select>`;
+    }
+    const label = cats.find(c => c.toLowerCase().replace("'", '') === category) || category;
+    const col = colors[label] || '#6b7280';
+    const bg = bgs[label] || '#f3f4f6';
+    return `<select class="moscow-select" onchange="setMoscow(${itemId}, this.value)" style="
+      border: 1.5px solid ${col}30; border-radius: 6px; padding: 4px 8px; font-size: 12px;
+      color: ${col}; background: ${bg}; font-weight: 600; font-family: Inter, sans-serif; cursor: pointer;">
+      ${cats.map(c => `<option value="${c.toLowerCase().replace("'", '')}" ${c.toLowerCase().replace("'", '') === category ? 'selected' : ''}>${c}</option>`).join('')}
+    </select>`;
+  }
+
+  function renderTable() {
+    const fw = frameworks[currentFramework];
+    const data = currentFramework === 'rice' ? 'rice' : currentFramework === 'ice' ? 'ice' : currentFramework === 'moscow' ? 'moscow' : 'weighted';
+
+    // Sort items by score descending
+    const sorted = [...items].sort((a, b) => {
+      const sa = fw.calcScore(a[data]);
+      const sb = fw.calcScore(b[data]);
+      return sb - sa;
+    });
+
+    // Header
+    let headHTML = '<tr><th class="rank-col">#</th><th style="min-width:250px;">Item</th>';
+    headHTML += `<th class="score-col sorted">${fw.scoreLabel} <span class="sort-arrow">▼</span></th>`;
+    if (currentFramework === 'moscow') {
+      headHTML += '<th class="score-col">Category</th>';
+    } else {
+      fw.criteria.forEach(c => {
+        headHTML += `<th class="score-col">${fw.labels[c]}</th>`;
+      });
+    }
+    headHTML += '</tr>';
+    document.getElementById('tableHead').innerHTML = headHTML;
+
+    // Body
+    let bodyHTML = '';
+    sorted.forEach((item, idx) => {
+      const score = fw.calcScore(item[data]);
+      const scored = score > 0;
+      const scoreClass = getScoreClass(score, currentFramework);
+
+      bodyHTML += `<tr class="${scored ? 'scored' : 'unscored'}">`;
+      bodyHTML += `<td><div class="rank-cell ${scored ? getRankClass(idx) : 'rank-default'}">${idx + 1}</div></td>`;
+      bodyHTML += `<td><div class="item-cell"><div><div class="item-title">${item.title}</div><div class="item-meta">${item.meta}</div></div>${getStatusHTML(item.status)}</div></td>`;
+      bodyHTML += `<td class="score-cell"><span class="score-badge ${scoreClass}">${scored ? score : '—'}</span></td>`;
+
+      if (currentFramework === 'moscow') {
+        bodyHTML += `<td class="score-cell">${renderMoscowCell(item.id, item.moscow.category)}</td>`;
+      } else {
+        fw.criteria.forEach(c => {
+          const val = item[data][c];
+          const maxP = fw.maxPips[c];
+          const col = fw.colors[c];
+          bodyHTML += `<td class="score-cell">${renderPips(item.id, c, val, maxP, col, 'pip-' + c)}</td>`;
+        });
+      }
+      bodyHTML += '</tr>';
+    });
+
+    // Add item row
+    bodyHTML += `<tr class="add-item-row"><td colspan="99"><div class="add-item-text">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      New Item
+    </div></td></tr>`;
+
+    document.getElementById('tableBody').innerHTML = bodyHTML;
+  }
+
+  // ── Interaction Handlers ──
+  function setPipValue(itemId, criterion, value) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const data = item[currentFramework];
+    // Toggle: if clicking the same value, set to 0
+    if (data[criterion] === value) {
+      data[criterion] = 0;
+    } else {
+      data[criterion] = value;
+    }
+    renderTable();
+  }
+
+  function setMoscow(itemId, value) {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    item.moscow.category = value || null;
+    renderTable();
+  }
+
+  function setFramework(fw) {
+    currentFramework = fw;
+    // Update switcher buttons
+    document.querySelectorAll('.mockup-switcher button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll(`.mockup-switcher button`).forEach(b => {
+      if (b.textContent.toLowerCase().replace(/\s/g,'') === fw.replace(/\s/g,'').toLowerCase() ||
+          b.textContent === fw.toUpperCase() ||
+          b.getAttribute('onclick')?.includes(`'${fw}'`)) {
+        b.classList.add('active');
+      }
+    });
+    // Update framework selector tabs
+    document.querySelectorAll('.framework-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.fw === fw);
+    });
+    renderTable();
+  }
+
+  // Initial render
+  renderTable();
+</script>
+</body>
+</html>
