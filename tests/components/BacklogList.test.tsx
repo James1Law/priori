@@ -18,7 +18,7 @@ describe('BacklogList', () => {
       roadmap_end_period: null,
       roadmap_start_quadrant: null,
       roadmap_end_quadrant: null,
-      roadmap_row: 0,
+      roadmap_row: 0, start_date: null, end_date: null,
       score: {
         id: 'score-1',
         item_id: '1',
@@ -40,7 +40,7 @@ describe('BacklogList', () => {
       roadmap_end_period: null,
       roadmap_start_quadrant: null,
       roadmap_end_quadrant: null,
-      roadmap_row: 0,
+      roadmap_row: 0, start_date: null, end_date: null,
       score: {
         id: 'score-2',
         item_id: '2',
@@ -62,7 +62,7 @@ describe('BacklogList', () => {
       roadmap_end_period: null,
       roadmap_start_quadrant: null,
       roadmap_end_quadrant: null,
-      roadmap_row: 0,
+      roadmap_row: 0, start_date: null, end_date: null,
       score: {
         id: 'score-3',
         item_id: '3',
@@ -588,52 +588,4 @@ describe('BacklogList', () => {
     expect(onStatusChangeMultiple).toHaveBeenCalledWith(['3'], 'in_progress') // Item '3' is first due to sorting
   })
 
-  it('shows Assign Period dropdown when periods provided', () => {
-    const periods = [
-      { id: 'p1', session_id: 'session-1', name: 'Now', position: 0, width: 4, created_at: '2024-01-01' },
-      { id: 'p2', session_id: 'session-1', name: 'Next', position: 1, width: 4, created_at: '2024-01-01' },
-    ]
-    render(
-      <BacklogList
-        {...defaultProps}
-        periods={periods}
-        onDeleteMultiple={vi.fn()}
-        onStatusChangeMultiple={vi.fn()}
-        onAssignPeriod={vi.fn()}
-      />
-    )
-    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
-
-    fireEvent.click(checkboxes[0])
-
-    expect(screen.getByRole('button', { name: /assign period/i })).toBeInTheDocument()
-  })
-
-  it('calls onAssignPeriod when period option clicked', () => {
-    const onAssignPeriod = vi.fn()
-    const periods = [
-      { id: 'p1', session_id: 'session-1', name: 'Now', position: 0, width: 4, created_at: '2024-01-01' },
-      { id: 'p2', session_id: 'session-1', name: 'Next', position: 1, width: 4, created_at: '2024-01-01' },
-    ]
-    render(
-      <BacklogList
-        {...defaultProps}
-        periods={periods}
-        onDeleteMultiple={vi.fn()}
-        onStatusChangeMultiple={vi.fn()}
-        onAssignPeriod={onAssignPeriod}
-      />
-    )
-    const checkboxes = screen.getAllByRole('button', { name: /select item/i })
-
-    fireEvent.click(checkboxes[0])
-
-    // Open period dropdown
-    fireEvent.click(screen.getByRole('button', { name: /assign period/i }))
-
-    // Click "Next" option
-    fireEvent.click(screen.getByRole('option', { name: 'Next' }))
-
-    expect(onAssignPeriod).toHaveBeenCalledWith(['3'], 1) // Item '3' is first, period position 1
-  })
 })

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Item, ItemWithScore, ItemStatus, Framework, RoadmapPeriod, ItemLevel } from '../types/database'
+import type { Item, ItemWithScore, ItemStatus, Framework, ItemLevel } from '../types/database'
+import { canResizeDateChild, canResizeDateParent } from '../lib/roadmap-dates'
 import { ITEM_LEVEL_LABELS, ITEM_LEVEL_CHILD_LABELS, MAX_ITEM_LEVEL } from '../types/database'
 import { getQuadrant } from '../lib/valueEffort'
 import { getAncestors, getDirectChildren, getStatusRollup, getRolledUpEstimate } from '../lib/hierarchy'
@@ -8,15 +9,16 @@ interface ItemDrawerProps {
   item: ItemWithScore | null
   isOpen: boolean
   framework: Framework
-  periods: RoadmapPeriod[]
   allItems?: ItemWithScore[]
   onClose: () => void
   onSave: (item: Item) => void
   onDelete: (itemId: string) => void
-  onAssignPeriod?: (itemId: string, startQuadrant: number, endQuadrant: number) => void
-  onUnassignPeriod?: (itemId: string) => void
+  onSetItemDates?: (itemId: string, startDate: string, endDate: string) => Promise<void>
+  onClearItemDates?: (itemId: string) => Promise<void>
   onNavigateToItem?: (item: ItemWithScore) => void
   onAddChild?: (parentId: string, parentLevel: number, title: string) => void
+  isNew?: boolean
+  onCreate?: (item: { title: string; description: string; status: ItemStatus; item_level: number; start_date: string | null; end_date: string | null }) => void
 }
 
 const STATUS_OPTIONS: { value: ItemStatus; label: string; bgClass: string; textClass: string }[] = [
@@ -95,14 +97,6 @@ function formatScoreDisplay(item: ItemWithScore, framework: Framework): { label:
   }
 }
 
-// Get period name from quadrant
-function getPeriodFromQuadrant(startQuadrant: number | null, periods: RoadmapPeriod[]): RoadmapPeriod | null {
-  if (startQuadrant === null || periods.length === 0) return null
-  const QUADRANTS_PER_PERIOD = 4
-  const periodIndex = Math.floor(startQuadrant / QUADRANTS_PER_PERIOD)
-  return periods.find(p => p.position === periodIndex) || null
-}
-
 // Level badge colours (matching BacklogList)
 const LEVEL_BADGE_STYLES: Record<number, string> = {
   0: 'bg-pink-50 text-pink-700 border-pink-200',
@@ -116,20 +110,24 @@ export default function ItemDrawer({
   item,
   isOpen,
   framework,
-  periods,
   allItems = [],
   onClose,
   onSave,
   onDelete,
-  onAssignPeriod,
-  onUnassignPeriod,
+  onSetItemDates,
+  onClearItemDates,
   onNavigateToItem,
   onAddChild,
+  isNew = false,
+  onCreate,
 }: ItemDrawerProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<ItemStatus>('todo')
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null)
+  const [selectedLevel, setSelectedLevel] = useState<number>(0)
+  const [startDate, setStartDate] = useState<string>('')
+  const [endDate, setEndDate] = useState<string>('')
+  const [dateError, setDateError] = useState<string | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   const [childTitle, setChildTitle] = useState('')
   const [isAddingChild, setIsAddingChild] = useState(false)
@@ -142,13 +140,15 @@ export default function ItemDrawer({
       setTitle(item.title)
       setDescription(item.description || '')
       setStatus(item.status || 'todo')
-      const currentPeriod = getPeriodFromQuadrant(item.roadmap_start_quadrant ?? null, periods)
-      setSelectedPeriodId(currentPeriod?.id || null)
+      setSelectedLevel(item.item_level ?? 0)
+      setStartDate(item.start_date || '')
+      setEndDate(item.end_date || '')
+      setDateError(null)
       setHasChanges(false)
       setIsAddingChild(false)
       setChildTitle('')
     }
-  }, [item, periods])
+  }, [item])
 
   // Focus child input when shown
   useEffect(() => {
@@ -160,15 +160,14 @@ export default function ItemDrawer({
   // Track changes
   useEffect(() => {
     if (!item) return
-    const currentPeriod = getPeriodFromQuadrant(item.roadmap_start_quadrant ?? null, periods)
-    const periodChanged = selectedPeriodId !== (currentPeriod?.id || null)
+    const datesChanged = startDate !== (item.start_date || '') || endDate !== (item.end_date || '')
     const changed =
       title !== item.title ||
       description !== (item.description || '') ||
       status !== (item.status || 'todo') ||
-      periodChanged
+      datesChanged
     setHasChanges(changed)
-  }, [title, description, status, selectedPeriodId, item, periods])
+  }, [title, description, status, startDate, endDate, item])
 
   // Handle Escape key
   useEffect(() => {
@@ -197,7 +196,6 @@ export default function ItemDrawer({
   if (!isOpen || !item) return null
 
   const scoreDisplay = formatScoreDisplay(item, framework)
-  const currentPeriod = getPeriodFromQuadrant(item.roadmap_start_quadrant ?? null, periods)
 
   // Hierarchy data
   const itemLevel = (item.item_level ?? 0) as ItemLevel
@@ -219,6 +217,20 @@ export default function ItemDrawer({
   const handleSave = () => {
     if (!title.trim()) return
 
+    if (isNew && onCreate) {
+      // Create new item via callback — no DB record exists yet
+      onCreate({
+        title: title.trim(),
+        description: description.trim(),
+        status,
+        item_level: selectedLevel,
+        start_date: startDate || null,
+        end_date: endDate || null,
+      })
+      onClose()
+      return
+    }
+
     // Save basic item changes
     onSave({
       ...item,
@@ -227,17 +239,13 @@ export default function ItemDrawer({
       status,
     })
 
-    // Handle period changes
-    const newPeriod = periods.find(p => p.id === selectedPeriodId)
-    const oldPeriodId = currentPeriod?.id || null
-
-    if (selectedPeriodId !== oldPeriodId) {
-      if (selectedPeriodId && newPeriod && onAssignPeriod) {
-        const QUADRANTS_PER_PERIOD = 4
-        const startQuadrant = newPeriod.position * QUADRANTS_PER_PERIOD
-        onAssignPeriod(item.id, startQuadrant, startQuadrant)
-      } else if (!selectedPeriodId && onUnassignPeriod) {
-        onUnassignPeriod(item.id)
+    // Handle date changes
+    const datesChanged = startDate !== (item.start_date || '') || endDate !== (item.end_date || '')
+    if (datesChanged) {
+      if (startDate && endDate && onSetItemDates) {
+        onSetItemDates(item.id, startDate, endDate)
+      } else if (!startDate && !endDate && onClearItemDates) {
+        onClearItemDates(item.id)
       }
     }
   }
@@ -280,7 +288,7 @@ export default function ItemDrawer({
                 </span>
               )}
               <h2 id="drawer-title" className="text-lg font-display font-semibold text-gray-900 truncate">
-                Item Details
+                {isNew ? 'Add Item' : 'Edit Item'}
               </h2>
             </div>
             <button
@@ -402,29 +410,108 @@ export default function ItemDrawer({
             </div>
           </div>
 
-          {/* Period Assignment */}
-          {periods.length > 0 && (
+          {/* Item Level (only for new items) */}
+          {isNew && (
             <div>
-              <label htmlFor="drawer-period" className="block text-sm font-medium text-gray-700 mb-1">
-                Roadmap Period
+              <label htmlFor="drawer-level" className="block text-sm font-medium text-gray-700 mb-1">
+                Item Type
               </label>
               <select
-                id="drawer-period"
-                value={selectedPeriodId || ''}
-                onChange={(e) => setSelectedPeriodId(e.target.value || null)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900"
+                id="drawer-level"
+                value={selectedLevel}
+                onChange={(e) => setSelectedLevel(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-gray-900 text-sm"
               >
-                <option value="">Not scheduled</option>
-                {[...periods]
-                  .sort((a, b) => a.position - b.position)
-                  .map((period) => (
-                    <option key={period.id} value={period.id}>
-                      {period.name}
-                    </option>
-                  ))}
+                <option value={0}>Goal</option>
+                <option value={1}>Initiative</option>
+                <option value={2}>Epic</option>
+                <option value={3}>Story</option>
+                <option value={4}>Subtask</option>
               </select>
             </div>
           )}
+
+          {/* Schedule (Date-based) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Schedule</label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <div className="text-[10px] text-gray-500 mb-0.5">Start date</div>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    const newStart = e.target.value
+                    setStartDate(newStart)
+                    setDateError(null)
+                    if (newStart && endDate && newStart > endDate) {
+                      setEndDate(newStart)
+                    }
+                    // Validate hierarchy constraints
+                    if (newStart && endDate && allItems.length > 0) {
+                      if (!canResizeDateChild(item.id, newStart, endDate > newStart ? endDate : newStart, allItems)) {
+                        setDateError('Dates must be within parent bounds')
+                      } else if (!canResizeDateParent(item.id, newStart, endDate > newStart ? endDate : newStart, allItems)) {
+                        setDateError('Dates must contain all children')
+                      }
+                    }
+                  }}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <span className="text-gray-400 mt-4">→</span>
+              <div className="flex-1">
+                <div className="text-[10px] text-gray-500 mb-0.5">End date</div>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    const newEnd = e.target.value
+                    setEndDate(newEnd)
+                    setDateError(null)
+                    if (startDate && newEnd && newEnd < startDate) {
+                      setStartDate(newEnd)
+                    }
+                    // Validate hierarchy constraints
+                    if (startDate && newEnd && allItems.length > 0) {
+                      if (!canResizeDateChild(item.id, startDate < newEnd ? startDate : newEnd, newEnd, allItems)) {
+                        setDateError('Dates must be within parent bounds')
+                      } else if (!canResizeDateParent(item.id, startDate < newEnd ? startDate : newEnd, newEnd, allItems)) {
+                        setDateError('Dates must contain all children')
+                      }
+                    }
+                  }}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <button
+                  onClick={() => { setStartDate(''); setEndDate(''); setDateError(null) }}
+                  className="mt-4 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Clear dates"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {dateError && (
+              <p className="text-xs text-red-500 mt-1">{dateError}</p>
+            )}
+            {/* Hierarchy bounds hint */}
+            {item.parent_item_id && allItems.length > 0 && (() => {
+              const parent = allItems.find(i => i.id === item.parent_item_id)
+              if (parent?.start_date && parent?.end_date) {
+                return (
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Parent "{parent.title}" runs {parent.start_date} → {parent.end_date}
+                  </p>
+                )
+              }
+              return null
+            })()}
+          </div>
 
           {/* Hierarchy Rollup for parent items */}
           {hasChildren && statusRollup && (
@@ -557,13 +644,15 @@ export default function ItemDrawer({
 
         {/* Footer */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
-          >
-            Delete
-          </button>
+          {!isNew ? (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+            >
+              Delete
+            </button>
+          ) : <div />}
           <div className="flex gap-2">
             <button
               type="button"
@@ -578,7 +667,7 @@ export default function ItemDrawer({
               disabled={!title.trim()}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
             >
-              {hasChanges ? 'Save Changes' : 'Done'}
+              {isNew ? 'Create' : hasChanges ? 'Save Changes' : 'Done'}
             </button>
           </div>
         </div>

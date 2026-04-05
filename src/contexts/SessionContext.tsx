@@ -5,8 +5,6 @@ import type { Session, Item, ItemWithScore, Score } from '../types/database'
 import AppShell from '../components/AppShell'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileChatModal from '../components/MobileChatModal'
-import BottomSheet from '../components/BottomSheet'
-import ItemForm from '../components/ItemForm'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
 import { useMessages } from '../hooks/useMessages'
@@ -21,6 +19,10 @@ interface SessionContextValue {
   participantCount: number
   participants: { name: string; joinedAt: string }[]
   refetchData: () => Promise<void>
+  editingItem: ItemWithScore | null
+  setEditingItem: React.Dispatch<React.SetStateAction<ItemWithScore | null>>
+  isNewItem: boolean
+  addItemAndEdit: () => void
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -41,7 +43,13 @@ export default function SessionLayout() {
   const [error, setError] = useState<string | null>(null)
 
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
+  const [editingItem, setEditingItemRaw] = useState<ItemWithScore | null>(null)
+  const [isNewItem, setIsNewItem] = useState(false)
+  const setEditingItem: React.Dispatch<React.SetStateAction<ItemWithScore | null>> = useCallback((val) => {
+    setEditingItemRaw(val)
+    // Clear isNewItem when drawer closes or switches to a different item
+    if (val === null) setIsNewItem(false)
+  }, [])
 
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
   const { participantCount, participants } = usePresence(session?.id || null, participantName)
@@ -152,26 +160,40 @@ export default function SessionLayout() {
 
   // ── Add item ──
 
-  const handleAddItem = async (item: { title: string; description?: string }) => {
+  const handleAddItem = () => {
     if (!session) return
-    const position = items.length
-    const { data, error: insertError } = await supabase
-      .from('items')
-      .insert([{
-        session_id: session.id,
-        title: item.title,
-        description: item.description || null,
-        position,
-        status: 'todo',
-        created_by: participantName,
-        item_level: 0,
-      } as never])
-      .select()
-      .single()
 
-    if (!insertError && data) {
-      setItems(prev => [...prev, data as ItemWithScore])
+    const today = new Date()
+    const endDate = new Date(today)
+    endDate.setMonth(endDate.getMonth() + 1)
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+    // Create a draft item (not yet saved to DB)
+    const draft: ItemWithScore = {
+      id: `draft-${Date.now()}`,
+      session_id: session.id,
+      title: '',
+      description: null,
+      position: items.length,
+      backlog_position: null,
+      status: 'todo',
+      created_by: participantName,
+      created_at: new Date().toISOString(),
+      roadmap_start_period: null,
+      roadmap_end_period: null,
+      roadmap_start_quadrant: null,
+      roadmap_end_quadrant: null,
+      roadmap_row: 0,
+      start_date: fmt(today),
+      end_date: fmt(endDate),
+      story_points: null,
+      effort_estimate: null,
+      parent_item_id: null,
+      item_level: 0,
     }
+
+    setIsNewItem(true)
+    setEditingItemRaw(draft)
   }
 
   // ── Guard states ──
@@ -231,6 +253,10 @@ export default function SessionLayout() {
       participantCount,
       participants: participants.map(p => ({ name: p.name, joinedAt: p.joinedAt })),
       refetchData: fetchData,
+      editingItem,
+      setEditingItem,
+      isNewItem,
+      addItemAndEdit: handleAddItem,
     }}>
       <AppShell
         slug={slug!}
@@ -238,7 +264,7 @@ export default function SessionLayout() {
         participantCount={participantCount}
         unreadCount={unreadCount}
         onChatOpen={() => setIsChatOpen(true)}
-        onAddItem={() => setIsAddSheetOpen(true)}
+        onAddItem={handleAddItem}
         onSessionNameChange={async (name) => {
           await supabase.from('sessions').update({ name } as never).eq('id', session.id)
           setSession(prev => prev ? { ...prev, name } : null)
@@ -256,18 +282,6 @@ export default function SessionLayout() {
           onSendMessage={sendMessage}
         />
 
-        <BottomSheet
-          isOpen={isAddSheetOpen}
-          onClose={() => setIsAddSheetOpen(false)}
-          title="Add New Item"
-        >
-          <ItemForm
-            onAdd={(item) => {
-              handleAddItem(item)
-              setIsAddSheetOpen(false)
-            }}
-          />
-        </BottomSheet>
       </AppShell>
     </SessionContext.Provider>
   )

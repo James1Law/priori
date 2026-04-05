@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import type { ViewMode, ItemStatus, RoadmapPeriod } from '../types/database'
+import type { ViewMode, ItemStatus } from '../types/database'
 
 export interface FilterState {
   search: string
   status: ItemStatus | 'all'
   hasEstimate: boolean | null
   onRoadmap: boolean | null
-  period: string | null // period id or null for "all"
 }
 
 interface BacklogToolbarProps {
@@ -14,7 +13,6 @@ interface BacklogToolbarProps {
   onFiltersChange: (filters: FilterState) => void
   view: ViewMode
   onAddCutoff?: () => void
-  periods: RoadmapPeriod[]
   itemCount: number
   filteredCount: number
 }
@@ -24,23 +22,17 @@ export default function BacklogToolbar({
   onFiltersChange,
   view,
   onAddCutoff,
-  periods,
   itemCount,
   filteredCount,
 }: BacklogToolbarProps) {
   const [isStatusOpen, setIsStatusOpen] = useState(false)
-  const [isPeriodOpen, setIsPeriodOpen] = useState(false)
   const statusRef = useRef<HTMLDivElement>(null)
-  const periodRef = useRef<HTMLDivElement>(null)
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
         setIsStatusOpen(false)
-      }
-      if (periodRef.current && !periodRef.current.contains(event.target as Node)) {
-        setIsPeriodOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -62,8 +54,7 @@ export default function BacklogToolbar({
     filters.search !== '' ||
     filters.status !== 'all' ||
     filters.hasEstimate !== null ||
-    filters.onRoadmap !== null ||
-    filters.period !== null
+    filters.onRoadmap !== null
 
   const clearFilters = () => {
     onFiltersChange({
@@ -71,7 +62,6 @@ export default function BacklogToolbar({
       status: 'all',
       hasEstimate: null,
       onRoadmap: null,
-      period: null,
     })
   }
 
@@ -117,10 +107,7 @@ export default function BacklogToolbar({
         {/* Status filter dropdown */}
         <div className="relative" ref={statusRef}>
           <button
-            onClick={() => {
-              setIsStatusOpen(!isStatusOpen)
-              setIsPeriodOpen(false)
-            }}
+            onClick={() => setIsStatusOpen(!isStatusOpen)}
             className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
               filters.status !== 'all'
                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
@@ -186,63 +173,6 @@ export default function BacklogToolbar({
           On Roadmap
         </button>
 
-        {/* Period filter dropdown */}
-        {periods.length > 0 && (
-          <div className="relative" ref={periodRef}>
-            <button
-              onClick={() => {
-                setIsPeriodOpen(!isPeriodOpen)
-                setIsStatusOpen(false)
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                filters.period !== null
-                  ? 'bg-purple-50 border-purple-200 text-purple-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-              aria-expanded={isPeriodOpen}
-            >
-              {filters.period !== null
-                ? periods.find(p => p.id === filters.period)?.name || 'Period'
-                : 'Period'}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {isPeriodOpen && (
-              <div className="absolute left-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      updateFilter('period', null)
-                      setIsPeriodOpen(false)
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      filters.period === null ? 'bg-purple-50 text-purple-700' : 'text-gray-700'
-                    }`}
-                  >
-                    All Periods
-                  </button>
-                  {[...periods].sort((a, b) => a.position - b.position).map((period) => (
-                    <button
-                      key={period.id}
-                      onClick={() => {
-                        updateFilter('period', period.id)
-                        setIsPeriodOpen(false)
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                        filters.period === period.id ? 'bg-purple-50 text-purple-700' : 'text-gray-700'
-                      }`}
-                    >
-                      {period.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Spacer */}
         <div className="flex-1 hidden sm:block" />
 
@@ -284,11 +214,10 @@ export function applyFilters<T extends {
   description: string | null
   status?: string
   story_points?: number | null
-  roadmap_start_quadrant?: number | null
+  start_date?: string | null
 }>(
   items: T[],
-  filters: FilterState,
-  periods: RoadmapPeriod[]
+  filters: FilterState
 ): T[] {
   return items.filter((item) => {
     // Search filter
@@ -309,23 +238,9 @@ export function applyFilters<T extends {
       if (item.story_points === null || item.story_points === undefined) return false
     }
 
-    // On roadmap filter
+    // On roadmap filter (has dates)
     if (filters.onRoadmap === true) {
-      if (item.roadmap_start_quadrant === null || item.roadmap_start_quadrant === undefined) return false
-    }
-
-    // Period filter
-    if (filters.period !== null) {
-      const period = periods.find(p => p.id === filters.period)
-      if (!period) return false
-
-      const startQ = item.roadmap_start_quadrant
-      if (startQ === null || startQ === undefined) return false
-
-      // Each period has 4 quadrants
-      const periodStartQ = period.position * 4
-      const periodEndQ = periodStartQ + 3
-      if (startQ < periodStartQ || startQ > periodEndQ) return false
+      if (!item.start_date) return false
     }
 
     return true

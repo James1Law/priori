@@ -46,12 +46,6 @@ describe('Sidebar', () => {
       expect(screen.getByText('My Sprint')).toBeInTheDocument()
     })
 
-    it('renders session URL', () => {
-      renderSidebar({ slug: 'my-sprint' })
-
-      expect(screen.getByText('priori.work/s/my-sprint')).toBeInTheDocument()
-    })
-
     it('renders Settings in footer', () => {
       renderSidebar()
 
@@ -59,10 +53,10 @@ describe('Sidebar', () => {
       expect(screen.getByText('Settings')).toBeInTheDocument()
     })
 
-    it('shows "Untitled Session" when session name is null', () => {
+    it('shows placeholder when session name is null', () => {
       renderSidebar({ sessionName: null })
 
-      expect(screen.getByText('Untitled Session')).toBeInTheDocument()
+      expect(screen.getByText('Name your session...')).toBeInTheDocument()
     })
   })
 

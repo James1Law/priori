@@ -17,7 +17,7 @@ function makeItem(overrides: Partial<Item> = {}): Item {
     roadmap_end_period: null,
     roadmap_start_quadrant: null,
     roadmap_end_quadrant: null,
-    roadmap_row: 0,
+    roadmap_row: 0, start_date: null, end_date: null,
     story_points: null,
     effort_estimate: null,
     ...overrides,

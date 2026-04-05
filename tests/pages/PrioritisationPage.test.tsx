@@ -9,7 +9,7 @@ const mockSession = {
   current_estimation_item_id: null, estimation_revealed: false,
   estimation_item_ids: [], estimation_host: null, estimation_session_id: null,
   capacity_team_size: 5, capacity_working_days: 65, capacity_focus_factor: 0.6,
-  capacity_contingency: 0.3, capacity_unit: 'days', capacity_hours_per_day: 8,
+  capacity_contingency: 0.3, capacity_unit: 'days', capacity_hours_per_day: 8, roadmap_zoom: 'fit' as const, roadmap_start_date: null, roadmap_end_date: null,
   created_at: '2024-01-01', updated_at: '2024-01-01',
 }
 
@@ -19,7 +19,7 @@ const mockItems = [
     description: null, position: 0, backlog_position: null,
     status: 'in_progress', created_by: 'James', created_at: '2024-01-01',
     roadmap_start_period: null, roadmap_end_period: null,
-    roadmap_start_quadrant: null, roadmap_end_quadrant: null, roadmap_row: 0,
+    roadmap_start_quadrant: null, roadmap_end_quadrant: null, roadmap_row: 0, start_date: null, end_date: null,
     story_points: 8, effort_estimate: null, parent_item_id: null, item_level: 0,
   },
   {
@@ -27,7 +27,7 @@ const mockItems = [
     description: null, position: 1, backlog_position: null,
     status: 'todo', created_by: 'Sarah', created_at: '2024-01-01',
     roadmap_start_period: null, roadmap_end_period: null,
-    roadmap_start_quadrant: null, roadmap_end_quadrant: null, roadmap_row: 0,
+    roadmap_start_quadrant: null, roadmap_end_quadrant: null, roadmap_row: 0, start_date: null, end_date: null,
     story_points: null, effort_estimate: null, parent_item_id: null, item_level: 0,
   },
 ]

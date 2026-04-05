@@ -1,27 +1,20 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import BacklogToolbar, { applyFilters, type FilterState } from '../../src/components/BacklogToolbar'
-import type { RoadmapPeriod, ItemStatus } from '../../src/types/database'
+import type { ItemStatus } from '../../src/types/database'
 
 const defaultFilters: FilterState = {
   search: '',
   status: 'all',
   hasEstimate: null,
   onRoadmap: null,
-  period: null,
 }
-
-const mockPeriods: RoadmapPeriod[] = [
-  { id: 'p1', session_id: 's1', name: 'Now', width: 4, position: 0, created_at: '' },
-  { id: 'p2', session_id: 's1', name: 'Next', width: 4, position: 1, created_at: '' },
-]
 
 describe('BacklogToolbar', () => {
   const defaultProps = {
     filters: defaultFilters,
     onFiltersChange: vi.fn(),
     view: 'list' as const,
-    periods: mockPeriods,
     itemCount: 10,
     filteredCount: 10,
   }
@@ -149,29 +142,6 @@ describe('BacklogToolbar', () => {
     })
   })
 
-  it('renders Period dropdown when periods exist', () => {
-    render(<BacklogToolbar {...defaultProps} />)
-    expect(screen.getByText('Period')).toBeInTheDocument()
-  })
-
-  it('hides Period dropdown when no periods', () => {
-    render(<BacklogToolbar {...defaultProps} periods={[]} />)
-    expect(screen.queryByText('Period')).not.toBeInTheDocument()
-  })
-
-  it('selects period from dropdown', () => {
-    const onFiltersChange = vi.fn()
-    render(<BacklogToolbar {...defaultProps} onFiltersChange={onFiltersChange} />)
-
-    fireEvent.click(screen.getByText('Period'))
-    fireEvent.click(screen.getByText('Now'))
-
-    expect(onFiltersChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      period: 'p1',
-    })
-  })
-
   it('renders Add Cutoff button in list view', () => {
     const onAddCutoff = vi.fn()
     render(<BacklogToolbar {...defaultProps} onAddCutoff={onAddCutoff} />)
@@ -231,7 +201,7 @@ describe('applyFilters', () => {
       description: 'First task description',
       status: 'todo' as ItemStatus,
       story_points: null,
-      roadmap_start_quadrant: null,
+      start_date: null,
     },
     {
       id: '2',
@@ -239,7 +209,7 @@ describe('applyFilters', () => {
       description: 'Second task description',
       status: 'in_progress' as ItemStatus,
       story_points: 5,
-      roadmap_start_quadrant: 0, // In "Now" period
+      start_date: '2026-04-01',
     },
     {
       id: '3',
@@ -247,61 +217,54 @@ describe('applyFilters', () => {
       description: null,
       status: 'done' as ItemStatus,
       story_points: 3,
-      roadmap_start_quadrant: 4, // In "Next" period
+      start_date: '2026-05-01',
     },
   ]
 
   it('returns all items with no filters', () => {
-    const result = applyFilters(mockItems, defaultFilters, mockPeriods)
+    const result = applyFilters(mockItems, defaultFilters)
     expect(result).toHaveLength(3)
   })
 
   it('filters by search in title', () => {
     const filters = { ...defaultFilters, search: 'One' }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(1)
     expect(result[0].title).toBe('Task One')
   })
 
   it('filters by search in description', () => {
     const filters = { ...defaultFilters, search: 'Second' }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(1)
     expect(result[0].title).toBe('Task Two')
   })
 
   it('search is case insensitive', () => {
     const filters = { ...defaultFilters, search: 'TASK' }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(3)
   })
 
   it('filters by status', () => {
     const filters = { ...defaultFilters, status: 'done' as ItemStatus }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(1)
     expect(result[0].title).toBe('Task Three')
   })
 
   it('filters by hasEstimate', () => {
     const filters = { ...defaultFilters, hasEstimate: true }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(2)
     expect(result.every(item => item.story_points !== null)).toBe(true)
   })
 
   it('filters by onRoadmap', () => {
     const filters = { ...defaultFilters, onRoadmap: true }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(2)
-    expect(result.every(item => item.roadmap_start_quadrant !== null)).toBe(true)
-  })
-
-  it('filters by period', () => {
-    const filters = { ...defaultFilters, period: 'p1' } // "Now" period
-    const result = applyFilters(mockItems, filters, mockPeriods)
-    expect(result).toHaveLength(1)
-    expect(result[0].title).toBe('Task Two')
+    expect(result.every(item => item.start_date !== null)).toBe(true)
   })
 
   it('combines multiple filters', () => {
@@ -310,9 +273,8 @@ describe('applyFilters', () => {
       status: 'all',
       hasEstimate: true,
       onRoadmap: true,
-      period: null,
     }
-    const result = applyFilters(mockItems, filters, mockPeriods)
+    const result = applyFilters(mockItems, filters)
     expect(result).toHaveLength(2)
   })
 })

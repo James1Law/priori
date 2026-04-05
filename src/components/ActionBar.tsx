@@ -1,33 +1,25 @@
 import { useState, useRef, useEffect } from 'react'
-import type { RoadmapPeriod, ItemStatus } from '../types/database'
+import type { ItemStatus } from '../types/database'
 
 interface ActionBarProps {
   selectedCount: number
   onClearSelection: () => void
   onSetStatus: (status: ItemStatus) => void
-  onAssignPeriod: (periodPosition: number) => void
   onDelete: () => void
-  periods: RoadmapPeriod[]
   hasDeleteHandler: boolean
   hasStatusHandler: boolean
-  hasPeriodHandler: boolean
 }
 
 export default function ActionBar({
   selectedCount,
   onClearSelection,
   onSetStatus,
-  onAssignPeriod,
   onDelete,
-  periods,
   hasDeleteHandler,
   hasStatusHandler,
-  hasPeriodHandler,
 }: ActionBarProps) {
   const [isStatusOpen, setIsStatusOpen] = useState(false)
-  const [isPeriodOpen, setIsPeriodOpen] = useState(false)
   const statusRef = useRef<HTMLDivElement>(null)
-  const periodRef = useRef<HTMLDivElement>(null)
 
   const hasSelection = selectedCount > 0
 
@@ -36,9 +28,6 @@ export default function ActionBar({
     const handleClickOutside = (event: MouseEvent) => {
       if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
         setIsStatusOpen(false)
-      }
-      if (periodRef.current && !periodRef.current.contains(event.target as Node)) {
-        setIsPeriodOpen(false)
       }
     }
 
@@ -51,7 +40,6 @@ export default function ActionBar({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsStatusOpen(false)
-        setIsPeriodOpen(false)
       }
     }
 
@@ -101,7 +89,6 @@ export default function ActionBar({
               onClick={() => {
                 if (hasSelection) {
                   setIsStatusOpen(!isStatusOpen)
-                  setIsPeriodOpen(false)
                 }
               }}
               disabled={!hasSelection}
@@ -139,59 +126,6 @@ export default function ActionBar({
                       {option.label}
                     </button>
                   ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Assign Period dropdown */}
-        {hasPeriodHandler && periods.length > 0 && (
-          <div className="relative" ref={periodRef}>
-            <button
-              onClick={() => {
-                if (hasSelection) {
-                  setIsPeriodOpen(!isPeriodOpen)
-                  setIsStatusOpen(false)
-                }
-              }}
-              disabled={!hasSelection}
-              title={!hasSelection ? 'Select items to assign period' : 'Assign period to selected items'}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                hasSelection
-                  ? 'bg-gray-600 hover:bg-gray-700 text-white'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-              aria-expanded={isPeriodOpen}
-              aria-haspopup="listbox"
-            >
-              Assign Period
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {isPeriodOpen && hasSelection && (
-              <div
-                className="absolute left-0 sm:left-auto sm:right-0 mt-1 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
-                role="listbox"
-              >
-                <div className="py-1">
-                  {[...periods]
-                    .sort((a, b) => a.position - b.position)
-                    .map((period) => (
-                      <button
-                        key={period.id}
-                        onClick={() => {
-                          onAssignPeriod(period.position)
-                          setIsPeriodOpen(false)
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        role="option"
-                      >
-                        {period.name}
-                      </button>
-                    ))}
                 </div>
               </div>
             )}

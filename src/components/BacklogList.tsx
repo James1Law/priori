@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { ItemWithScore, Framework, RoadmapPeriod, ItemStatus, Cutoff, CutoffColor, ItemLevel } from '../types/database'
+import type { ItemWithScore, Framework, ItemStatus, Cutoff, CutoffColor, ItemLevel } from '../types/database'
 import { ITEM_LEVEL_LABELS, ITEM_LEVEL_CHILD_LABELS, MAX_ITEM_LEVEL } from '../types/database'
 import { getQuadrant } from '../lib/valueEffort'
 import { buildTree, flattenTree, getStatusRollup, getRolledUpEstimate, getRolledUpScore, getMobileIndent, hasChildren as hasChildrenFn } from '../lib/hierarchy'
@@ -29,7 +29,6 @@ interface BacklogListProps {
   framework: Framework
   isManualOrder: boolean
   cutoffs?: Cutoff[]
-  periods?: RoadmapPeriod[]
   onEdit: (item: ItemWithScore) => void
   onDelete: (itemId: string) => void
   onDeleteMultiple?: (itemIds: string[]) => void
@@ -39,7 +38,6 @@ interface BacklogListProps {
   onDeleteCutoff?: (id: string) => void
   onStatusChange?: (itemId: string, status: ItemStatus) => void
   onStatusChangeMultiple?: (itemIds: string[], status: ItemStatus) => void
-  onAssignPeriod?: (itemIds: string[], periodPosition: number) => void
   onAddChild?: (parentId: string, parentLevel: number, title: string) => void
 }
 
@@ -113,15 +111,16 @@ function getStatusBadge(status: ItemStatus | undefined): { label: string; classN
   }
 }
 
-// Get period name for an item
-function getItemPeriod(item: ItemWithScore, periods: RoadmapPeriod[]): string | null {
-  // Check for null/undefined explicitly since 0 is a valid quadrant value
-  if (item.roadmap_start_quadrant === null || item.roadmap_start_quadrant === undefined || periods.length === 0) return null
-
-  // Each period has 4 quadrants, find which period the start quadrant belongs to
-  const periodIndex = Math.floor(item.roadmap_start_quadrant / 4)
-  const period = periods.find(p => p.position === periodIndex)
-  return period?.name || null
+// Get formatted date range for an item
+function getItemDateRange(item: ItemWithScore): string | null {
+  if (!item.start_date || !item.end_date) return null
+  const fmtDate = (d: string) => {
+    const date = new Date(d + 'T00:00:00')
+    const day = date.getDate()
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${day} ${months[date.getMonth()]}`
+  }
+  return `${fmtDate(item.start_date)} – ${fmtDate(item.end_date)}`
 }
 
 // Status sort order
@@ -229,7 +228,7 @@ function SortableItem({
   const levelLabel = ITEM_LEVEL_LABELS[itemLevel as ItemLevel] ?? 'Item'
   const levelBadgeStyle = LEVEL_BADGE_STYLES[itemLevel] ?? LEVEL_BADGE_STYLES[0]
   const levelBorderColor = LEVEL_BORDER_COLORS[itemLevel] ?? LEVEL_BORDER_COLORS[0]
-  const isHierarchyItem = itemLevel > 0 || hasChildren
+  const isHierarchyItem = true // All items show their level badge
 
   // Rolled-up estimate for parent items
   const rolledUpEstimate = hasChildren ? getRolledUpEstimate(item.id, allItems) : null
@@ -823,7 +822,6 @@ export default function BacklogList({
   framework,
   isManualOrder,
   cutoffs = [],
-  periods = [],
   onEdit,
   onDelete,
   onDeleteMultiple,
@@ -833,7 +831,6 @@ export default function BacklogList({
   onDeleteCutoff,
   onStatusChange,
   onStatusChangeMultiple,
-  onAssignPeriod,
   onAddChild,
 }: BacklogListProps) {
   const [sortOption, setSortOption] = useState<SortOption>(isManualOrder ? 'manual' : 'score')
@@ -858,7 +855,7 @@ export default function BacklogList({
   // Progressive disclosure: determine which columns to show
   const hasAnyScores = items.some(item => item.score?.calculated_score !== undefined && item.score?.calculated_score !== null)
   const hasAnyEstimates = items.some(item => item.story_points !== null && item.story_points !== undefined)
-  const hasAnyPeriods = items.some(item => item.roadmap_start_quadrant !== null)
+  const hasAnyPeriods = items.some(item => item.start_date !== null)
 
   // Clear selection when items change (e.g., items deleted)
   useEffect(() => {
@@ -964,9 +961,9 @@ export default function BacklogList({
         const statusB = STATUS_ORDER[b.status || 'todo']
         return statusA - statusB
       case 'period':
-        const periodA = a.roadmap_start_quadrant ?? Number.MAX_SAFE_INTEGER
-        const periodB = b.roadmap_start_quadrant ?? Number.MAX_SAFE_INTEGER
-        return periodA - periodB
+        const dateA = a.start_date ?? '\uffff'
+        const dateB = b.start_date ?? '\uffff'
+        return dateA < dateB ? -1 : dateA > dateB ? 1 : 0
       case 'title':
         return a.title.localeCompare(b.title)
       default:
@@ -1085,15 +1082,6 @@ export default function BacklogList({
     handleClearSelection()
   }, [selectedIds, onDeleteMultiple, handleClearSelection])
 
-  // Handle bulk period assignment
-  const handleBulkAssignPeriod = useCallback((periodPosition: number) => {
-    const ids = Array.from(selectedIds)
-    if (onAssignPeriod) {
-      onAssignPeriod(ids, periodPosition)
-    }
-    handleClearSelection()
-  }, [selectedIds, onAssignPeriod, handleClearSelection])
-
   // Early return for empty items list (AFTER all hooks are defined)
   if (items.length === 0) {
     return (
@@ -1127,12 +1115,9 @@ export default function BacklogList({
           selectedCount={selectedIds.size}
           onClearSelection={handleClearSelection}
           onSetStatus={handleBulkStatusChange}
-          onAssignPeriod={handleBulkAssignPeriod}
           onDelete={handleBulkDelete}
-          periods={periods}
           hasDeleteHandler={!!onDeleteMultiple}
           hasStatusHandler={!!onStatusChangeMultiple}
-          hasPeriodHandler={!!onAssignPeriod}
         />
       </div>
 
@@ -1239,7 +1224,7 @@ export default function BacklogList({
                     item={item}
                     index={isTopLevel ? currentRank - 1 : index}
                     framework={framework}
-                    periodName={getItemPeriod(item, periods)}
+                    periodName={getItemDateRange(item)}
                     showScoreColumn={hasAnyScores}
                     showEstimateColumn={hasAnyEstimates}
                     showPeriodColumn={hasAnyPeriods}

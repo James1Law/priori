@@ -53,6 +53,10 @@ export interface Session {
   capacity_contingency: number
   capacity_unit: 'days' | 'hours'
   capacity_hours_per_day: number
+  // Roadmap view settings
+  roadmap_zoom: 'fit' | '3m' | '6m' | '1y' | 'custom'
+  roadmap_start_date: string | null
+  roadmap_end_date: string | null
   created_at: string
   updated_at: string
 }
@@ -84,6 +88,9 @@ export interface Item {
   story_points: number | null
   // Capacity planning estimate
   effort_estimate: number | null
+  // Date-based roadmap scheduling
+  start_date: string | null
+  end_date: string | null
   // Hierarchy
   parent_item_id: string | null
   item_level: ItemLevel

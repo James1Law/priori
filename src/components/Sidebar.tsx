@@ -193,23 +193,26 @@ export default function Sidebar({ slug, sessionName, collapsed, onToggleCollapse
                   if (e.key === 'Enter') saveEdit()
                   if (e.key === 'Escape') setEditing(false)
                 }}
-                className="font-display font-semibold text-sm text-gray-900 w-full border-b-2 border-indigo-500 bg-transparent focus:outline-none"
+                className="font-display font-bold text-base text-gray-900 w-full border-b-2 border-indigo-500 bg-transparent focus:outline-none"
                 autoFocus
                 data-testid="session-name-input"
               />
             ) : (
-              <div
-                className="font-display font-semibold text-sm text-gray-900 truncate cursor-pointer hover:text-indigo-600 transition-colors"
+              <button
+                className="group flex items-center gap-1 text-left max-w-full cursor-pointer"
                 onClick={startEditing}
-                title="Click to edit session name"
                 data-testid="session-name-display"
               >
-                {sessionName || 'Untitled Session'}
-              </div>
+                <span className={`font-display font-bold text-base truncate transition-colors group-hover:text-indigo-600 ${
+                  sessionName ? 'text-gray-900' : 'text-gray-400 italic'
+                }`}>
+                  {sessionName || 'Name your session...'}
+                </span>
+                <svg className="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
             )}
-            <div className="text-[11px] text-gray-400 truncate">
-              priori.work/s/{slug}
-            </div>
           </div>
         )}
       </div>

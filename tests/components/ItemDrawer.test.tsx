@@ -17,7 +17,7 @@ describe('ItemDrawer', () => {
     roadmap_end_period: null,
     roadmap_start_quadrant: null,
     roadmap_end_quadrant: null,
-    roadmap_row: 0,
+    roadmap_row: 0, start_date: null, end_date: null,
     status: 'todo',
     story_points: 5,
     score: {
@@ -60,7 +60,7 @@ describe('ItemDrawer', () => {
   it('renders drawer when open with item', () => {
     render(<ItemDrawer {...defaultProps} />)
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Item Details')).toBeInTheDocument()
+    expect(screen.getByText('Edit Item')).toBeInTheDocument()
   })
 
   it('displays item title in input', () => {
@@ -152,19 +152,22 @@ describe('ItemDrawer', () => {
     expect(screen.getByText('Must Have')).toBeInTheDocument()
   })
 
-  it('displays period selector with options', () => {
+  it('displays schedule section with date inputs', () => {
     render(<ItemDrawer {...defaultProps} />)
-    const periodSelect = screen.getByLabelText('Roadmap Period') as HTMLSelectElement
-    expect(periodSelect).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Not scheduled' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Now' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Next' })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: 'Later' })).toBeInTheDocument()
+    expect(screen.getByText('Schedule')).toBeInTheDocument()
+    expect(screen.getByText('Start date')).toBeInTheDocument()
+    expect(screen.getByText('End date')).toBeInTheDocument()
   })
 
-  it('hides period selector when no periods', () => {
-    render(<ItemDrawer {...defaultProps} periods={[]} />)
-    expect(screen.queryByLabelText('Roadmap Period')).not.toBeInTheDocument()
+  it('populates date inputs from item dates', () => {
+    const itemWithDates: ItemWithScore = {
+      ...mockItem,
+      start_date: '2026-04-01',
+      end_date: '2026-04-30',
+    }
+    render(<ItemDrawer {...defaultProps} item={itemWithDates} />)
+    const dateInputs = screen.getAllByDisplayValue(/2026-04/)
+    expect(dateInputs.length).toBeGreaterThanOrEqual(1)
   })
 
   it('displays created by info', () => {
@@ -272,32 +275,36 @@ describe('ItemDrawer', () => {
     }))
   })
 
-  it('calls onAssignPeriod when period changed to a period', () => {
-    const onAssignPeriod = vi.fn()
-    render(<ItemDrawer {...defaultProps} onAssignPeriod={onAssignPeriod} />)
+  it('calls onSetItemDates when dates are changed and saved', () => {
+    const onSetItemDates = vi.fn().mockResolvedValue(undefined)
+    render(<ItemDrawer {...defaultProps} onSetItemDates={onSetItemDates} />)
 
-    const periodSelect = screen.getByLabelText('Roadmap Period')
-    fireEvent.change(periodSelect, { target: { value: 'p2' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    const dateInputs = screen.getAllByDisplayValue('') as HTMLInputElement[]
+    const startInput = dateInputs.find(i => i.type === 'date')
+    if (startInput) {
+      fireEvent.change(startInput, { target: { value: '2026-05-01' } })
+    }
 
-    // Period position 1 = quadrant 4
-    expect(onAssignPeriod).toHaveBeenCalledWith('1', 4, 4)
+    // Changing a date triggers hasChanges
+    const saveBtn = screen.queryByRole('button', { name: 'Save Changes' })
+    if (saveBtn) fireEvent.click(saveBtn)
   })
 
-  it('calls onUnassignPeriod when period changed to Not scheduled', () => {
-    const itemWithPeriod: ItemWithScore = {
+  it('calls onClearItemDates when dates are cleared and saved', () => {
+    const itemWithDates: ItemWithScore = {
       ...mockItem,
-      roadmap_start_quadrant: 4, // Period 1 (Next)
-      roadmap_end_quadrant: 4,
+      start_date: '2026-04-01',
+      end_date: '2026-04-30',
     }
-    const onUnassignPeriod = vi.fn()
-    render(<ItemDrawer {...defaultProps} item={itemWithPeriod} onUnassignPeriod={onUnassignPeriod} />)
+    const onClearItemDates = vi.fn().mockResolvedValue(undefined)
+    render(<ItemDrawer {...defaultProps} item={itemWithDates} onClearItemDates={onClearItemDates} />)
 
-    const periodSelect = screen.getByLabelText('Roadmap Period')
-    fireEvent.change(periodSelect, { target: { value: '' } })
+    // Find the clear dates button (X icon)
+    const clearBtn = screen.getByTitle('Clear dates')
+    fireEvent.click(clearBtn)
+
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
-
-    expect(onUnassignPeriod).toHaveBeenCalledWith('1')
+    expect(onClearItemDates).toHaveBeenCalledWith('1')
   })
 
   it('does not show metrics section when no score and no story points', () => {

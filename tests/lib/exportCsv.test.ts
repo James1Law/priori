@@ -11,6 +11,8 @@ describe('generateCsvContent', () => {
     position: 0,
     created_by: 'Alice',
     created_at: '2026-01-13T00:00:00Z',
+    start_date: null,
+    end_date: null,
   }
 
   it('generates CSV for RICE framework', () => {

@@ -120,7 +120,7 @@ export default function CapacityItemList({
       {items.map((item, index) => {
         const statusConfig = STATUS_CONFIG[item.status]
         const itemLevel = item.item_level ?? 0
-        const isHierarchyItem = itemLevel > 0 || getDirectChildren(item.id, items).length > 0
+        const isHierarchyItem = true // All items show their level badge
         const hasChildren = getDirectChildren(item.id, items).length > 0
         const rolledUp = hasChildren ? getRolledUpEstimate(item.id, items) : null
         const levelBorderColour = LEVEL_BORDER_COLOURS[itemLevel] ?? LEVEL_BORDER_COLOURS[0]

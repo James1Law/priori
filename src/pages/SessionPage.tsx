@@ -3,12 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Framework, Score, ViewMode } from '../types/database'
 import { exportToCsv } from '../lib/exportCsv'
-import ItemForm from '../components/ItemForm'
 import BacklogList from '../components/BacklogList'
 import { type FilterState, applyFilters } from '../components/BacklogToolbar'
 import CapacityView from '../components/CapacityView'
 import RoadmapView from '../components/RoadmapView'
-import MobileRoadmapView from '../components/MobileRoadmapView'
 import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
 import MobileBottomBar from '../components/MobileBottomBar'
@@ -19,7 +17,6 @@ import MobileMenu from '../components/MobileMenu'
 import MobileChatModal from '../components/MobileChatModal'
 import { useParticipantName } from '../hooks/useParticipantName'
 import { usePresence } from '../hooks/usePresence'
-import { useRoadmapPeriods } from '../hooks/useRoadmapPeriods'
 import { useCutoffs } from '../hooks/useCutoffs'
 import { useMessages } from '../hooks/useMessages'
 import { useUnreadCount } from '../hooks/useUnreadCount'
@@ -68,7 +65,9 @@ export default function SessionPage() {
   const setSession = sessionContext.setSession
 
 
-  const [editingItem, setEditingItem] = useState<ItemWithScore | null>(null)
+  const editingItem = sessionContext.editingItem
+  const setEditingItem = sessionContext.setEditingItem
+  const isNewItem = sessionContext.isNewItem
   const [editingSessionName, setEditingSessionName] = useState(false)
   const [sessionNameInput, setSessionNameInput] = useState('')
   const [confirmModal, setConfirmModal] = useState<{
@@ -78,7 +77,6 @@ export default function SessionPage() {
     variant: 'danger' | 'warning' | 'default'
     onConfirm: () => void
   } | null>(null)
-  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -94,7 +92,6 @@ export default function SessionPage() {
     status: 'all',
     hasEstimate: null,
     onRoadmap: null,
-    period: null,
   })
   // Refs to track current values for realtime callbacks (avoids stale closure)
   const frameworkRef = useRef<Framework | undefined>(session?.framework)
@@ -119,14 +116,6 @@ export default function SessionPage() {
     participantName
   )
 
-  // Roadmap periods
-  const {
-    periods: roadmapPeriods,
-    loading: roadmapPeriodsLoading,
-    addPeriod,
-    updatePeriod,
-    deletePeriod,
-  } = useRoadmapPeriods(localView === 'roadmap' ? (session?.id ?? null) : null)
 
   // Cutoffs hook
   const {
@@ -148,10 +137,10 @@ export default function SessionPage() {
         return
       }
 
-      // "N" key opens add item panel (desktop) or bottom sheet (mobile)
+      // "N" key creates a new item and opens the drawer
       if (e.key === 'n' || e.key === 'N') {
         e.preventDefault()
-        setIsAddSheetOpen(true)
+        sessionContext.addItemAndEdit()
       }
     }
 
@@ -329,12 +318,20 @@ export default function SessionPage() {
 
     const position = items.length
 
+    // Default dates: today → today + 1 month
+    const today = new Date()
+    const endDate = new Date(today)
+    endDate.setMonth(endDate.getMonth() + 1)
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
     const itemToInsert: Record<string, unknown> = {
       session_id: session.id,
       title: newItem.title,
       description: newItem.description || null,
       position,
       created_by: participantName,
+      start_date: fmt(today),
+      end_date: fmt(endDate),
     }
 
     // Add hierarchy fields if provided
@@ -553,39 +550,6 @@ export default function SessionPage() {
     }
   }
 
-  const handleAssignPeriod = async (itemIds: string[], periodPosition: number) => {
-    if (!roadmapPeriods.length) return
-
-    // Calculate quadrant for the start of this period
-    const QUADRANTS_PER_PERIOD = 4
-    const startQuadrant = periodPosition * QUADRANTS_PER_PERIOD
-    const endQuadrant = startQuadrant // Single quadrant by default
-
-    // Optimistically update local state
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        itemIds.includes(item.id)
-          ? { ...item, roadmap_start_quadrant: startQuadrant, roadmap_end_quadrant: endQuadrant }
-          : item
-      )
-    )
-
-    // Persist to database
-    for (const itemId of itemIds) {
-      const { error } = await supabase
-        .from('items')
-        .update({
-          roadmap_start_quadrant: startQuadrant,
-          roadmap_end_quadrant: endQuadrant,
-        } as never)
-        .eq('id', itemId)
-
-      if (error) {
-        console.error('Error assigning period to item:', error)
-      }
-    }
-  }
-
   const handleClearItems = () => {
     if (!session) return
 
@@ -666,7 +630,7 @@ export default function SessionPage() {
       })
 
   // Apply filters to sorted items
-  const backlogViewItems = applyFilters(sortedItems, filters, roadmapPeriods)
+  const backlogViewItems = applyFilters(sortedItems, filters)
 
   const handleBacklogReorder = async (reorderedItems: ItemWithScore[]) => {
     if (!session) return
@@ -696,227 +660,160 @@ export default function SessionPage() {
     }
   }
 
-  const handleScheduleItem = async (itemId: string, startQuadrant: number, endQuadrant: number) => {
-    const scheduledItem = items.find((i) => i.id === itemId)
+  // ============================================
+  // Date-based roadmap handlers
+  // ============================================
 
-    let clampedStart = startQuadrant
-    let clampedEnd = endQuadrant
+  const handleSetItemDates = async (itemId: string, startDate: string, endDate: string) => {
+    const item = items.find((i) => i.id === itemId)
 
-    // Clamp within ALL ancestor bounds (parent, grandparent, etc.)
-    if (scheduledItem?.parent_item_id) {
-      let currentParentId: string | null = scheduledItem.parent_item_id
-      while (currentParentId) {
-        const ancestor = items.find((i) => i.id === currentParentId)
-        if (ancestor && ancestor.roadmap_start_quadrant != null && ancestor.roadmap_end_quadrant != null) {
-          clampedStart = Math.max(clampedStart, ancestor.roadmap_start_quadrant)
-          clampedEnd = Math.min(clampedEnd, ancestor.roadmap_end_quadrant)
-        }
-        currentParentId = ancestor?.parent_item_id ?? null
-      }
-      // Ensure start <= end after clamping
-      if (clampedStart > clampedEnd) {
-        // Find the tightest ancestor bounds to fall back to
-        const parent = items.find((i) => i.id === scheduledItem.parent_item_id)
-        if (parent && parent.roadmap_start_quadrant != null && parent.roadmap_end_quadrant != null) {
-          clampedStart = parent.roadmap_start_quadrant
-          clampedEnd = parent.roadmap_end_quadrant
-        }
-      }
-    }
-
-    // Collect ALL descendants (not just direct children) that need constraining
-    const descendantUpdates: { id: string; start: number; end: number }[] = []
-    if (scheduledItem) {
-      const collectDescendantUpdates = (parentId: string, parentStart: number, parentEnd: number) => {
+    // Collect descendants that need constraining within new bounds
+    const descendantUpdates: { id: string; start: string; end: string }[] = []
+    if (item) {
+      const collectConstraints = (parentId: string, parentStart: string, parentEnd: string) => {
         const children = getDirectChildren(parentId, items)
         for (const child of children) {
-          if (child.roadmap_start_quadrant != null && child.roadmap_end_quadrant != null) {
-            const newStart = Math.max(child.roadmap_start_quadrant, parentStart)
-            const newEnd = Math.min(child.roadmap_end_quadrant, parentEnd)
-            if (newStart !== child.roadmap_start_quadrant || newEnd !== child.roadmap_end_quadrant) {
-              const safeStart = Math.min(newStart, newEnd)
-              const safeEnd = Math.max(newStart, newEnd)
+          if (child.start_date && child.end_date) {
+            const newStart = child.start_date < parentStart ? parentStart : child.start_date
+            const newEnd = child.end_date > parentEnd ? parentEnd : child.end_date
+            if (newStart !== child.start_date || newEnd !== child.end_date) {
+              const safeStart = newStart <= newEnd ? newStart : newEnd
+              const safeEnd = newStart <= newEnd ? newEnd : newStart
               descendantUpdates.push({ id: child.id, start: safeStart, end: safeEnd })
-              // Recurse to constrain this child's children too
-              collectDescendantUpdates(child.id, safeStart, safeEnd)
+              collectConstraints(child.id, safeStart, safeEnd)
             } else {
-              // Even if this child didn't move, check its children
-              collectDescendantUpdates(child.id, child.roadmap_start_quadrant, child.roadmap_end_quadrant)
+              collectConstraints(child.id, child.start_date, child.end_date)
             }
           }
         }
       }
-      collectDescendantUpdates(itemId, clampedStart, clampedEnd)
+      collectConstraints(itemId, startDate, endDate)
     }
-    const childUpdates = descendantUpdates
 
-    // Optimistically update local state
-    const childUpdateMap = new Map(childUpdates.map((u) => [u.id, u]))
-    setItems((prevItems) =>
-      prevItems.map((item) => {
-        if (item.id === itemId) {
-          return { ...item, roadmap_start_quadrant: clampedStart, roadmap_end_quadrant: clampedEnd }
+    // Optimistic update
+    const childUpdateMap = new Map(descendantUpdates.map((u) => [u.id, u]))
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.id === itemId) return { ...i, start_date: startDate, end_date: endDate }
+        if (childUpdateMap.has(i.id)) {
+          const u = childUpdateMap.get(i.id)!
+          return { ...i, start_date: u.start, end_date: u.end }
         }
-        if (childUpdateMap.has(item.id)) {
-          const cu = childUpdateMap.get(item.id)!
-          return { ...item, roadmap_start_quadrant: cu.start, roadmap_end_quadrant: cu.end }
-        }
-        return item
+        return i
       })
     )
 
-    // Persist to database
-    const { error } = await supabase
-      .from('items')
-      .update({
-        roadmap_start_quadrant: clampedStart,
-        roadmap_end_quadrant: clampedEnd,
-      } as never)
-      .eq('id', itemId)
-
-    if (error) {
-      console.error('Error scheduling item:', error)
-      // Revert on error
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === itemId
-            ? { ...item, roadmap_start_quadrant: null, roadmap_end_quadrant: null }
-            : item
-        )
-      )
-      return
-    }
-
-    // Persist child constraint updates
-    for (const cu of childUpdates) {
-      await supabase
-        .from('items')
-        .update({
-          roadmap_start_quadrant: cu.start,
-          roadmap_end_quadrant: cu.end,
-        } as never)
-        .eq('id', cu.id)
+    // Persist
+    await supabase.from('items').update({ start_date: startDate, end_date: endDate } as never).eq('id', itemId)
+    for (const u of descendantUpdates) {
+      await supabase.from('items').update({ start_date: u.start, end_date: u.end } as never).eq('id', u.id)
     }
   }
 
-  const handleMoveItem = async (itemId: string, newStart: number, newEnd: number) => {
+  const handleMoveItemDates = async (itemId: string, newStart: string, newEnd: string) => {
     const movedItem = items.find((i) => i.id === itemId)
-    if (!movedItem) return
+    if (!movedItem || !movedItem.start_date) return
 
-    const oldStart = movedItem.roadmap_start_quadrant
+    const origStartMs = new Date(movedItem.start_date).getTime()
+    const newStartMs = new Date(newStart).getTime()
+    const deltaDays = Math.round((newStartMs - origStartMs) / (1000 * 60 * 60 * 24))
 
-    // Clamp within ancestor bounds (if this is a child)
-    let clampedStart = newStart
-    let clampedEnd = newEnd
-    if (movedItem.parent_item_id) {
-      let currentParentId: string | null = movedItem.parent_item_id
-      while (currentParentId) {
-        const ancestor = items.find((i) => i.id === currentParentId)
-        if (ancestor && ancestor.roadmap_start_quadrant != null && ancestor.roadmap_end_quadrant != null) {
-          clampedStart = Math.max(clampedStart, ancestor.roadmap_start_quadrant)
-          clampedEnd = Math.min(clampedEnd, ancestor.roadmap_end_quadrant)
-        }
-        currentParentId = ancestor?.parent_item_id ?? null
-      }
-      if (clampedStart > clampedEnd) {
-        clampedStart = newStart
-        clampedEnd = newEnd
-      }
-    }
-
-    // Calculate delta for proportional descendant moves
-    const delta = oldStart != null ? clampedStart - oldStart : 0
-
-    // Collect all descendants that need to move proportionally
-    const allUpdates: { id: string; start: number; end: number }[] = [
-      { id: itemId, start: clampedStart, end: clampedEnd },
+    // Collect all descendant moves
+    const allUpdates: { id: string; start: string; end: string }[] = [
+      { id: itemId, start: newStart, end: newEnd },
     ]
 
-    const collectMoves = (parentId: string, parentDelta: number) => {
-      const children = getDirectChildren(parentId, items)
-      for (const child of children) {
-        if (child.roadmap_start_quadrant != null && child.roadmap_end_quadrant != null) {
-          allUpdates.push({
-            id: child.id,
-            start: child.roadmap_start_quadrant + parentDelta,
-            end: child.roadmap_end_quadrant + parentDelta,
-          })
-          collectMoves(child.id, parentDelta)
+    if (deltaDays !== 0) {
+      const collectMoves = (parentId: string) => {
+        const kids = getDirectChildren(parentId, items)
+        for (const child of kids) {
+          if (child.start_date && child.end_date) {
+            const addDays = (d: string, n: number) => {
+              const date = new Date(d)
+              date.setUTCDate(date.getUTCDate() + n)
+              const y = date.getUTCFullYear()
+              const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+              const day = String(date.getUTCDate()).padStart(2, '0')
+              return `${y}-${m}-${day}`
+            }
+            allUpdates.push({
+              id: child.id,
+              start: addDays(child.start_date, deltaDays),
+              end: addDays(child.end_date, deltaDays),
+            })
+            collectMoves(child.id)
+          }
         }
       }
+      collectMoves(itemId)
     }
 
-    if (delta !== 0) {
-      collectMoves(itemId, delta)
-    }
-
-    // Optimistically update local state — all items at once
+    // Optimistic update
     const updateMap = new Map(allUpdates.map((u) => [u.id, u]))
-    setItems((prevItems) =>
-      prevItems.map((item) => {
-        const upd = updateMap.get(item.id)
-        if (upd) {
-          return { ...item, roadmap_start_quadrant: upd.start, roadmap_end_quadrant: upd.end }
-        }
-        return item
+    setItems((prev) =>
+      prev.map((i) => {
+        const u = updateMap.get(i.id)
+        if (u) return { ...i, start_date: u.start, end_date: u.end }
+        return i
       })
     )
 
-    // Persist all updates to database
-    for (const upd of allUpdates) {
-      const { error } = await supabase
-        .from('items')
-        .update({
-          roadmap_start_quadrant: upd.start,
-          roadmap_end_quadrant: upd.end,
-        } as never)
-        .eq('id', upd.id)
-
-      if (error) {
-        console.error('Error moving item:', error)
-      }
+    // Persist
+    for (const u of allUpdates) {
+      await supabase.from('items').update({ start_date: u.start, end_date: u.end } as never).eq('id', u.id)
     }
   }
 
-  const handleUnscheduleItem = async (itemId: string) => {
-    // Find the current item to store for potential revert
-    const currentItem = items.find((item) => item.id === itemId)
+  const handleClearItemDates = async (itemId: string) => {
+    const currentItem = items.find((i) => i.id === itemId)
 
-    // Optimistically update local state
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId
-          ? { ...item, roadmap_start_quadrant: null, roadmap_end_quadrant: null }
-          : item
-      )
+    setItems((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, start_date: null, end_date: null } : i))
     )
 
-    // Persist to database
     const { error } = await supabase
       .from('items')
-      .update({
-        roadmap_start_quadrant: null,
-        roadmap_end_quadrant: null,
-      } as never)
+      .update({ start_date: null, end_date: null } as never)
       .eq('id', itemId)
 
     if (error) {
-      console.error('Error unscheduling item:', error)
-      // Revert on error
+      console.error('Error clearing item dates:', error)
       if (currentItem) {
-        setItems((prevItems) =>
-          prevItems.map((item) =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  roadmap_start_quadrant: currentItem.roadmap_start_quadrant,
-                  roadmap_end_quadrant: currentItem.roadmap_end_quadrant,
-                }
-              : item
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === itemId
+              ? { ...i, start_date: currentItem.start_date, end_date: currentItem.end_date }
+              : i
           )
         )
       }
     }
+  }
+
+  const handleSetRoadmapZoom = async (zoom: string, customStart?: string, customEnd?: string) => {
+    if (!session) return
+
+    const updates: Record<string, unknown> = { roadmap_zoom: zoom }
+    if (zoom === 'custom') {
+      if (customStart) updates.roadmap_start_date = customStart
+      if (customEnd) updates.roadmap_end_date = customEnd
+    } else {
+      updates.roadmap_start_date = null
+      updates.roadmap_end_date = null
+    }
+
+    setSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            roadmap_zoom: zoom as Session['roadmap_zoom'],
+            roadmap_start_date: (updates.roadmap_start_date as string) ?? null,
+            roadmap_end_date: (updates.roadmap_end_date as string) ?? null,
+          }
+        : prev
+    )
+
+    await supabase.from('sessions').update(updates as never).eq('id', session.id)
   }
 
   const handleSessionNameSave = async () => {
@@ -989,13 +886,19 @@ export default function SessionPage() {
                     </button>
                   </div>
                 ) : (
-                  <h1
-                    className="text-xl font-display font-bold text-gray-900 cursor-pointer hover:text-indigo-600 transition-colors truncate"
+                  <button
+                    className="group flex items-center gap-1.5 text-left max-w-full cursor-pointer"
                     onClick={startEditingSessionName}
-                    title="Click to edit session name"
                   >
-                    {session.name || 'Untitled Session'}
-                  </h1>
+                    <h1 className={`text-xl font-display font-bold truncate transition-colors group-hover:text-indigo-600 ${
+                      session.name ? 'text-gray-900' : 'text-gray-400 italic'
+                    }`}>
+                      {session.name || 'Name your session...'}
+                    </h1>
+                    <svg className="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
                 )}
             </div>
             <div className="flex items-center gap-2 relative">
@@ -1055,8 +958,7 @@ export default function SessionPage() {
                   items,
                   framework: session.framework,
                   sessionName: session.name || session.slug,
-                  periods: roadmapPeriods,
-                })}
+                                  })}
                 onClearItems={handleClearItems}
                 onNewSession={handleNewSession}
                 itemCount={items.length}
@@ -1110,8 +1012,7 @@ export default function SessionPage() {
                     <button
                       onClick={() => setIsFilterSheetOpen(true)}
                       className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                        filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null || filters.period !== null
-                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                        filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                           : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >
@@ -1119,7 +1020,7 @@ export default function SessionPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                       </svg>
                       Filters
-                      {(filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null || filters.period !== null) && (
+                      {(filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null ) && (
                         <span className="w-2 h-2 bg-indigo-600 rounded-full" />
                       )}
                     </button>
@@ -1127,13 +1028,13 @@ export default function SessionPage() {
                   </div>
 
                   {/* Filter summary (when active) */}
-                  {(filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null || filters.period !== null || filters.search) && backlogViewItems.length !== items.length && (
+                  {(filters.status !== 'all' || filters.hasEstimate !== null || filters.onRoadmap !== null  || filters.search) && backlogViewItems.length !== items.length && (
                     <div className="flex items-center gap-2 mt-2 text-sm">
                       <span className="text-gray-500">
                         Showing {backlogViewItems.length} of {items.length}
                       </span>
                       <button
-                        onClick={() => setFilters({ search: '', status: 'all', hasEstimate: null, onRoadmap: null, period: null })}
+                        onClick={() => setFilters({ search: '', status: 'all', hasEstimate: null, onRoadmap: null })}
                         className="text-indigo-600 hover:text-indigo-800 font-medium"
                       >
                         Clear
@@ -1147,8 +1048,7 @@ export default function SessionPage() {
                   framework={session.framework}
                   isManualOrder={isManualOrder}
                   cutoffs={cutoffs}
-                  periods={roadmapPeriods}
-                  onEdit={setEditingItem}
+                                    onEdit={setEditingItem}
                   onDelete={handleDeleteItem}
                   onDeleteMultiple={handleDeleteMultiple}
                   onReorder={handleBacklogReorder}
@@ -1157,7 +1057,6 @@ export default function SessionPage() {
                   onDeleteCutoff={deleteCutoff}
                   onStatusChange={handleStatusChange}
                   onStatusChangeMultiple={handleStatusChangeMultiple}
-                  onAssignPeriod={handleAssignPeriod}
                   onAddChild={(parentId, parentLevel, title) => {
                     handleAddItem({
                       title,
@@ -1170,30 +1069,36 @@ export default function SessionPage() {
               </div>
             )}
 
-            {/* Roadmap View — desktop */}
-            {localView === 'roadmap' && (
+            {/* Roadmap View */}
+            {localView === 'roadmap' && session && (
               <>
                 <div className="hidden sm:block">
                   <RoadmapView
-                    periods={roadmapPeriods}
                     items={items}
-                    loading={roadmapPeriodsLoading}
-                    onAddPeriod={addPeriod}
-                    onUpdatePeriod={updatePeriod}
-                    onDeletePeriod={deletePeriod}
-                    onScheduleItem={handleScheduleItem}
-                    onMoveItem={handleMoveItem}
-                    onUnscheduleItem={handleUnscheduleItem}
-                    onItemClick={(itemId) => navigate(`/s/${slug}/item/${itemId}`)}
+                    loading={false}
+                    session={session}
+                    onSetItemDates={handleSetItemDates}
+                    onMoveItem={handleMoveItemDates}
+                    onClearItemDates={handleClearItemDates}
+                    onSetZoom={handleSetRoadmapZoom}
+                    onItemClick={(itemId) => {
+                      const item = items.find(i => i.id === itemId)
+                      if (item) setEditingItem(item)
+                    }}
                   />
                 </div>
                 <div className="sm:hidden">
-                  <MobileRoadmapView
-                    periods={roadmapPeriods}
-                    items={items}
-                    loading={roadmapPeriodsLoading}
-                    onItemClick={(itemId) => navigate(`/s/${slug}/item/${itemId}`)}
-                  />
+                  <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                      <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">Roadmap redesign in progress</h3>
+                    <p className="text-sm text-gray-500 max-w-xs">
+                      The roadmap is being redesigned with a new date-based Gantt view. Use desktop for the full experience.
+                    </p>
+                  </div>
                 </div>
               </>
             )}
@@ -1218,27 +1123,13 @@ export default function SessionPage() {
       </main>
 
       {/* FAB for adding items */}
-      <FAB onClick={() => setIsAddSheetOpen(true)} />
+      <FAB onClick={() => sessionContext.addItemAndEdit()} />
 
       {/* Bottom tab bar */}
       <MobileBottomBar
         view={localView}
         onViewChange={handleViewChange}
       />
-
-      {/* Mobile add item bottom sheet */}
-      <BottomSheet
-        isOpen={isAddSheetOpen}
-        onClose={() => setIsAddSheetOpen(false)}
-        title="Add New Item"
-      >
-        <ItemForm
-          onAdd={(item) => {
-            handleAddItem(item)
-            setIsAddSheetOpen(false)
-          }}
-        />
-      </BottomSheet>
 
       {/* Mobile filters bottom sheet */}
       <BottomSheet
@@ -1299,43 +1190,11 @@ export default function SessionPage() {
             </div>
           </div>
 
-          {/* Period filter */}
-          {roadmapPeriods.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Period</label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setFilters({ ...filters, period: null })}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                    filters.period === null
-                      ? 'bg-purple-50 border-purple-200 text-purple-700'
-                      : 'bg-white border-gray-300 text-gray-700'
-                  }`}
-                >
-                  All
-                </button>
-                {[...roadmapPeriods].sort((a, b) => a.position - b.position).map((period) => (
-                  <button
-                    key={period.id}
-                    onClick={() => setFilters({ ...filters, period: period.id })}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                      filters.period === period.id
-                        ? 'bg-purple-50 border-purple-200 text-purple-700'
-                        : 'bg-white border-gray-300 text-gray-700'
-                    }`}
-                  >
-                    {period.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Clear filters button */}
           <div className="pt-2 border-t border-gray-200">
             <button
               onClick={() => {
-                setFilters({ search: '', status: 'all', hasEstimate: null, onRoadmap: null, period: null })
+                setFilters({ search: '', status: 'all', hasEstimate: null, onRoadmap: null })
                 setIsFilterSheetOpen(false)
               }}
               className="w-full py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -1350,14 +1209,14 @@ export default function SessionPage() {
       <ItemDrawer
         item={editingItem}
         isOpen={editingItem !== null}
+        isNew={isNewItem}
         framework={session.framework}
-        periods={roadmapPeriods}
         allItems={items}
-        onClose={() => setEditingItem(null)}
+        onClose={() => { setEditingItem(null) }}
         onSave={handleEditItem}
         onDelete={handleDeleteItem}
-        onAssignPeriod={(itemId, start, end) => handleScheduleItem(itemId, start, end)}
-        onUnassignPeriod={handleUnscheduleItem}
+        onSetItemDates={handleSetItemDates}
+        onClearItemDates={handleClearItemDates}
         onNavigateToItem={(navItem) => setEditingItem(navItem)}
         onAddChild={(parentId, parentLevel, childItemTitle) => {
           handleAddItem({
@@ -1366,6 +1225,32 @@ export default function SessionPage() {
             parent_item_id: parentId,
             item_level: parentLevel + 1,
           })
+        }}
+        onCreate={async (newItem) => {
+          if (!session) return
+          const position = items.length
+          const itemToInsert: Record<string, unknown> = {
+            session_id: session.id,
+            title: newItem.title,
+            description: newItem.description || null,
+            position,
+            status: newItem.status,
+            created_by: participantName,
+            item_level: newItem.item_level,
+            start_date: newItem.start_date,
+            end_date: newItem.end_date,
+          }
+          const { data, error: insertError } = await supabase
+            .from('items')
+            .insert([itemToInsert as never])
+            .select()
+            .single()
+          if (insertError) {
+            console.error('Error creating item:', insertError)
+            return
+          }
+          const created: ItemWithScore = { ...(data as Item), score: undefined }
+          setItems(prev => [...prev, created])
         }}
       />
 

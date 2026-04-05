@@ -1,24 +1,10 @@
-import type { ItemWithScore, Framework, RoadmapPeriod } from '../types/database'
+import type { ItemWithScore, Framework } from '../types/database'
 import { MoscowCategory, MOSCOW_LABELS } from './moscow'
 
 interface ExportOptions {
   items: ItemWithScore[]
   framework: Framework
   sessionName?: string
-  periods?: RoadmapPeriod[]
-}
-
-/**
- * Get the period name for an item based on its quadrant position
- */
-function getItemPeriodName(item: ItemWithScore, periods: RoadmapPeriod[]): string {
-  if (item.roadmap_start_quadrant === null || item.roadmap_start_quadrant === undefined || periods.length === 0) {
-    return ''
-  }
-  // Each period has 4 quadrants, find which period the start quadrant belongs to
-  const periodIndex = Math.floor(item.roadmap_start_quadrant / 4)
-  const period = periods.find(p => p.position === periodIndex)
-  return period?.name || ''
 }
 
 /**
@@ -39,13 +25,13 @@ function formatStatus(status: string | undefined): string {
 /**
  * Generate CSV content from items
  */
-export function generateCsvContent({ items, framework, periods = [] }: ExportOptions): string {
+export function generateCsvContent({ items, framework }: ExportOptions): string {
   const rows: string[][] = []
 
   // Check what data we have to determine columns
   const hasAnyScores = items.some(item => item.score?.calculated_score !== undefined && item.score?.calculated_score !== null)
   const hasAnyEstimates = items.some(item => item.story_points !== null && item.story_points !== undefined)
-  const hasAnyPeriods = items.some(item => item.roadmap_start_quadrant !== null && item.roadmap_start_quadrant !== undefined)
+  const hasAnyDates = items.some(item => item.start_date !== null)
 
   // Header row - always include base columns, conditionally add others
   const headers = ['Rank', 'Title', 'Description', 'Status', 'Created By']
@@ -55,9 +41,9 @@ export function generateCsvContent({ items, framework, periods = [] }: ExportOpt
     headers.push('Story Points')
   }
 
-  // Add period column if any items are scheduled
-  if (hasAnyPeriods) {
-    headers.push('Period')
+  // Add dates column if any items are scheduled
+  if (hasAnyDates) {
+    headers.push('Start Date', 'End Date')
   }
 
   // Add framework-specific headers if any items have scores
@@ -98,9 +84,9 @@ export function generateCsvContent({ items, framework, periods = [] }: ExportOpt
       rowData.push(item.story_points !== null && item.story_points !== undefined ? String(item.story_points) : '')
     }
 
-    // Add period if column exists
-    if (hasAnyPeriods) {
-      rowData.push(getItemPeriodName(item, periods))
+    // Add dates if column exists
+    if (hasAnyDates) {
+      rowData.push(item.start_date || '', item.end_date || '')
     }
 
     // Add framework-specific data if scores exist

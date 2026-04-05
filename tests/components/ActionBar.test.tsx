@@ -7,12 +7,9 @@ describe('ActionBar', () => {
     selectedCount: 3,
     onClearSelection: vi.fn(),
     onSetStatus: vi.fn(),
-    onAssignPeriod: vi.fn(),
     onDelete: vi.fn(),
-    periods: [],
     hasDeleteHandler: true,
     hasStatusHandler: true,
-    hasPeriodHandler: false,
   }
 
   it('renders disabled state when no items selected', () => {
@@ -67,35 +64,4 @@ describe('ActionBar', () => {
     expect(onSetStatus).toHaveBeenCalledWith('in_progress')
   })
 
-  it('shows Assign Period dropdown when hasPeriodHandler and has periods', () => {
-    render(
-      <ActionBar
-        {...defaultProps}
-        hasPeriodHandler={true}
-        periods={[
-          { id: '1', session_id: 's1', name: 'Now', width: 4, position: 0, created_at: '' },
-          { id: '2', session_id: 's1', name: 'Next', width: 4, position: 1, created_at: '' },
-        ]}
-      />
-    )
-    expect(screen.getByText('Assign Period')).toBeInTheDocument()
-  })
-
-  it('opens period dropdown and calls onAssignPeriod', () => {
-    const onAssignPeriod = vi.fn()
-    render(
-      <ActionBar
-        {...defaultProps}
-        hasPeriodHandler={true}
-        onAssignPeriod={onAssignPeriod}
-        periods={[
-          { id: '1', session_id: 's1', name: 'Now', width: 4, position: 0, created_at: '' },
-        ]}
-      />
-    )
-
-    fireEvent.click(screen.getByText('Assign Period'))
-    fireEvent.click(screen.getByText('Now'))
-    expect(onAssignPeriod).toHaveBeenCalledWith(0)
-  })
 })
