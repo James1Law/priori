@@ -25,8 +25,10 @@ describe('EstimationQueue', () => {
   const defaultProps = {
     items: [],
     currentItemId: null,
+    selectedItemId: null,
     onStartEstimation: vi.fn(),
     onSelectItem: vi.fn(),
+    onConfirmItem: vi.fn(),
     isHost: true,
   }
 
@@ -108,7 +110,7 @@ describe('EstimationQueue', () => {
     expect(onStartEstimation).toHaveBeenCalled()
   })
 
-  it('calls onSelectItem when an item is clicked', () => {
+  it('calls onSelectItem (preview) when an item is clicked', () => {
     const onSelectItem = vi.fn()
     const items = [createMockItem({ id: '1', title: 'Item 1' })]
 
@@ -125,6 +127,44 @@ describe('EstimationQueue', () => {
     expect(onSelectItem).toHaveBeenCalledWith('1')
   })
 
+  it('shows Estimate This button for selected item and calls onConfirmItem', () => {
+    const onConfirmItem = vi.fn()
+    const items = [createMockItem({ id: '1', title: 'Item 1' })]
+
+    render(
+      <EstimationQueue
+        {...defaultProps}
+        items={items}
+        selectedItemId="1"
+        onConfirmItem={onConfirmItem}
+      />
+    )
+
+    const estimateBtn = screen.getByText(/Estimate This/i).closest('button')!
+    expect(estimateBtn).toBeInTheDocument()
+    fireEvent.click(estimateBtn)
+    expect(onConfirmItem).toHaveBeenCalledWith('1')
+  })
+
+  it('does not show Estimate This button for non-selected items', () => {
+    const items = [
+      createMockItem({ id: '1', title: 'Item 1' }),
+      createMockItem({ id: '2', title: 'Item 2' }),
+    ]
+
+    render(
+      <EstimationQueue
+        {...defaultProps}
+        items={items}
+        selectedItemId="1"
+      />
+    )
+
+    // Only one actual Estimate This <button> element (not the div[role=button] wrappers)
+    const buttons = screen.getAllByText(/Estimate This/i).filter(el => el.tagName === 'BUTTON')
+    expect(buttons).toHaveLength(1)
+  })
+
   it('highlights current item', () => {
     const items = [
       createMockItem({ id: '1', title: 'Item 1', position: 0 }),
@@ -133,9 +173,9 @@ describe('EstimationQueue', () => {
 
     render(<EstimationQueue {...defaultProps} items={items} currentItemId="1" />)
 
-    const item1Button = screen.getByText('Item 1').closest('button')
-    expect(item1Button).toHaveClass('border-indigo-500')
-    expect(item1Button).toHaveClass('bg-indigo-50')
+    const item1Wrapper = screen.getByText('Item 1').closest('[role="button"]')
+    expect(item1Wrapper).toHaveClass('border-indigo-500')
+    expect(item1Wrapper).toHaveClass('bg-indigo-50')
   })
 
   it('shows story points badge for completed items', () => {

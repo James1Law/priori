@@ -78,7 +78,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         aria-labelledby="sheet-title"
       >
         {/* Drag handle - mobile only */}
-        <div className="flex justify-center pt-3 pb-2 lg:hidden">
+        <div className="flex justify-center pt-3 pb-2 sm:hidden">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 

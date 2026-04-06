@@ -4,6 +4,31 @@ Detailed history of features implemented across all phases.
 
 ---
 
+## Poker Planner UX Overhaul
+
+### Bug Fixes
+- **Item Drawer in Estimation**: Add Item button in the header now opens the drawer on the estimation page (previously it only opened on the backlog)
+- **Share URL**: Share button now copies the current page URL (e.g. `/s/:slug/estimate`) instead of always copying the base session URL
+- **Presence Sync**: Fixed participants not seeing each other — `usePresence` now uses `removeChannel()` for proper cleanup and listens to `join`/`leave` events for immediate updates
+
+### Features
+- **Estimation Lobby**: Navigating to Poker Planner from the sidebar now shows a lobby where the host selects items and explicitly clicks "Start as Host" — no more auto-host assignment
+- **Two-Step Item Selection**: Clicking a queue item highlights it for preview; an "Estimate This" button confirms to start estimation — prevents accidental starts
+- **End Session**: Host can end the session at any time via an "End Session" button in the queue sidebar, returning to the lobby for a fresh round
+- **New Session from Completion**: "Estimation Complete" screen offers "New Session" (returns to lobby), "Re-estimate Items", and "Back to Backlog"
+- **New Items in Queue**: Items added via the Add Item button during an active estimation automatically appear in the queue
+- **Participant Indicators**: Connected participants shown as pills in the queue sidebar with a star icon for the host; role-aware messaging throughout
+
+### Layout
+- **Responsive Sidebar**: Sidebar now shows at 640px+ (was 1024px+), auto-collapsing to icon rail between 640px–1024px
+- **Mobile Bottom Bar**: Now includes all 5 modules (List, Roadmap, Score, Poker, Capacity) and is route-based — accessible from any page on phones
+
+### Tests
+- 8 new Playwright E2E tests covering full poker planner flow: lobby, host start, two-step selection, share URL, voting, two-participant round, mid-session join, queue interaction
+- Updated unit tests for EstimationFlowPage, EstimationQueue, MobileBottomBar, AppShell
+
+---
+
 ## Estimation Host Control, Realtime Sync & Chat
 
 ### Features

@@ -9,7 +9,6 @@ import CapacityView from '../components/CapacityView'
 import RoadmapView from '../components/RoadmapView'
 import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
-import MobileBottomBar from '../components/MobileBottomBar'
 import ConfirmModal from '../components/ConfirmModal'
 import FAB from '../components/FAB'
 import BottomSheet from '../components/BottomSheet'
@@ -47,7 +46,7 @@ function Logo({ className = '', id = 'header-brand' }: { className?: string; id?
 }
 
 export default function SessionPage() {
-  const { slug } = useParams<{ slug: string }>()
+  useParams<{ slug: string }>()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -604,14 +603,6 @@ export default function SessionPage() {
     navigate(`/s/${slug}`)
   }
 
-  const handleViewChange = (view: ViewMode) => {
-    if (!slug) return
-    switch (view) {
-      case 'roadmap': navigate(`/s/${slug}/roadmap`); break
-      case 'capacity': navigate(`/s/${slug}/capacity`); break
-      default: navigate(`/s/${slug}`); break
-    }
-  }
 
   // Check if items are in manual order (any item has backlog_position set)
   const isManualOrder = items.some((item) => item.backlog_position !== null && item.backlog_position !== undefined)
@@ -851,7 +842,7 @@ export default function SessionPage() {
   return (
     <>
       {/* Mobile header — hidden on desktop where AppShell provides the header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 lg:hidden">
+      <header className="bg-white shadow-sm border-b border-gray-200 sm:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between gap-3">
             <a href="/" className="flex-shrink-0" title="Go to home">
@@ -970,7 +961,7 @@ export default function SessionPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Main content area */}
-        <div className="space-y-4 sm:space-y-6 pb-24">
+        <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-0">
             {/* List View - the main backlog-centric view */}
             {localView === 'list' && (
               <div className="bg-white rounded-lg shadow p-4 sm:p-6">
@@ -1126,10 +1117,7 @@ export default function SessionPage() {
       <FAB onClick={() => sessionContext.addItemAndEdit()} />
 
       {/* Bottom tab bar */}
-      <MobileBottomBar
-        view={localView}
-        onViewChange={handleViewChange}
-      />
+      {/* MobileBottomBar is now rendered in AppShell */}
 
       {/* Mobile filters bottom sheet */}
       <BottomSheet

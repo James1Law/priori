@@ -3,8 +3,10 @@ import type { ItemWithScore } from '../types/database'
 interface EstimationQueueProps {
   items: ItemWithScore[]
   currentItemId: string | null
+  selectedItemId: string | null
   onStartEstimation: () => void
   onSelectItem: (itemId: string) => void
+  onConfirmItem: (itemId: string) => void
   isHost: boolean
 }
 
@@ -58,8 +60,10 @@ function StoryPointsBadge({ points }: { points: number }) {
 export default function EstimationQueue({
   items,
   currentItemId,
+  selectedItemId,
   onStartEstimation,
   onSelectItem,
+  onConfirmItem,
   isHost,
 }: EstimationQueueProps) {
   // Sort items by backlog_position if set, otherwise by position
@@ -118,18 +122,24 @@ export default function EstimationQueue({
         {sortedItems.map((item) => {
           const status = getEstimationStatus(item, currentItemId)
           const isCurrentItem = status === 'in_progress'
+          const isSelected = item.id === selectedItemId && !isCurrentItem
 
           return (
             <li key={item.id}>
-              <button
+              <div
+                role={isHost ? 'button' : undefined}
+                tabIndex={isHost ? 0 : undefined}
                 onClick={() => isHost && onSelectItem(item.id)}
+                onKeyDown={(e) => { if (isHost && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelectItem(item.id) } }}
                 className={`
                   w-full text-left p-3 rounded-lg border transition-colors
                   ${isCurrentItem
                     ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
-                    : isHost
-                      ? 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 cursor-pointer'
-                      : 'border-gray-200 cursor-default'
+                    : isSelected
+                      ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-400'
+                      : isHost
+                        ? 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 cursor-pointer'
+                        : 'border-gray-200 cursor-default'
                   }
                 `}
               >
@@ -139,7 +149,7 @@ export default function EstimationQueue({
                     <div className="flex items-center gap-2">
                       <span
                         className={`font-medium truncate ${
-                          isCurrentItem ? 'text-indigo-900' : 'text-gray-900'
+                          isCurrentItem ? 'text-indigo-900' : isSelected ? 'text-amber-900' : 'text-gray-900'
                         }`}
                       >
                         {item.title}
@@ -153,9 +163,21 @@ export default function EstimationQueue({
                         {item.description}
                       </p>
                     )}
+                    {/* Confirm button for selected item */}
+                    {isSelected && isHost && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onConfirmItem(item.id)
+                        }}
+                        className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1 px-3 rounded transition-colors"
+                      >
+                        Estimate This
+                      </button>
+                    )}
                   </div>
                 </div>
-              </button>
+              </div>
             </li>
           )
         })}

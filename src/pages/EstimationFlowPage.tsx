@@ -7,15 +7,9 @@ import EstimationCards from '../components/EstimationCards'
 import CurrentEstimationItem from '../components/CurrentEstimationItem'
 import ParticipantVotes from '../components/ParticipantVotes'
 import EstimationResults from '../components/EstimationResults'
+import ItemDrawer from '../components/ItemDrawer'
 import { useEstimationVotes } from '../hooks/useEstimationVotes'
-import { useParticipantName } from '../hooks/useParticipantName'
-import { usePresence } from '../hooks/usePresence'
 import { useSessionContext } from '../contexts/SessionContext'
-
-interface Participant {
-  name: string
-  joinedAt: string
-}
 
 export default function EstimationFlowPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -30,8 +24,11 @@ export default function EstimationFlowPage() {
   const [allItems, setAllItems] = useState<ItemWithScore[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Sync items from SessionLayout context (picks up adds from global Add Item button)
+  // Use shared context for participants, items and participant name (single presence channel)
   const sessionContext = useSessionContext()
+  const { participantName, participants } = sessionContext
+
+  // Sync items from SessionLayout context (picks up adds from global Add Item button)
   useEffect(() => {
     if (sessionContext.items.length > 0) {
       setAllItems(prev => {
@@ -46,14 +43,13 @@ export default function EstimationFlowPage() {
     }
   }, [sessionContext.items])
 
-  // Participant name and presence
-  const { name: participantName } = useParticipantName()
-  const { participants } = usePresence(session?.id || null, participantName)
-
   // Host role — the person who navigated here with selectedItemIds is the host
   const isHost = session?.estimation_host === participantName && participantName !== null
   // Track whether this client initiated the estimation (navigated with selectedItemIds)
   const isInitiator = navigationSelectedIds.length > 0
+
+  // Queue preview — host clicks item to highlight, then confirms to start estimation
+  const [selectedQueueItemId, setSelectedQueueItemId] = useState<string | null>(null)
 
   // Session ended state — when host clears estimation but participant is still on page
   const [sessionEnded, setSessionEnded] = useState(false)
@@ -106,16 +102,18 @@ export default function EstimationFlowPage() {
     return []
   }, [session?.estimation_host, session?.estimation_item_ids, navigationSelectedIds, allItems])
 
-  // Sync estimation state to session on entry
-  // - With nav IDs (from backlog): save selection + set host + new session ID
-  // - Without nav IDs (from sidebar): set host if no host is set yet
+  // Lobby state — items selected by user before starting as host
+  const [lobbySelectedIds, setLobbySelectedIds] = useState<Set<string>>(new Set())
+  const isInLobby = !isInitiator && !session?.estimation_host
+
+  // Sync estimation state to session on entry (only for backlog initiator flow)
   useEffect(() => {
     if (!session || initializedEstimation || !participantName) return
 
     const hasNavigationIds = navigationSelectedIds.length > 0
 
     if (hasNavigationIds) {
-      // Host is entering with a selection — save selection, set host, generate new session ID
+      // Host is entering with a selection from backlog — save selection, set host, generate new session ID
       const newSessionId = crypto.randomUUID()
       supabase
         .from('sessions')
@@ -137,30 +135,40 @@ export default function EstimationFlowPage() {
             } : null)
           }
         })
-    } else if (!session.estimation_host) {
-      // Standalone entry from sidebar — first person becomes host
-      const newSessionId = crypto.randomUUID()
-      supabase
-        .from('sessions')
-        .update({
-          estimation_host: participantName,
-          estimation_session_id: newSessionId,
-        } as never)
-        .eq('id', session.id)
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error setting estimation host:', error)
-          } else {
-            setSession(prev => prev ? {
-              ...prev,
-              estimation_host: participantName,
-              estimation_session_id: newSessionId,
-            } : null)
-          }
-        })
     }
+    // Sidebar entry without active session: don't auto-assign host — show lobby instead
     setInitializedEstimation(true)
   }, [session, navigationSelectedIds, initializedEstimation, participantName])
+
+  // Handler: Start as host from lobby
+  const handleStartAsHost = async () => {
+    if (!session || !participantName) return
+
+    const selectedIds = lobbySelectedIds.size > 0
+      ? Array.from(lobbySelectedIds)
+      : allItems.map(item => item.id)
+
+    const newSessionId = crypto.randomUUID()
+    const { error } = await supabase
+      .from('sessions')
+      .update({
+        estimation_item_ids: selectedIds,
+        estimation_host: participantName,
+        estimation_session_id: newSessionId,
+      } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error starting as host:', error)
+    } else {
+      setSession(prev => prev ? {
+        ...prev,
+        estimation_item_ids: selectedIds,
+        estimation_host: participantName,
+        estimation_session_id: newSessionId,
+      } : null)
+    }
+  }
 
   // Detect estimation session changes — when the host starts a new round or ends the session
   useEffect(() => {
@@ -497,6 +505,35 @@ export default function EstimationFlowPage() {
     }
   }
 
+  // Handler: End current session and return to lobby (stays on estimation page)
+  const handleEndSession = async () => {
+    if (session) {
+      await supabase
+        .from('sessions')
+        .update({
+          estimation_item_ids: [],
+          current_estimation_item_id: null,
+          estimation_revealed: false,
+          estimation_host: null,
+          estimation_session_id: null,
+        } as never)
+        .eq('id', session.id)
+
+      setSession(prev => prev ? {
+        ...prev,
+        estimation_item_ids: [],
+        current_estimation_item_id: null,
+        estimation_revealed: false,
+        estimation_host: null,
+        estimation_session_id: null,
+      } : null)
+      setSelectedQueueItemId(null)
+      setInitializedEstimation(false)
+      setSessionEnded(false)
+      setPrevEstimationSessionId(null)
+    }
+  }
+
   // Handler: Navigate back to backlog (clears estimation state)
   const handleBackToBacklog = async () => {
     if (session) {
@@ -524,11 +561,8 @@ export default function EstimationFlowPage() {
     )
   }
 
-  // Convert participants to expected format
-  const participantsList: Participant[] = participants.map(p => ({
-    name: p.name,
-    joinedAt: p.joinedAt,
-  }))
+  // Participants from context are already in the right format
+  const participantsList = participants
 
   return (
     <>
@@ -553,6 +587,116 @@ export default function EstimationFlowPage() {
                 Back to Backlog
               </button>
             </div>
+          </div>
+        ) : isInLobby ? (
+          // Lobby — no active session, user picks items and starts as host
+          <div className="max-w-2xl mx-auto p-4 sm:p-8">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Poker Planner</h2>
+              <p className="text-gray-600">
+                Select items to estimate, then start the session. Others can join using the same URL.
+              </p>
+            </div>
+
+            {allItems.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-4">No items in this session yet.</p>
+                <button
+                  onClick={handleBackToBacklog}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                >
+                  Back to Backlog
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Select all / none */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-gray-600">
+                    {lobbySelectedIds.size} of {allItems.length} selected
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (lobbySelectedIds.size === allItems.length) {
+                        setLobbySelectedIds(new Set())
+                      } else {
+                        setLobbySelectedIds(new Set(allItems.map(i => i.id)))
+                      }
+                    }}
+                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                  >
+                    {lobbySelectedIds.size === allItems.length ? 'Deselect all' : 'Select all'}
+                  </button>
+                </div>
+
+                {/* Item list */}
+                <ul className="space-y-2 mb-6" role="list">
+                  {[...allItems].sort((a, b) => (a.backlog_position ?? a.position) - (b.backlog_position ?? b.position)).map(item => {
+                    const isSelected = lobbySelectedIds.has(item.id)
+                    const hasEstimate = item.story_points !== null && item.story_points !== undefined
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => {
+                            setLobbySelectedIds(prev => {
+                              const next = new Set(prev)
+                              if (next.has(item.id)) next.delete(item.id)
+                              else next.add(item.id)
+                              return next
+                            })
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                            isSelected
+                              ? 'border-indigo-500 bg-indigo-50'
+                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`flex items-center justify-center w-5 h-5 rounded border-2 transition-colors ${
+                              isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
+                            }`}>
+                              {isSelected && (
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className="font-medium text-gray-900 truncate flex-1">{item.title}</span>
+                            {hasEstimate && (
+                              <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                {item.story_points} SP
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+
+                {/* Start button */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleStartAsHost}
+                    disabled={lobbySelectedIds.size === 0}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-colors"
+                  >
+                    Start as Host {lobbySelectedIds.size > 0 && `(${lobbySelectedIds.size} items)`}
+                  </button>
+                  <button
+                    onClick={handleBackToBacklog}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-colors"
+                  >
+                    Back
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ) : itemsToEstimate.length === 0 ? (
           // No items state
@@ -580,16 +724,60 @@ export default function EstimationFlowPage() {
           <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
             {/* Queue sidebar */}
             <div className="lg:w-80 lg:border-r lg:border-gray-200 p-4 bg-gray-50 lg:bg-white">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Estimation Queue
               </h3>
+
+              {/* Connected participants */}
+              <div className="flex flex-wrap items-center gap-1.5 mb-4 pb-3 border-b border-gray-200">
+                {participantsList.length > 0 ? participantsList.map(p => {
+                  const isHostParticipant = p.name === session?.estimation_host
+                  const isYou = p.name === participantName
+                  return (
+                    <span
+                      key={p.name}
+                      title={`${p.name}${isHostParticipant ? ' (Host)' : ''}${isYou ? ' (you)' : ''}`}
+                      className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${
+                        isHostParticipant
+                          ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {isHostParticipant && (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      )}
+                      {p.name}{isYou ? ' (you)' : ''}
+                    </span>
+                  )
+                }) : (
+                  <span className="text-xs text-gray-400">No participants yet</span>
+                )}
+              </div>
+
               <EstimationQueue
                 items={itemsToEstimate}
                 currentItemId={currentEstimationItemId}
+                selectedItemId={selectedQueueItemId}
                 onStartEstimation={handleStartEstimation}
-                onSelectItem={handleCurrentItemChange}
+                onSelectItem={(itemId) => setSelectedQueueItemId(itemId === selectedQueueItemId ? null : itemId)}
+                onConfirmItem={(itemId) => {
+                  setSelectedQueueItemId(null)
+                  handleCurrentItemChange(itemId)
+                }}
                 isHost={isHost}
               />
+
+              {/* End Session — host only */}
+              {isHost && (
+                <button
+                  onClick={handleEndSession}
+                  className="w-full mt-4 py-2 text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                >
+                  End Session
+                </button>
+              )}
             </div>
 
             {/* Main estimation area */}
@@ -656,6 +844,14 @@ export default function EstimationFlowPage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     {isHost && (
                       <button
+                        onClick={handleEndSession}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors"
+                      >
+                        New Session
+                      </button>
+                    )}
+                    {isHost && (
+                      <button
                         onClick={handleResetAndRestartEstimation}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-5 rounded-lg transition-colors"
                       >
@@ -664,7 +860,7 @@ export default function EstimationFlowPage() {
                     )}
                     <button
                       onClick={isHost ? handleBackToBacklog : () => navigate(`/s/${slug}`)}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-colors"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-5 rounded-lg transition-colors"
                     >
                       Back to Backlog
                     </button>
@@ -695,17 +891,91 @@ export default function EstimationFlowPage() {
                     Estimate items collaboratively with your team using Fibonacci story points.
                   </p>
                   <p className="text-sm text-gray-500">
-                    Select an item from the queue or click "Start Estimation" to begin.
+                    {isHost
+                      ? 'Select an item from the queue or click "Start Estimation" to begin.'
+                      : 'Waiting for the host to start estimation.'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-4">
-                    Participant: {participantName || 'Anonymous'}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-4">
+                    {isHost ? (
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        {participantName} (Host)
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        {participantName || 'Anonymous'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
         )}
       </main>
+
+      {/* Item Drawer (for Add Item from header) */}
+      <ItemDrawer
+        item={sessionContext.editingItem}
+        isOpen={sessionContext.editingItem !== null}
+        isNew={sessionContext.isNewItem}
+        framework={session?.framework || 'rice'}
+        allItems={allItems}
+        onClose={() => sessionContext.setEditingItem(null)}
+        onSave={(updatedItem) => {
+          setAllItems(prev => prev.map(i => i.id === updatedItem.id ? { ...i, ...updatedItem } : i))
+          if (updatedItem.id) {
+            supabase.from('items').update({
+              title: updatedItem.title,
+              description: updatedItem.description,
+              status: updatedItem.status,
+            } as never).eq('id', updatedItem.id).then(() => {})
+          }
+        }}
+        onDelete={async (itemId) => {
+          await supabase.from('items').delete().eq('id', itemId)
+          setAllItems(prev => prev.filter(i => i.id !== itemId))
+          sessionContext.setEditingItem(null)
+        }}
+        onCreate={async (newItem) => {
+          if (!session) return
+          const position = allItems.length
+          const { data, error: insertError } = await supabase
+            .from('items')
+            .insert([{
+              session_id: session.id,
+              title: newItem.title,
+              description: newItem.description || null,
+              position,
+              status: newItem.status,
+              created_by: participantName,
+              item_level: newItem.item_level,
+              start_date: newItem.start_date,
+              end_date: newItem.end_date,
+            } as never])
+            .select()
+            .single()
+          if (insertError) {
+            console.error('Error creating item:', insertError)
+            return
+          }
+          const created: ItemWithScore = { ...(data as Item), score: undefined }
+          setAllItems(prev => [...prev, created])
+          sessionContext.setItems(prev => [...prev, created])
+
+          // Add to estimation queue if a session is active
+          if (session.estimation_host && session.estimation_item_ids) {
+            const updatedIds = [...session.estimation_item_ids, created.id]
+            await supabase
+              .from('sessions')
+              .update({ estimation_item_ids: updatedIds } as never)
+              .eq('id', session.id)
+            setSession(prev => prev ? { ...prev, estimation_item_ids: updatedIds } : null)
+          }
+        }}
+      />
 
       {/* Chat modal */}
     </>

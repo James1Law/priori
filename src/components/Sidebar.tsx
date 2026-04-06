@@ -163,7 +163,7 @@ export default function Sidebar({ slug, sessionName, collapsed, onToggleCollapse
   return (
     <aside
       className={`
-        hidden lg:flex flex-col flex-shrink-0 bg-white border-r border-gray-200
+        hidden sm:flex flex-col flex-shrink-0 bg-white border-r border-gray-200
         transition-[width] duration-200 ease-in-out
         ${collapsed ? 'w-16' : 'w-[260px]'}
       `}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ItemWithScore } from '../types/database'
 import EstimationQueue from './EstimationQueue'
 import EstimationCards from './EstimationCards'
@@ -72,8 +72,10 @@ export default function EstimatesView({
     }
   }
 
+  const [selectedQueueItemId, setSelectedQueueItemId] = useState<string | null>(null)
+
   const handleSelectItem = (itemId: string) => {
-    onCurrentItemChange(itemId)
+    setSelectedQueueItemId(itemId === selectedQueueItemId ? null : itemId)
   }
 
   const handleSelectCard = (value: number) => {
@@ -133,8 +135,13 @@ export default function EstimatesView({
         <EstimationQueue
           items={items}
           currentItemId={currentEstimationItemId}
+          selectedItemId={selectedQueueItemId}
           onStartEstimation={handleStartEstimation}
           onSelectItem={handleSelectItem}
+          onConfirmItem={(itemId) => {
+            setSelectedQueueItemId(null)
+            onCurrentItemChange(itemId)
+          }}
           isHost={true}
         />
       </div>

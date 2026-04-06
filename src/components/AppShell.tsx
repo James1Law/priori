@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import MobileBottomBar from './MobileBottomBar'
 
 const SIDEBAR_COLLAPSED_KEY = 'priori_sidebar_collapsed'
 
@@ -44,7 +46,10 @@ export default function AppShell({
   onSessionNameChange,
   children,
 }: AppShellProps) {
-  const [collapsed, setCollapsed] = useState(() => {
+  const location = useLocation()
+
+  // User's explicit preference (persisted to localStorage)
+  const [userCollapsed, setUserCollapsed] = useState(() => {
     try {
       return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true'
     } catch {
@@ -52,23 +57,37 @@ export default function AppShell({
     }
   })
 
+  // Auto-collapse at medium widths (sm to lg: 640px–1024px)
+  const [isMediumWidth, setIsMediumWidth] = useState(false)
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 640px) and (max-width: 1023px)')
+    setIsMediumWidth(mql.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMediumWidth(e.matches)
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [])
+
+  // Sidebar is collapsed if user chose it OR if viewport is medium width
+  const collapsed = userCollapsed || isMediumWidth
+
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     try {
-      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed))
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(userCollapsed))
     } catch {
       // localStorage unavailable
     }
-  }, [collapsed])
+  }, [userCollapsed])
 
   const handleCopyUrl = useCallback(() => {
-    const url = `https://priori.work/s/${slug}`
+    const url = `https://priori.work${location.pathname}`
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
-  }, [slug])
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen bg-gray-50 font-body flex" data-testid="app-shell">
@@ -77,14 +96,14 @@ export default function AppShell({
         slug={slug}
         sessionName={sessionName}
         collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed(prev => !prev)}
+        onToggleCollapse={() => setUserCollapsed(prev => !prev)}
         onSessionNameChange={onSessionNameChange}
       />
 
       {/* Right side: header + content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Content header — only spans the content area (right of sidebar) */}
-        <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 flex-shrink-0 items-center justify-between px-5">
+        <header className="hidden sm:flex h-16 bg-white border-b border-gray-200 flex-shrink-0 items-center justify-between px-5">
           <div className="flex items-center gap-3">
             <a href="/" className="flex-shrink-0" title="Go to home">
               <Logo className="w-10 h-10" />
@@ -150,6 +169,9 @@ export default function AppShell({
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom navigation — phone only */}
+      <MobileBottomBar slug={slug} />
     </div>
   )
 }

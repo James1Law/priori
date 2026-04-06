@@ -1,95 +1,75 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import MobileBottomBar from '../../src/components/MobileBottomBar'
 
-describe('MobileBottomBar', () => {
-  const defaultProps = {
-    view: 'list' as const,
-    onViewChange: vi.fn(),
-  }
+function renderWithRouter(path = '/s/test-slug') {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <MobileBottomBar slug="test-slug" />
+    </MemoryRouter>
+  )
+}
 
-  // View toggle tests
-  it('renders view toggle buttons', () => {
-    render(<MobileBottomBar {...defaultProps} />)
+describe('MobileBottomBar', () => {
+  it('renders all five navigation buttons', () => {
+    renderWithRouter()
 
     expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /roadmap/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /score/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /poker/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /capacity/i })).toBeInTheDocument()
   })
 
-  it('highlights list button when view is list', () => {
-    render(<MobileBottomBar {...defaultProps} view="list" />)
+  it('highlights list button on backlog route', () => {
+    renderWithRouter('/s/test-slug')
 
     const listBtn = screen.getByRole('button', { name: /list/i })
     expect(listBtn).toHaveClass('bg-indigo-600')
   })
 
-  it('highlights roadmap button when view is roadmap', () => {
-    render(<MobileBottomBar {...defaultProps} view="roadmap" />)
+  it('highlights roadmap button on roadmap route', () => {
+    renderWithRouter('/s/test-slug/roadmap')
 
     const roadmapBtn = screen.getByRole('button', { name: /roadmap/i })
     expect(roadmapBtn).toHaveClass('bg-indigo-600')
   })
 
-  it('calls onViewChange when clicking roadmap button', () => {
-    const onViewChange = vi.fn()
-    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
+  it('highlights score button on prioritise route', () => {
+    renderWithRouter('/s/test-slug/prioritise')
 
-    const roadmapBtn = screen.getByRole('button', { name: /roadmap/i })
-    fireEvent.click(roadmapBtn)
-
-    expect(onViewChange).toHaveBeenCalledWith('roadmap')
+    const scoreBtn = screen.getByRole('button', { name: /score/i })
+    expect(scoreBtn).toHaveClass('bg-indigo-600')
   })
 
-  it('calls onViewChange when clicking list button', () => {
-    const onViewChange = vi.fn()
-    render(<MobileBottomBar {...defaultProps} view="roadmap" onViewChange={onViewChange} />)
+  it('highlights poker button on estimate route', () => {
+    renderWithRouter('/s/test-slug/estimate')
 
-    const listBtn = screen.getByRole('button', { name: /list/i })
-    fireEvent.click(listBtn)
-
-    expect(onViewChange).toHaveBeenCalledWith('list')
+    const pokerBtn = screen.getByRole('button', { name: /poker/i })
+    expect(pokerBtn).toHaveClass('bg-indigo-600')
   })
 
-  it('is fixed to bottom of screen', () => {
-    render(<MobileBottomBar {...defaultProps} />)
-
-    const container = screen.getByRole('button', { name: /list/i }).closest('div[class*="fixed"]')
-    expect(container).toBeInTheDocument()
-  })
-
-  it('renders capacity button', () => {
-    render(<MobileBottomBar {...defaultProps} />)
-
-    expect(screen.getByRole('button', { name: /capacity/i })).toBeInTheDocument()
-  })
-
-  it('highlights capacity button when view is capacity', () => {
-    render(<MobileBottomBar {...defaultProps} view="capacity" />)
+  it('highlights capacity button on capacity route', () => {
+    renderWithRouter('/s/test-slug/capacity')
 
     const capacityBtn = screen.getByRole('button', { name: /capacity/i })
     expect(capacityBtn).toHaveClass('bg-indigo-600')
   })
 
-  it('calls onViewChange with capacity when clicking capacity button', () => {
-    const onViewChange = vi.fn()
-    render(<MobileBottomBar {...defaultProps} onViewChange={onViewChange} />)
+  it('is fixed to bottom of screen', () => {
+    renderWithRouter()
 
-    const capacityBtn = screen.getByRole('button', { name: /capacity/i })
-    fireEvent.click(capacityBtn)
-
-    expect(onViewChange).toHaveBeenCalledWith('capacity')
+    const container = screen.getByRole('button', { name: /list/i }).closest('div[class*="fixed"]')
+    expect(container).toBeInTheDocument()
   })
 
   it('renders icons alongside labels', () => {
-    render(<MobileBottomBar {...defaultProps} />)
+    renderWithRouter()
 
-    const listBtn = screen.getByRole('button', { name: /list/i })
-    const roadmapBtn = screen.getByRole('button', { name: /roadmap/i })
-    const capacityBtn = screen.getByRole('button', { name: /capacity/i })
-
-    // Check that SVG icons are present
-    expect(listBtn.querySelector('svg')).toBeInTheDocument()
-    expect(roadmapBtn.querySelector('svg')).toBeInTheDocument()
-    expect(capacityBtn.querySelector('svg')).toBeInTheDocument()
+    const buttons = screen.getAllByRole('button')
+    buttons.forEach(btn => {
+      expect(btn.querySelector('svg')).toBeInTheDocument()
+    })
   })
 })

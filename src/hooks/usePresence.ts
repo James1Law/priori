@@ -25,23 +25,27 @@ export function usePresence(
       },
     })
 
-    presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = presenceChannel.presenceState()
-        const participantList: Participant[] = []
+    const syncState = () => {
+      const presenceState = presenceChannel.presenceState()
+      const participantList: Participant[] = []
 
-        Object.entries(presenceState).forEach(([, presences]) => {
-          const presence = presences[0] as unknown as { name: string; joinedAt: string }
-          if (presence?.name) {
-            participantList.push({
-              name: presence.name,
-              joinedAt: presence.joinedAt,
-            })
-          }
-        })
-
-        setParticipants(participantList)
+      Object.entries(presenceState).forEach(([, presences]) => {
+        const presence = presences[0] as unknown as { name: string; joinedAt: string }
+        if (presence?.name) {
+          participantList.push({
+            name: presence.name,
+            joinedAt: presence.joinedAt,
+          })
+        }
       })
+
+      setParticipants(participantList)
+    }
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, syncState)
+      .on('presence', { event: 'join' }, syncState)
+      .on('presence', { event: 'leave' }, syncState)
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await presenceChannel.track({
@@ -54,7 +58,7 @@ export function usePresence(
     setChannel(presenceChannel)
 
     return () => {
-      presenceChannel.unsubscribe()
+      supabase.removeChannel(presenceChannel)
     }
   }, [sessionId, participantName])
 

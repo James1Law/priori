@@ -191,9 +191,14 @@ describe('EstimatesView', () => {
       />
     )
 
-    // Click on a different item in the queue
+    // Click to select (preview), then confirm
     fireEvent.click(screen.getByText('Item 2'))
+    // Now the item is selected but not confirmed — onCurrentItemChange not yet called
+    expect(onCurrentItemChange).not.toHaveBeenCalled()
 
+    // Click "Estimate This" to confirm
+    const estimateBtn = screen.getByText(/Estimate This/i).closest('button')!
+    fireEvent.click(estimateBtn)
     expect(onCurrentItemChange).toHaveBeenCalledWith('2')
   })
 
