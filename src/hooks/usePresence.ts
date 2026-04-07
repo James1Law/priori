@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -12,10 +12,18 @@ export function usePresence(
   participantName: string | null
 ) {
   const [participants, setParticipants] = useState<Participant[]>([])
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true
     if (!sessionId || !participantName) return
+
+    // Clean up any existing channel before creating a new one
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
 
     const presenceChannel = supabase.channel(`presence:${sessionId}`, {
       config: {
@@ -24,8 +32,10 @@ export function usePresence(
         },
       },
     })
+    channelRef.current = presenceChannel
 
     const syncState = () => {
+      if (!mountedRef.current) return
       const presenceState = presenceChannel.presenceState()
       const participantList: Participant[] = []
 
@@ -47,7 +57,7 @@ export function usePresence(
       .on('presence', { event: 'join' }, syncState)
       .on('presence', { event: 'leave' }, syncState)
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && mountedRef.current) {
           await presenceChannel.track({
             name: participantName,
             joinedAt: new Date().toISOString(),
@@ -55,21 +65,31 @@ export function usePresence(
         }
       })
 
-    setChannel(presenceChannel)
+    // Periodic re-sync to catch any missed presence events
+    const interval = setInterval(() => {
+      if (mountedRef.current && presenceChannel) {
+        syncState()
+      }
+    }, 5000)
 
     return () => {
-      supabase.removeChannel(presenceChannel)
+      mountedRef.current = false
+      clearInterval(interval)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
     }
   }, [sessionId, participantName])
 
   const updateName = useCallback(async (newName: string) => {
-    if (channel) {
-      await channel.track({
+    if (channelRef.current) {
+      await channelRef.current.track({
         name: newName,
         joinedAt: new Date().toISOString(),
       })
     }
-  }, [channel])
+  }, [])
 
   return {
     participants,
