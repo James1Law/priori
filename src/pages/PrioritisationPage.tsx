@@ -219,7 +219,7 @@ function StatusBadge({ status }: { status: string }) {
     done: 'Done',
   }
   return (
-    <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${styles[status] || styles.todo}`}>
+    <span className={`px-2 py-0.5 rounded-md text-xs font-medium border whitespace-nowrap ${styles[status] || styles.todo}`}>
       {labels[status] || status}
     </span>
   )
@@ -603,7 +603,7 @@ export default function PrioritisationPage() {
               <colgroup>
                 <col style={{ width: '50px' }} />
                 <col />
-                <col style={{ width: '80px' }} />
+                <col style={{ width: '100px' }} />
                 <col style={{ width: '140px' }} />
                 {fwConfig.criteria.map(c => (
                   <col key={c.key} style={{ width: '140px' }} />
