@@ -209,9 +209,9 @@ function MoscowSelect({ value, onChange }: { value: string; onChange: (val: stri
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    todo: 'bg-gray-100 text-gray-600',
-    in_progress: 'bg-indigo-50 text-indigo-600',
-    done: 'bg-emerald-50 text-emerald-600',
+    todo: 'bg-gray-50 text-gray-600 border-gray-200',
+    in_progress: 'bg-amber-50 text-amber-700 border-amber-200',
+    done: 'bg-green-50 text-green-700 border-green-200',
   }
   const labels: Record<string, string> = {
     todo: 'To Do',
@@ -219,7 +219,7 @@ function StatusBadge({ status }: { status: string }) {
     done: 'Done',
   }
   return (
-    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${styles[status] || styles.todo}`}>
+    <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${styles[status] || styles.todo}`}>
       {labels[status] || status}
     </span>
   )

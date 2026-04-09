@@ -32,11 +32,11 @@ const STATUS_CONFIG: Record<ItemStatus, { label: string; className: string }> = 
   },
   in_progress: {
     label: 'In Progress',
-    className: 'bg-amber-50 text-amber-800 border-amber-200',
+    className: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   done: {
     label: 'Done',
-    className: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    className: 'bg-green-50 text-green-700 border-green-200',
   },
 }
 
