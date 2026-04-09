@@ -101,7 +101,7 @@ export default function ItemList({ items, framework, onEdit, onDelete, onScoreUp
     <article
       key={item.id}
       id={`item-${item.id}`}
-      className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition-all duration-500 ${
+      className={`border rounded-lg p-3 sm:p-4 hover:shadow-md transition-colors duration-300 ${
         isHighlighted
           ? 'border-indigo-500 ring-2 ring-indigo-200'
           : isRecentlyMoved

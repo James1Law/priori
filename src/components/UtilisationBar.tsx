@@ -29,7 +29,7 @@ export default function UtilisationBar({
       <div className="h-3 bg-gray-200 rounded-md overflow-hidden relative">
         <div
           data-testid="util-bar-fill"
-          className="h-full rounded-md transition-all duration-500"
+          className="h-full rounded-md transition-[width] duration-300"
           style={{
             width: `${barWidth}%`,
             backgroundColor: statusColour,

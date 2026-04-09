@@ -639,7 +639,7 @@ export default function ScoringFlowPage() {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
             <div
-              className="bg-indigo-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
+              className="bg-indigo-600 h-1.5 sm:h-2 rounded-full transition-[width] duration-300"
               style={{ width: `${((currentItemIndex + 1) / itemsToScore.length) * 100}%` }}
             />
           </div>

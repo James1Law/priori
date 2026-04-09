@@ -112,7 +112,7 @@ export default function EstimationQueue({
       {/* Progress bar */}
       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full bg-indigo-600 transition-all duration-300"
+          className="h-full bg-indigo-600 transition-[width] duration-300"
           style={{ width: `${totalCount > 0 ? (estimatedCount / totalCount) * 100 : 0}%` }}
         />
       </div>

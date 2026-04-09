@@ -77,7 +77,7 @@ export default function ValueEffortMatrix({ items, onItemClick, selectedItemId }
                   key={item.id}
                   title={item.title}
                   onClick={() => onItemClick(item.id)}
-                  className={`absolute w-4 h-4 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer transition-all
+                  className={`absolute w-4 h-4 rounded-full transform -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer transition-[colors,transform]
                     ${selectedItemId === item.id
                       ? 'bg-indigo-600 ring-4 ring-indigo-300 z-10'
                       : 'bg-indigo-500 hover:bg-indigo-600 hover:scale-110'

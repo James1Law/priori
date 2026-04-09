@@ -398,7 +398,7 @@ export default function ItemDrawer({
                   key={opt.value}
                   type="button"
                   onClick={() => setStatus(opt.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                     status === opt.value
                       ? `${opt.bgClass} ${opt.textClass} ring-2 ring-offset-1 ring-indigo-500 border-transparent`
                       : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'

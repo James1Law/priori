@@ -142,7 +142,7 @@ export default function EstimationResults({
             onClick={onReveal}
             disabled={!hasVotes}
             className={`
-              px-6 py-3 rounded-lg font-semibold text-lg transition-all
+              px-6 py-3 rounded-lg font-semibold text-lg transition-[colors,box-shadow]
               ${
                 hasVotes
                   ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'

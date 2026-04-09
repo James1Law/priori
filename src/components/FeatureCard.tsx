@@ -12,7 +12,7 @@ export default function FeatureCard({
   description,
 }: FeatureCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-md hover:-translate-y-1 transition-transform duration-200">
+    <div className="bg-white rounded-2xl p-6 shadow-md hover:-translate-y-1 transition-transform duration-200 motion-reduce:transition-none">
       <div
         className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4"
         style={{ backgroundColor: iconBgColor }}

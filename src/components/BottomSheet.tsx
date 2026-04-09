@@ -64,7 +64,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
         ref={sheetRef}
         className={`
           fixed z-50 bg-white shadow-xl
-          transform transition-all duration-200 ease-out motion-reduce:transition-none
+          transform transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none
 
           bottom-0 left-0 right-0 rounded-t-2xl
           ${isOpen ? 'translate-y-0' : 'translate-y-full'}

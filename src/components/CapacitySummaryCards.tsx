@@ -105,7 +105,7 @@ export default function CapacitySummaryCards({
                 strokeLinecap="round"
                 strokeDasharray={circumference}
                 strokeDashoffset={dashOffset}
-                className="transition-all duration-500"
+                className="transition-[stroke-dashoffset] duration-300"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center font-display text-[13px] sm:text-base font-bold text-gray-900">
@@ -135,7 +135,7 @@ export default function CapacitySummaryCards({
         <div className="text-xs text-gray-400 mt-1">items estimated</div>
         <div className="h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
           <div
-            className="h-full bg-indigo-500 rounded-full transition-all duration-400"
+            className="h-full bg-indigo-500 rounded-full transition-[width] duration-300"
             style={{ width: `${Math.min(coveragePct, 100)}%` }}
           />
         </div>

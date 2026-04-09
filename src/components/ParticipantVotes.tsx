@@ -65,7 +65,7 @@ export default function ParticipantVotes({
             <div
               key={participant.name}
               className={`
-                relative rounded-lg p-3 text-center transition-all
+                relative rounded-lg p-3 text-center transition-colors
                 ${isCurrentUser ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}
                 ${
                   hasVoted

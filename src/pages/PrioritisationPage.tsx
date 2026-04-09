@@ -162,7 +162,7 @@ function PipControl({
           <button
             key={pipVal}
             onClick={() => onChange(pipVal === value ? 0 : pipVal)}
-            className="w-2.5 h-2.5 rounded-full border-2 transition-all hover:scale-125"
+            className="w-2.5 h-2.5 rounded-full border-2 transition-transform hover:scale-110"
             style={{
               borderColor: filled ? 'transparent' : '#d1d5db',
               backgroundColor: filled ? color : 'white',

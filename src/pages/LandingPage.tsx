@@ -180,7 +180,7 @@ export default function LandingPage() {
             <button
               onClick={handleCreateSession}
               disabled={isCreating}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 text-lg shadow-lg shadow-indigo-600/30"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 active:scale-[0.97] text-white font-semibold py-4 px-6 rounded-xl transition-[colors,transform] duration-200 ease-out text-lg shadow-lg shadow-indigo-600/30"
             >
               {isCreating ? 'Creating Session...' : 'Create New Session'}
             </button>
@@ -289,7 +289,7 @@ export default function LandingPage() {
           <button
             onClick={handleCreateSession}
             disabled={isCreating}
-            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 text-lg shadow-lg shadow-indigo-600/30"
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 active:scale-[0.97] text-white font-semibold py-4 px-8 rounded-xl transition-[colors,transform] duration-200 ease-out text-lg shadow-lg shadow-indigo-600/30"
           >
             {isCreating ? 'Creating Session...' : 'Create New Session'}
           </button>

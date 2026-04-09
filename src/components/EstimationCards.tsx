@@ -38,7 +38,7 @@ function CardButton({
       className={`
         relative flex items-center justify-center
         w-full aspect-[3/4] rounded-lg border-2 font-bold
-        transition-all duration-150
+        transition-[colors,transform,box-shadow] duration-150 motion-reduce:transition-none
         ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
         ${isSelected
           ? 'border-indigo-500 bg-indigo-600 text-white shadow-lg scale-105'
