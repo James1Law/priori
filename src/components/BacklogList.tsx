@@ -118,7 +118,7 @@ function getItemDateRange(item: ItemWithScore): string | null {
     const date = new Date(d + 'T00:00:00')
     const day = date.getDate()
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    return `${day} ${months[date.getMonth()]}`
+    return `${day} ${months[date.getMonth()]} ${date.getFullYear()}`
   }
   return `${fmtDate(item.start_date)} – ${fmtDate(item.end_date)}`
 }
@@ -580,9 +580,9 @@ function SortableItem({
 
         {/* Period column */}
         {showPeriodColumn && (
-          <div className="flex-shrink-0 w-20 flex justify-center">
+          <div className="flex-shrink-0 flex justify-center">
             {periodName ? (
-              <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-xs font-medium truncate">
+              <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-xs font-medium whitespace-nowrap">
                 {periodName}
               </span>
             ) : (
