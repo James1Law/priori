@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import type { Session, Item, ItemWithScore, Score, Framework, ItemLevel } from '../types/database'
+import type { Session, Item, ItemWithScore, Score, Framework, ItemLevel, ItemStatus } from '../types/database'
 import type { WeightedCriterionData } from '../types/database'
 import { ITEM_LEVEL_LABELS } from '../types/database'
 import { calculateRiceScore } from '../lib/rice'
@@ -10,6 +10,8 @@ import { calculateWeightedScore } from '../lib/weighted'
 import { buildTree, flattenTree, getRolledUpScore, hasChildren as hasChildrenFn } from '../lib/hierarchy'
 import WeightedCriteriaEditor from '../components/WeightedCriteriaEditor'
 import type { WeightedCriterion } from '../lib/weighted'
+import { useSessionContext } from '../contexts/SessionContext'
+import ItemDrawer from '../components/ItemDrawer'
 
 // ── Framework Configuration ──
 
@@ -228,6 +230,8 @@ function StatusBadge({ status }: { status: string }) {
 export default function PrioritisationPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const sessionContext = useSessionContext()
+  const { editingItem, setEditingItem, isNewItem, participantName } = sessionContext
 
   const [session, setSession] = useState<Session | null>(null)
   const [items, setItems] = useState<ItemWithScore[]>([])
@@ -425,6 +429,50 @@ export default function PrioritisationPage() {
       return next
     })
   }, [])
+
+  // ── Item Drawer handlers ──
+
+  const handleEditItem = async (updatedItem: Item) => {
+    await supabase
+      .from('items')
+      .update({ title: updatedItem.title, description: updatedItem.description, status: updatedItem.status } as never)
+      .eq('id', updatedItem.id)
+
+    setItems(prev => prev.map(i => i.id === updatedItem.id ? { ...i, ...updatedItem } : i))
+    setEditingItem(null)
+  }
+
+  const handleDeleteItem = async (itemId: string) => {
+    await supabase.from('items').delete().eq('id', itemId)
+    setItems(prev => prev.filter(i => i.id !== itemId))
+    setEditingItem(null)
+  }
+
+  const handleCreateItem = async (newItem: { title: string; description: string; status: ItemStatus; item_level: number; start_date: string | null; end_date: string | null }) => {
+    if (!session) return
+    const { data, error: insertError } = await supabase
+      .from('items')
+      .insert([{
+        session_id: session.id,
+        title: newItem.title,
+        description: newItem.description || null,
+        position: items.length,
+        status: newItem.status,
+        created_by: participantName,
+        item_level: newItem.item_level,
+        start_date: newItem.start_date,
+        end_date: newItem.end_date,
+      } as never])
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error('Error creating item:', insertError)
+      return
+    }
+    const created: ItemWithScore = { ...(data as Item), score: undefined }
+    setItems(prev => [...prev, created])
+  }
 
   const fwConfig = useMemo(
     () => session ? getFrameworkConfig(session.framework, session.weighted_criteria) : RICE_CONFIG,
@@ -707,6 +755,19 @@ export default function PrioritisationPage() {
         )}
       </div>
 
+      {/* Item Drawer */}
+      <ItemDrawer
+        item={editingItem}
+        isOpen={editingItem !== null}
+        isNew={isNewItem}
+        framework={session.framework}
+        allItems={items}
+        onClose={() => setEditingItem(null)}
+        onSave={handleEditItem}
+        onDelete={handleDeleteItem}
+        onNavigateToItem={(navItem) => setEditingItem(navItem)}
+        onCreate={handleCreateItem}
+      />
     </>
   )
 }

@@ -124,6 +124,16 @@ vi.mock('../../src/hooks/useUnreadCount', () => ({
   useUnreadCount: () => ({ unreadCount: 0 }),
 }))
 
+vi.mock('../../src/contexts/SessionContext', () => ({
+  useSessionContext: () => ({
+    editingItem: null,
+    setEditingItem: vi.fn(),
+    isNewItem: false,
+    participantName: 'James',
+    addItemAndEdit: vi.fn(),
+  }),
+}))
+
 import PrioritisationPage from '../../src/pages/PrioritisationPage'
 
 // Need to provide the route with slug param
