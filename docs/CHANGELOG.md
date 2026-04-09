@@ -9,7 +9,7 @@ Detailed history of features implemented across all phases.
 ### Bug Fixes
 - **Item Drawer in Estimation**: Add Item button in the header now opens the drawer on the estimation page (previously it only opened on the backlog)
 - **Share URL**: Share button now copies the current page URL (e.g. `/s/:slug/estimate`) instead of always copying the base session URL
-- **Presence Sync**: Fixed participants not seeing each other — `usePresence` now uses `removeChannel()` for proper cleanup and listens to `join`/`leave` events for immediate updates
+- **Presence Sync**: Fixed participants not seeing each other — `usePresence` now uses `removeChannel()` for proper cleanup, `join`/`leave` event listeners, and a 5-second polling interval to catch any missed Supabase Realtime events
 
 ### Features
 - **Estimation Lobby**: Navigating to Poker Planner from the sidebar now shows a lobby where the host selects items and explicitly clicks "Start as Host" — no more auto-host assignment

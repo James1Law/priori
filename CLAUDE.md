@@ -165,19 +165,21 @@ Items support a 5-level hierarchy: **Goal → Initiative → Epic → Story → 
 - **Item Hierarchy** — 5-level nesting (Goal → Initiative → Epic → Story → Subtask) with effort roll-up and status cascading
 - **Item Drawer** — Side panel for viewing/editing item details, parent selector, ancestry breadcrumb
 - **Scoring Flow** — Dedicated `/s/:slug/score` route for scoring selected items
-- **Estimation Flow** — Dedicated `/s/:slug/estimate` route for Planning Poker with host control (only host can Reveal/Accept/Skip), session sync, and in-estimation chat
-- **Roadmap View** — Currently showing "being redesigned" placeholder (hierarchy support in progress)
+- **Estimation Flow** — Dedicated `/s/:slug/estimate` route for Planning Poker. Lobby for item selection → "Start as Host" → two-step queue selection → voting → reveal → accept. Host controls (Reveal/Accept/Skip/End Session), participant presence with 5s polling, session sync, in-estimation chat, and Add Item support
+- **Roadmap View** — Date-based Gantt chart at `/s/:slug/roadmap` with drag-to-position, resize, and zoom controls
 - **Capacity Planning** — Compare backlog effort vs team capacity with utilisation metrics, info tooltips, click-to-edit items
 - **Team Chat** — Real-time messaging with typing indicators
-- **Mobile Support** — Dual-layout responsive design with clamped hierarchy indentation, colour accent bars, compact controls
+- **Mobile Support** — Sidebar visible at 640px+ (auto-collapses to icon rail at medium widths), mobile bottom bar with all 5 modules below 640px, dual-layout responsive design with clamped hierarchy indentation, colour accent bars, compact controls
 
 ## URL Structure
 
 ```
 /s/:slug              → Backlog list view (default)
-/s/:slug/roadmap      → Roadmap view (currently WIP placeholder)
+/s/:slug/roadmap      → Roadmap Gantt chart view
+/s/:slug/prioritise   → Prioritisation scoring module
 /s/:slug/score        → Scoring flow for selected items
-/s/:slug/estimate     → Planning Poker estimation flow
+/s/:slug/estimate     → Planning Poker estimation flow (lobby → session)
+/s/:slug/capacity     → Capacity planning view
 /s/:slug/item/:id     → Backlog with item drawer open
 ```
 
