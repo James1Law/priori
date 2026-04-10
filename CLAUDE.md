@@ -147,6 +147,9 @@ Items support a 5-level hierarchy: **Goal → Initiative → Epic → Story → 
 ### Key Files
 - `src/types/database.ts` — `ItemLevel`, `ITEM_LEVEL_LABELS`, `ItemWithChildren`
 - `src/lib/hierarchy.ts` — `buildTree`, `flattenTree`, `getRolledUpEstimate`, `getCascadedStatusUpdates`, `getDescendants`, `canReparent`, `canAddChild`
+- `src/lib/roadmap-dates.ts` — `getViewRange`, `getTimelineMonths`, `getRoadmapDateTree`, `getDefaultChildDates`, `formatDisplayDate`, `canResizeDateChild`, `canResizeDateParent`
+- `src/lib/device.ts` — `isTouchDevice()` for touch device detection
+- `src/components/RoadmapMobileView.tsx` — View-only mobile Gantt (pinned labels, bars, zoom, today marker)
 - `src/components/InfoTooltip.tsx` — Portal-based tooltip (escapes overflow-hidden containers)
 
 ## Prioritisation Frameworks
@@ -166,10 +169,10 @@ Items support a 5-level hierarchy: **Goal → Initiative → Epic → Story → 
 - **Item Drawer** — Side panel for viewing/editing item details, parent selector, ancestry breadcrumb
 - **Scoring Flow** — Dedicated `/s/:slug/score` route for scoring selected items
 - **Estimation Flow** — Dedicated `/s/:slug/estimate` route for Planning Poker. Lobby for item selection → "Start as Host" → two-step queue selection → voting → reveal → accept. Host controls (Reveal/Accept/Skip/End Session), participant presence with 5s polling, session sync, in-estimation chat, and Add Item support
-- **Roadmap View** — Date-based Gantt chart at `/s/:slug/roadmap` with drag-to-position, resize, and zoom controls
+- **Roadmap View** — Date-based Gantt chart at `/s/:slug/roadmap` with drag-to-position, resize, and zoom controls. Mobile: view-only pannable Gantt (no drag/resize), tap bars to edit dates via ItemDrawer
 - **Capacity Planning** — Compare backlog effort vs team capacity with utilisation metrics, info tooltips, click-to-edit items
 - **Team Chat** — Real-time messaging with typing indicators
-- **Mobile Support** — Sidebar visible at 640px+ (auto-collapses to icon rail at medium widths), mobile bottom bar with all 5 modules below 640px, dual-layout responsive design with clamped hierarchy indentation, colour accent bars, compact controls
+- **Mobile Support** — Sidebar visible at 640px+ (auto-collapses to icon rail at medium widths), mobile bottom bar with all 5 modules below 640px, dual-layout responsive design with clamped hierarchy indentation, colour accent bars, compact controls. Touch devices always get view-only Gantt via `isTouchDevice()` check.
 
 ## URL Structure
 

@@ -4,6 +4,38 @@ Detailed history of features implemented across all phases.
 
 ---
 
+## Mobile Roadmap
+
+### Features
+- **View-Only Mobile Gantt** — Replaced the "Roadmap redesign in progress" placeholder with a fully functional pannable Gantt chart on mobile. Users can scroll the timeline horizontally, view colour-coded bars by hierarchy level, and tap any bar or label to open the ItemDrawer for date editing.
+- **Zoom Presets** — 3M, 6M, 1Y, and Fit zoom pills on mobile, matching desktop behaviour
+- **Pinned Item Labels** — Item names stay visible on the left while scrolling the timeline (sticky positioning)
+- **Today Marker** — Red vertical line showing current date, same as desktop
+- **Unscheduled Items** — Shown with amber background and "No dates set" text; tappable to set dates
+- **Touch Device Detection** — `isTouchDevice()` utility gates which Gantt renders; touch devices always get the view-only mobile Gantt (desktop Gantt has no touch handlers and targets are too small for fingers)
+- **Scroll Hint** — Dismissable "Scroll to pan" banner on first visit, auto-dismisses on scroll
+- **Empty State** — "No items yet" message when session has no items
+
+### Bug Fixes
+- **Child Date Inheritance** — New child items now inherit their parent's dates instead of defaulting to today + 1 month. Walks up the hierarchy to find the nearest scheduled ancestor if the direct parent has no dates.
+- **Auto-Save Before Add Child** — Clicking "+ Add initiative/epic/story" now auto-saves the parent's pending changes first. Fixes two issues: (1) unsaved date edits were lost when navigating to the new child, and (2) adding a child under an unsaved draft item crashed with "invalid input syntax for type uuid".
+- **Date Validation Enforcement** — The Done/Save button is now disabled when dates violate hierarchy constraints (previously showed a warning but allowed saving)
+- **UK Date Format** — Parent date bounds hint in the ItemDrawer now displays dd/mm/yyyy instead of YYYY-MM-DD
+
+### Design
+- **PRD**: `docs/mobile-roadmap-PRD.md`
+- **Mockup**: `plans/mobile-roadmap-readonly.mockup.html`
+
+### Tests
+- 32 unit tests for `RoadmapMobileView` (zoom, hints, timeline, rows, bars, today marker, empty states)
+- 3 unit tests for `isTouchDevice()`
+- 9 unit tests for `getDefaultChildDates()` covering full hierarchy scenarios
+- 2 unit tests for `formatDisplayDate()`
+- 5 unit tests for date validation enforcement and auto-save before add child in `ItemDrawer`
+- 5 Playwright E2E tests for mobile roadmap (Gantt rendering, zoom, bars, drawer, item tap)
+
+---
+
 ## Poker Planner UX Overhaul
 
 ### Bug Fixes
