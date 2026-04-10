@@ -162,31 +162,31 @@ describe('ParticipantVotes', () => {
   })
 
   describe('Visual Styling', () => {
-    it('applies ring highlight to current user card', () => {
+    it('applies ring highlight to current user pill', () => {
       render(<ParticipantVotes {...defaultProps} />)
 
-      // Find the card container for Alice
+      // Find the pill container for Alice
       const aliceText = screen.getByText('Alice (you)')
-      const aliceCard = aliceText.closest('div[class*="rounded-lg"]')
-      expect(aliceCard).toHaveClass('ring-2', 'ring-indigo-500')
+      const alicePill = aliceText.closest('span[class*="rounded-full"]')
+      expect(alicePill).toHaveClass('ring-2', 'ring-indigo-500')
     })
 
-    it('applies green styling to voted but not revealed cards', () => {
+    it('applies green styling to voted but not revealed pills', () => {
       const votes = [createVote('Alice', 5)]
       render(<ParticipantVotes {...defaultProps} votes={votes} revealed={false} />)
 
       const aliceText = screen.getByText('Alice (you)')
-      const aliceCard = aliceText.closest('div[class*="rounded-lg"]')
-      expect(aliceCard).toHaveClass('bg-green-50', 'border-green-200')
+      const alicePill = aliceText.closest('span[class*="rounded-full"]')
+      expect(alicePill).toHaveClass('bg-green-50', 'border-green-200')
     })
 
-    it('applies indigo styling to revealed cards', () => {
+    it('applies indigo styling to revealed pills', () => {
       const votes = [createVote('Alice', 5)]
       render(<ParticipantVotes {...defaultProps} votes={votes} revealed={true} />)
 
       const aliceText = screen.getByText('Alice (you)')
-      const aliceCard = aliceText.closest('div[class*="rounded-lg"]')
-      expect(aliceCard).toHaveClass('bg-indigo-50', 'border-indigo-200')
+      const alicePill = aliceText.closest('span[class*="rounded-full"]')
+      expect(alicePill).toHaveClass('bg-indigo-50', 'border-indigo-200')
     })
   })
 

@@ -136,13 +136,13 @@ export default function EstimationResults({
   if (!revealed) {
     // Show Reveal button for host, waiting message for participants
     return (
-      <div className="mt-6 flex flex-col items-center gap-2">
+      <div className="mt-3 flex flex-col items-center gap-2">
         {isHost ? (
           <button
             onClick={onReveal}
             disabled={!hasVotes}
             className={`
-              px-6 py-3 rounded-lg font-semibold text-lg transition-[colors,box-shadow]
+              w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-base sm:text-lg transition-[colors,box-shadow]
               ${
                 hasVotes
                   ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
@@ -166,7 +166,7 @@ export default function EstimationResults({
 
   // Show consensus indicator and action buttons
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-3 space-y-3">
       {/* Consensus indicator */}
       <div
         className={`

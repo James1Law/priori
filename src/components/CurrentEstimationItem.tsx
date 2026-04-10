@@ -6,7 +6,7 @@ interface CurrentEstimationItemProps {
 
 export default function CurrentEstimationItem({ item }: CurrentEstimationItemProps) {
   return (
-    <div className="mb-6">
+    <div className="mb-3">
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
           Now estimating

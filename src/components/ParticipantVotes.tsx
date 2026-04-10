@@ -44,17 +44,17 @@ export default function ParticipantVotes({
   const totalCount = participants.length
 
   return (
-    <div className="mt-6">
+    <div className="mt-3">
       {/* Vote counter */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <h4 className="text-sm font-medium text-gray-700">Team Votes</h4>
         <span className="text-sm text-gray-500">
           {votedCount} of {totalCount} voted
         </span>
       </div>
 
-      {/* Participant cards grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {/* Participant pills */}
+      <div className="flex flex-wrap gap-1.5">
         {participants.map((participant) => {
           const vote = votesByParticipant.get(participant.name)
           const hasVoted = vote?.vote !== null && vote?.vote !== undefined
@@ -62,62 +62,55 @@ export default function ParticipantVotes({
           const isHostParticipant = participant.name === hostName
 
           return (
-            <div
+            <span
               key={participant.name}
+              title={participant.name}
               className={`
-                relative rounded-lg p-3 text-center transition-colors
-                ${isCurrentUser ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}
+                inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border
+                transition-colors
+                ${isCurrentUser ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}
                 ${
                   hasVoted
                     ? revealed
-                      ? 'bg-indigo-50 border border-indigo-200'
-                      : 'bg-green-50 border border-green-200'
-                    : 'bg-gray-50 border border-gray-200'
+                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                      : 'bg-green-50 border-green-200 text-green-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500'
                 }
               `}
             >
-              {/* Vote display area */}
-              <div className="h-12 flex items-center justify-center mb-2">
-                {hasVoted ? (
-                  revealed ? (
-                    // Revealed state - show the vote value prominently
-                    <div className="w-10 h-12 bg-indigo-600 rounded-lg shadow-md flex items-center justify-center">
-                      <span className="text-xl font-bold text-white">
-                        {getVoteDisplay(vote?.vote ?? null)}
-                      </span>
-                    </div>
-                  ) : (
-                    // Voted but not revealed - show "Ready" with checkmark
-                    <div className="w-10 h-12 bg-green-500 rounded-lg shadow-md flex flex-col items-center justify-center">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  )
+              {/* Status icon */}
+              {hasVoted ? (
+                revealed ? (
+                  <span className="w-5 h-5 rounded bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                    {getVoteDisplay(vote?.vote ?? null)}
+                  </span>
                 ) : (
-                  // Waiting state - show hourglass/waiting indicator
-                  <div className="w-10 h-12 bg-gray-100 border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <span className="w-3.5 h-3.5 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
-                  </div>
-                )}
-              </div>
+                  </span>
+                )
+              ) : (
+                <span className="w-3.5 h-3.5 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </span>
+              )}
 
               {/* Participant name */}
-              <p
-                className={`text-xs truncate ${
-                  hasVoted ? 'text-gray-700 font-medium' : 'text-gray-500'
-                }`}
-                title={participant.name}
-              >
+              <span className="truncate max-w-[120px]">
                 {participant.name}
                 {isCurrentUser && ' (you)'}
-              </p>
+              </span>
+
+              {/* Host indicator */}
               {isHostParticipant && (
-                <span className="inline-flex items-center text-[10px] font-medium text-indigo-600">
-                  Host
-                </span>
+                <span className="text-indigo-400 flex-shrink-0" aria-hidden="true">★</span>
+              )}
+              {isHostParticipant && (
+                <span className="sr-only">Host</span>
               )}
 
               {/* Status indicator for accessibility */}
@@ -128,7 +121,7 @@ export default function ParticipantVotes({
                     : `${participant.name} has voted`
                   : `Waiting for ${participant.name} to vote`}
               </span>
-            </div>
+            </span>
           )
         })}
       </div>

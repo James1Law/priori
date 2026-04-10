@@ -145,12 +145,11 @@ describe('EstimationCards', () => {
     expect(screen.getByText('Select your estimate')).toBeInTheDocument()
   })
 
-  it('uses responsive grid layout for mobile', () => {
+  it('uses 5-column grid layout', () => {
     const { container } = render(<EstimationCards {...defaultProps} />)
 
-    // Check that the grid container has responsive classes
+    // Check that the grid container uses 5 columns
     const gridContainer = container.querySelector('.grid')
-    expect(gridContainer).toHaveClass('grid-cols-4') // 4 columns on mobile
-    expect(gridContainer).toHaveClass('sm:grid-cols-5') // 5 columns on larger screens
+    expect(gridContainer).toHaveClass('grid-cols-5')
   })
 })

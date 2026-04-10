@@ -69,13 +69,13 @@ export default function EstimationCards({
   disabled = false,
 }: EstimationCardsProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className="text-sm text-gray-600 text-center">
         Select your estimate
       </p>
 
-      {/* Fibonacci cards - 4x2 grid on mobile, 5x2 on larger screens */}
-      <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3">
+      {/* Fibonacci cards - 5x2 grid */}
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-3">
         {FIBONACCI_VALUES.map((value) => (
           <CardButton
             key={value}
