@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Item, ItemWithScore, ItemStatus, Framework, ItemLevel } from '../types/database'
-import { canResizeDateChild, canResizeDateParent } from '../lib/roadmap-dates'
+import { canResizeDateChild, canResizeDateParent, formatDisplayDate } from '../lib/roadmap-dates'
 import { ITEM_LEVEL_LABELS, ITEM_LEVEL_CHILD_LABELS, MAX_ITEM_LEVEL } from '../types/database'
 import { getQuadrant } from '../lib/valueEffort'
 import { getAncestors, getDirectChildren, getStatusRollup, getRolledUpEstimate } from '../lib/hierarchy'
@@ -18,7 +18,7 @@ interface ItemDrawerProps {
   onNavigateToItem?: (item: ItemWithScore) => void
   onAddChild?: (parentId: string, parentLevel: number, title: string) => void
   isNew?: boolean
-  onCreate?: (item: { title: string; description: string; status: ItemStatus; item_level: number; start_date: string | null; end_date: string | null }) => void
+  onCreate?: (item: { title: string; description: string; status: ItemStatus; item_level: number; start_date: string | null; end_date: string | null }) => Promise<string | undefined> | void
 }
 
 const STATUS_OPTIONS: { value: ItemStatus; label: string; bgClass: string; textClass: string }[] = [
@@ -207,15 +207,51 @@ export default function ItemDrawer({
   const rolledUpEstimate = hasChildren ? getRolledUpEstimate(item.id, allItems) : null
   const isHierarchyItem = itemLevel > 0 || hasChildren
 
-  const handleAddChild = () => {
+  const handleAddChild = async () => {
     if (!childTitle.trim() || !onAddChild) return
-    onAddChild(item.id, itemLevel, childTitle.trim())
+    const childName = childTitle.trim()
+
+    if (isNew && onCreate) {
+      // Draft item — create it in DB first, then add child
+      if (!title.trim()) return
+      const realId = await onCreate({
+        title: title.trim(),
+        description: description.trim(),
+        status,
+        item_level: selectedLevel,
+        start_date: startDate || null,
+        end_date: endDate || null,
+      })
+      if (realId) {
+        onAddChild(realId, selectedLevel, childName)
+      }
+    } else {
+      // Existing item — auto-save any pending changes first
+      if (hasChanges) {
+        onSave({
+          ...item,
+          title: title.trim(),
+          description: description.trim() || null,
+          status,
+        })
+        const datesChanged = startDate !== (item.start_date || '') || endDate !== (item.end_date || '')
+        if (datesChanged) {
+          if (startDate && endDate && onSetItemDates) {
+            onSetItemDates(item.id, startDate, endDate)
+          } else if (!startDate && !endDate && onClearItemDates) {
+            onClearItemDates(item.id)
+          }
+        }
+      }
+      onAddChild(item.id, itemLevel, childName)
+    }
+
     setChildTitle('')
     setIsAddingChild(false)
   }
 
   const handleSave = () => {
-    if (!title.trim()) return
+    if (!title.trim() || dateError) return
 
     if (isNew && onCreate) {
       // Create new item via callback — no DB record exists yet
@@ -505,7 +541,7 @@ export default function ItemDrawer({
               if (parent?.start_date && parent?.end_date) {
                 return (
                   <p className="text-[10px] text-gray-400 mt-1">
-                    Parent "{parent.title}" runs {parent.start_date} → {parent.end_date}
+                    Parent "{parent.title}" runs {formatDisplayDate(parent.start_date)} → {formatDisplayDate(parent.end_date)}
                   </p>
                 )
               }
@@ -664,7 +700,7 @@ export default function ItemDrawer({
             <button
               type="button"
               onClick={handleSave}
-              disabled={!title.trim()}
+              disabled={!title.trim() || !!dateError}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
             >
               {isNew ? 'Create' : hasChanges ? 'Save Changes' : 'Done'}

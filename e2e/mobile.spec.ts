@@ -11,22 +11,22 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
-// Helper to add an item via the FAB + BottomSheet (mobile)
+// Helper to add an item via the FAB + ItemDrawer (mobile)
 async function addItemMobile(page: import('@playwright/test').Page, title: string, description?: string) {
   // Click the FAB (floating action button)
   await page.locator('button[aria-label="Add item"]').click()
 
-  // Wait for bottom sheet to open
-  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
+  // Wait for drawer to open
+  await expect(page.locator('input[placeholder="Item title"]')).toBeVisible()
 
   // Fill in the form
-  await page.fill('input[placeholder="Item title (required)"]', title)
+  await page.fill('input[placeholder="Item title"]', title)
   if (description) {
-    await page.fill('textarea[placeholder="Description (optional)"]', description)
+    await page.fill('textarea[placeholder="Add a description..."]', description)
   }
 
-  // Submit using the specific form submit button
-  await page.click('[data-testid="submit-item-button"]')
+  // Submit using the Create button
+  await page.locator('button:has-text("Create")').click()
 
   // Wait for item to appear in the list
   await expect(page.locator(`text=${title}`)).toBeVisible()
@@ -139,4 +139,77 @@ test.describe('Mobile Experience', () => {
     await statusBadge.click()
     await expect(page.locator('article button:has-text("In Progress")').first()).toBeVisible()
   })
+
 })
+
+// ============================================
+// Mobile Roadmap tests (separate beforeEach with single item)
+// ============================================
+test.describe('Mobile Roadmap', () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+  })
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/')
+    await page.click('button:has-text("Create New Session")')
+    await page.fill('input[placeholder="Your name"]', 'Test User')
+    await page.click('button:has-text("Join Session")')
+
+    // Add a single item via FAB
+    await page.locator('button[aria-label="Add item"]').click()
+    await expect(page.locator('input[placeholder="Item title"]')).toBeVisible()
+    await page.fill('input[placeholder="Item title"]', 'Roadmap item')
+    await page.locator('button:has-text("Create")').click()
+    await expect(page.locator('text=Roadmap item').first()).toBeVisible()
+  })
+
+  test('shows Gantt view instead of placeholder', async ({ page }) => {
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
+
+    await expect(page.getByTestId('gantt-scroll-container')).toBeVisible()
+    await expect(page.locator('text=Roadmap redesign in progress')).not.toBeVisible()
+  })
+
+  test('shows zoom pills', async ({ page }) => {
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
+
+    // Scope to visible zoom pills (desktop ones are hidden at this width)
+    await expect(page.locator('button:has-text("3M"):visible')).toBeVisible()
+    await expect(page.locator('button:has-text("6M"):visible')).toBeVisible()
+    await expect(page.locator('button:has-text("1Y"):visible')).toBeVisible()
+    await expect(page.locator('button:has-text("Fit"):visible')).toBeVisible()
+  })
+
+  test('shows item bars and labels', async ({ page }) => {
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
+
+    await expect(page.getByTestId('gantt-row').first()).toBeVisible()
+    await expect(page.getByTestId('gantt-bar').first()).toBeVisible()
+  })
+
+  test('tapping an item label opens the item drawer', async ({ page }) => {
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
+
+    // Click the item label text in the mobile gantt (pinned left column)
+    await page.locator('[data-testid="gantt-row"]:visible').first().click()
+
+    // Drawer opens with item details
+    const drawer = page.getByRole('dialog')
+    await expect(drawer.getByRole('heading', { name: 'Edit Item' })).toBeVisible()
+    // Should show date fields in the drawer
+    await expect(drawer.locator('input[type="date"]').first()).toBeVisible()
+  })
+
+  test('zoom pills change the timeline range', async ({ page }) => {
+    await page.locator('.fixed.bottom-0 button:has-text("Roadmap")').click()
+
+    await page.locator('button:has-text("1Y"):visible').click()
+
+    const monthCells = page.locator('[data-testid="month-cell"]:visible')
+    await expect(monthCells.first()).toBeVisible()
+    const count = await monthCells.count()
+    expect(count).toBeGreaterThanOrEqual(10)
+  })
+})
+

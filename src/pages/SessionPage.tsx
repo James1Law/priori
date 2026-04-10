@@ -7,6 +7,9 @@ import BacklogList from '../components/BacklogList'
 import { type FilterState, applyFilters } from '../components/BacklogToolbar'
 import CapacityView from '../components/CapacityView'
 import RoadmapView from '../components/RoadmapView'
+import RoadmapMobileView from '../components/RoadmapMobileView'
+import { isTouchDevice } from '../lib/device'
+import { getDefaultChildDates } from '../lib/roadmap-dates'
 import ItemDrawer from '../components/ItemDrawer'
 import NamePromptModal from '../components/NamePromptModal'
 import ConfirmModal from '../components/ConfirmModal'
@@ -317,11 +320,8 @@ export default function SessionPage() {
 
     const position = items.length
 
-    // Default dates: today → today + 1 month
-    const today = new Date()
-    const endDate = new Date(today)
-    endDate.setMonth(endDate.getMonth() + 1)
-    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    // Default dates: inherit from parent if child, otherwise today → today + 1 month
+    const defaultDates = getDefaultChildDates(newItem.parent_item_id, items)
 
     const itemToInsert: Record<string, unknown> = {
       session_id: session.id,
@@ -329,8 +329,8 @@ export default function SessionPage() {
       description: newItem.description || null,
       position,
       created_by: participantName,
-      start_date: fmt(today),
-      end_date: fmt(endDate),
+      start_date: defaultDates.start,
+      end_date: defaultDates.end,
     }
 
     // Add hierarchy fields if provided
@@ -1062,36 +1062,46 @@ export default function SessionPage() {
 
             {/* Roadmap View */}
             {localView === 'roadmap' && session && (
-              <>
-                <div className="hidden sm:block">
-                  <RoadmapView
-                    items={items}
-                    loading={false}
-                    session={session}
-                    onSetItemDates={handleSetItemDates}
-                    onMoveItem={handleMoveItemDates}
-                    onClearItemDates={handleClearItemDates}
-                    onSetZoom={handleSetRoadmapZoom}
-                    onItemClick={(itemId) => {
-                      const item = items.find(i => i.id === itemId)
-                      if (item) setEditingItem(item)
-                    }}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
-                      <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
-                      </svg>
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">Roadmap redesign in progress</h3>
-                    <p className="text-sm text-gray-500 max-w-xs">
-                      The roadmap is being redesigned with a new date-based Gantt view. Use desktop for the full experience.
-                    </p>
+              isTouchDevice() ? (
+                <RoadmapMobileView
+                  items={items}
+                  session={session}
+                  onItemClick={(itemId) => {
+                    const item = items.find(i => i.id === itemId)
+                    if (item) setEditingItem(item)
+                  }}
+                  onSetZoom={handleSetRoadmapZoom}
+                />
+              ) : (
+                <>
+                  <div className="hidden sm:block">
+                    <RoadmapView
+                      items={items}
+                      loading={false}
+                      session={session}
+                      onSetItemDates={handleSetItemDates}
+                      onMoveItem={handleMoveItemDates}
+                      onClearItemDates={handleClearItemDates}
+                      onSetZoom={handleSetRoadmapZoom}
+                      onItemClick={(itemId) => {
+                        const item = items.find(i => i.id === itemId)
+                        if (item) setEditingItem(item)
+                      }}
+                    />
                   </div>
-                </div>
-              </>
+                  <div className="sm:hidden">
+                    <RoadmapMobileView
+                      items={items}
+                      session={session}
+                      onItemClick={(itemId) => {
+                        const item = items.find(i => i.id === itemId)
+                        if (item) setEditingItem(item)
+                      }}
+                      onSetZoom={handleSetRoadmapZoom}
+                    />
+                  </div>
+                </>
+              )
             )}
 
             {/* Capacity Planning View */}
@@ -1215,7 +1225,7 @@ export default function SessionPage() {
           })
         }}
         onCreate={async (newItem) => {
-          if (!session) return
+          if (!session) return undefined
           const position = items.length
           const itemToInsert: Record<string, unknown> = {
             session_id: session.id,
@@ -1235,10 +1245,14 @@ export default function SessionPage() {
             .single()
           if (insertError) {
             console.error('Error creating item:', insertError)
-            return
+            return undefined
           }
           const created: ItemWithScore = { ...(data as Item), score: undefined }
           setItems(prev => [...prev, created])
+          // Also update the editing item to the real record so drawer reflects saved state
+          setEditingItem(created)
+          setIsNewItem(false)
+          return created.id
         }}
       />
 

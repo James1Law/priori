@@ -4,6 +4,8 @@ import {
   canResizeDateChild,
   canResizeDateParent,
   getDateProportionalMoves,
+  getDefaultChildDates,
+  formatDisplayDate,
   getRoadmapDateTree,
   getDateUnscheduledGroups,
   dateToPixel,
@@ -550,5 +552,125 @@ describe('getTimelineWeeks', () => {
     const weeks = getTimelineWeeks('2026-04-01', '2026-06-30')
     const total = weeks.reduce((sum, w) => sum + w.widthPercent, 0)
     expect(total).toBeCloseTo(100, 0)
+  })
+})
+
+describe('formatDisplayDate', () => {
+  it('converts YYYY-MM-DD to dd/mm/yyyy', () => {
+    expect(formatDisplayDate('2026-04-10')).toBe('10/04/2026')
+  })
+
+  it('preserves leading zeros', () => {
+    expect(formatDisplayDate('2026-01-05')).toBe('05/01/2026')
+  })
+})
+
+describe('getDefaultChildDates', () => {
+  it('returns parent dates when parent is scheduled', () => {
+    const items = [
+      makeItem('parent', { start_date: '2026-03-25', end_date: '2026-04-30' }),
+    ]
+    const result = getDefaultChildDates('parent', items)
+    expect(result).toEqual({ start: '2026-03-25', end: '2026-04-30' })
+  })
+
+  it('returns today + 1 month when parent has no dates', () => {
+    const items = [
+      makeItem('parent', { start_date: null, end_date: null }),
+    ]
+    const result = getDefaultChildDates('parent', items)
+    // Should be today-based defaults
+    const today = new Date()
+    const expectedStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    expect(result.start).toBe(expectedStart)
+    // End should be ~1 month later
+    expect(result.end > result.start).toBe(true)
+  })
+
+  it('returns today + 1 month when parent not found', () => {
+    const result = getDefaultChildDates('nonexistent', [])
+    const today = new Date()
+    const expectedStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    expect(result.start).toBe(expectedStart)
+  })
+
+  it('returns today + 1 month when no parentId provided', () => {
+    const result = getDefaultChildDates(undefined, [])
+    const today = new Date()
+    const expectedStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    expect(result.start).toBe(expectedStart)
+  })
+
+  it('walks up to scheduled grandparent when parent is unscheduled', () => {
+    const items = [
+      makeItem('grandparent', { start_date: '2026-02-01', end_date: '2026-06-30' }),
+      makeItem('parent', { parent_item_id: 'grandparent', start_date: null, end_date: null }),
+    ]
+    const result = getDefaultChildDates('parent', items)
+    expect(result).toEqual({ start: '2026-02-01', end: '2026-06-30' })
+  })
+
+  // Full hierarchy scenarios matching user-reported flows
+  it('epic under initiative inherits initiative dates (not goal dates)', () => {
+    const items = [
+      makeItem('goal', { item_level: 0, start_date: '2026-01-01', end_date: '2026-12-31' }),
+      makeItem('init', { item_level: 1, parent_item_id: 'goal', start_date: '2026-03-01', end_date: '2026-06-30' }),
+    ]
+    // Adding epic under initiative
+    const result = getDefaultChildDates('init', items)
+    expect(result).toEqual({ start: '2026-03-01', end: '2026-06-30' })
+  })
+
+  it('story under epic inherits epic dates (not initiative or goal)', () => {
+    const items = [
+      makeItem('goal', { item_level: 0, start_date: '2026-01-01', end_date: '2026-12-31' }),
+      makeItem('init', { item_level: 1, parent_item_id: 'goal', start_date: '2026-03-01', end_date: '2026-06-30' }),
+      makeItem('epic', { item_level: 2, parent_item_id: 'init', start_date: '2026-04-01', end_date: '2026-04-15' }),
+    ]
+    // Adding story under epic — should get EPIC dates, not initiative
+    const result = getDefaultChildDates('epic', items)
+    expect(result).toEqual({ start: '2026-04-01', end: '2026-04-15' })
+  })
+
+  it('story under epic after epic dates were changed inherits updated epic dates', () => {
+    // Simulates: user created epic (inherited init dates), then changed epic dates
+    const items = [
+      makeItem('goal', { item_level: 0, start_date: '2026-01-01', end_date: '2026-12-31' }),
+      makeItem('init', { item_level: 1, parent_item_id: 'goal', start_date: '2026-03-01', end_date: '2026-06-30' }),
+      makeItem('epic', { item_level: 2, parent_item_id: 'init', start_date: '2026-05-01', end_date: '2026-05-31' }),
+    ]
+    const result = getDefaultChildDates('epic', items)
+    expect(result).toEqual({ start: '2026-05-01', end: '2026-05-31' })
+  })
+
+  it('child under unscheduled parent with scheduled grandparent inherits grandparent dates', () => {
+    const items = [
+      makeItem('goal', { item_level: 0, start_date: '2026-02-01', end_date: '2026-08-31' }),
+      makeItem('init', { item_level: 1, parent_item_id: 'goal', start_date: null, end_date: null }),
+    ]
+    // Adding epic under unscheduled initiative — walks up to goal
+    const result = getDefaultChildDates('init', items)
+    expect(result).toEqual({ start: '2026-02-01', end: '2026-08-31' })
+  })
+
+  it('falls back to defaults when entire ancestor chain is unscheduled', () => {
+    const items = [
+      makeItem('goal', { item_level: 0, start_date: null, end_date: null }),
+      makeItem('init', { item_level: 1, parent_item_id: 'goal', start_date: null, end_date: null }),
+    ]
+    const result = getDefaultChildDates('init', items)
+    const today = new Date()
+    const expectedStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    expect(result.start).toBe(expectedStart)
+  })
+
+  it('uses direct parent even when parent dates are narrower than grandparent', () => {
+    const items = [
+      makeItem('goal', { item_level: 0, start_date: '2026-01-01', end_date: '2026-12-31' }),
+      makeItem('init', { item_level: 1, parent_item_id: 'goal', start_date: '2026-06-01', end_date: '2026-06-15' }),
+    ]
+    // Should inherit the narrow initiative dates, not the wide goal dates
+    const result = getDefaultChildDates('init', items)
+    expect(result).toEqual({ start: '2026-06-01', end: '2026-06-15' })
   })
 })

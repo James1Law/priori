@@ -27,6 +27,12 @@ function addDays(dateStr: string, days: number): string {
   return formatDate(date)
 }
 
+/** Format a YYYY-MM-DD date string for display in UK format (dd/mm/yyyy) */
+export function formatDisplayDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-')
+  return `${d}/${m}/${y}`
+}
+
 /** Difference in days between two date strings (end - start) */
 function diffDays(startStr: string, endStr: string): number {
   const start = parseDate(startStr)
@@ -102,6 +108,36 @@ export function canResizeDateParent(
   if (!childSpan) return true
 
   return newStart <= childSpan.start && newEnd >= childSpan.end
+}
+
+/**
+ * Get default dates for a new child item.
+ * If the parent (or nearest scheduled ancestor) has dates, inherit them.
+ * Otherwise fall back to today → today + 1 month.
+ */
+export function getDefaultChildDates(
+  parentId: string | undefined,
+  items: ItemWithScore[]
+): { start: string; end: string } {
+  // Walk up the hierarchy to find a scheduled ancestor
+  let currentId = parentId
+  while (currentId) {
+    const ancestor = items.find(i => i.id === currentId)
+    if (!ancestor) break
+    if (ancestor.start_date && ancestor.end_date) {
+      return { start: ancestor.start_date, end: ancestor.end_date }
+    }
+    currentId = ancestor.parent_item_id ?? undefined
+  }
+
+  // Fallback: today + 1 month
+  const today = new Date()
+  const endDate = new Date(today)
+  endDate.setMonth(endDate.getMonth() + 1)
+  return {
+    start: formatDate(today),
+    end: formatDate(endDate),
+  }
 }
 
 /**

@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Priori — Mobile Roadmap (View-Only)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb; color: #111827; min-height: 100vh;
+    }
+    .font-display { font-family: 'Poppins', sans-serif; }
+
+    .concept-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white; padding: 3rem 2rem; text-align: center;
+    }
+    .concept-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .concept-header p { opacity: 0.9; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+
+    .section-divider {
+      text-align: center; padding: 2rem;
+      border-top: 3px dashed #e5e7eb; margin-top: 3rem; background: #f3f4f6;
+    }
+    .section-divider h2 { font-size: 1.5rem; color: #374151; margin-bottom: 0.5rem; }
+    .section-divider p { color: #6b7280; max-width: 600px; margin: 0 auto; }
+    .scenario-label {
+      display: inline-block; background: #dbeafe; color: #1d4ed8;
+      font-size: 0.75rem; font-weight: 600;
+      padding: 0.25rem 0.75rem; border-radius: 999px; margin-bottom: 0.5rem;
+    }
+
+    .design-notes {
+      max-width: 700px; margin: 2rem auto; padding: 0 1.5rem;
+    }
+    .design-notes h3 {
+      font-family: 'Poppins', sans-serif; font-size: 1.1rem;
+      color: #374151; margin-bottom: 0.75rem;
+    }
+    .design-notes ul { padding-left: 1.25rem; color: #4b5563; line-height: 1.8; }
+    .design-notes li { margin-bottom: 0.25rem; }
+
+    .pros-cons {
+      display: flex; gap: 1.5rem; max-width: 700px; margin: 1.5rem auto;
+      padding: 0 1.5rem;
+    }
+    .pros, .cons {
+      flex: 1; padding: 1rem; border-radius: 12px; font-size: 0.85rem;
+    }
+    .pros { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .cons { background: #fef2f2; border: 1px solid #fecaca; }
+    .pros h4 { color: #16a34a; margin-bottom: 0.5rem; }
+    .cons h4 { color: #dc2626; margin-bottom: 0.5rem; }
+    .pros ul, .cons ul { padding-left: 1rem; line-height: 1.6; }
+
+    /* === Mobile Frame === */
+    .mobile-frame {
+      width: 390px; margin: 2rem auto;
+      background: white; border-radius: 24px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      overflow: hidden; position: relative;
+      min-height: 780px;
+    }
+
+    /* === Landscape Frame === */
+    .landscape-frame {
+      width: 780px; height: 360px; margin: 2rem auto;
+      background: white; border-radius: 24px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      overflow: hidden; position: relative;
+    }
+
+    .status-bar {
+      background: white; padding: 0.4rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.7rem; font-weight: 600; color: #111827;
+    }
+    .status-bar-icons { display: flex; gap: 4px; align-items: center; }
+
+    /* App Header */
+    .app-header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.625rem 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .app-header-left {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .app-header .logo {
+      width: 24px; height: 24px; background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 0.65rem;
+    }
+    .app-header .session-name {
+      font-weight: 600; font-size: 0.85rem; color: #111827;
+    }
+
+    /* Zoom bar */
+    .zoom-bar {
+      display: flex; align-items: center; gap: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      background: #fafafa;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .zoom-pill {
+      padding: 0.25rem 0.6rem; font-size: 0.7rem; font-weight: 500;
+      border: 1px solid #d1d5db; border-radius: 6px;
+      background: white; color: #6b7280; cursor: pointer;
+    }
+    .zoom-pill.active {
+      background: #4f46e5; color: white; border-color: #4f46e5;
+    }
+    .zoom-spacer { flex: 1; }
+    .zoom-hint {
+      font-size: 0.65rem; color: #9ca3af; font-style: italic;
+    }
+
+    /* === Pannable Mini Gantt === */
+    .gantt-mobile {
+      position: relative;
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .gantt-mobile-inner {
+      min-width: 600px; /* wider than viewport to allow scrolling */
+      position: relative;
+    }
+
+    /* Timeline header */
+    .timeline-header {
+      position: sticky; top: 0; z-index: 10;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .timeline-months {
+      display: flex; height: 22px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .timeline-month {
+      font-size: 0.6rem; font-weight: 600; color: #6b7280;
+      text-align: center; padding-top: 4px;
+      border-right: 1px solid #f3f4f6;
+    }
+    .timeline-weeks {
+      display: flex; height: 18px;
+    }
+    .timeline-week {
+      font-size: 0.55rem; color: #9ca3af;
+      text-align: center; padding-top: 2px;
+      border-right: 1px solid #f9fafb;
+    }
+
+    /* Gantt rows */
+    .gantt-rows {
+      position: relative;
+    }
+    .gantt-row {
+      height: 40px; display: flex; align-items: center;
+      border-bottom: 1px solid #f3f4f6;
+      position: relative;
+    }
+    .gantt-row:nth-child(even) { background: #fafafa; }
+
+    /* Item label pinned left */
+    .gantt-row-label {
+      position: sticky; left: 0; z-index: 5;
+      min-width: 140px; max-width: 140px;
+      padding: 0 0.5rem;
+      background: inherit;
+      font-size: 0.7rem; font-weight: 500;
+      color: #374151;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      border-right: 1px solid #e5e7eb;
+      height: 100%; display: flex; align-items: center; gap: 4px;
+    }
+    .gantt-row:nth-child(even) .gantt-row-label { background: #fafafa; }
+    .gantt-row:nth-child(odd) .gantt-row-label { background: white; }
+
+    .level-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .level-dot.goal { background: #ec4899; }
+    .level-dot.initiative { background: #3b82f6; }
+    .level-dot.epic { background: #8b5cf6; }
+    .level-dot.story { background: #22c55e; }
+
+    /* Gantt bar area */
+    .gantt-bar-area {
+      flex: 1; position: relative; height: 100%;
+    }
+    .gantt-bar {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      border-radius: 4px; cursor: pointer;
+      display: flex; align-items: center;
+      padding: 0 6px;
+      font-size: 0.6rem; font-weight: 500; color: white;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: opacity 0.15s;
+    }
+    .gantt-bar:active { opacity: 0.8; }
+
+    .gantt-bar.goal {
+      background: linear-gradient(135deg, #ec4899, #f472b6);
+      height: 24px;
+    }
+    .gantt-bar.initiative {
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      height: 20px;
+    }
+    .gantt-bar.epic {
+      background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+      height: 18px;
+    }
+    .gantt-bar.story {
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      height: 16px;
+    }
+
+    /* Today marker */
+    .today-marker {
+      position: absolute; top: 0; bottom: 0;
+      width: 2px; background: #ef4444;
+      z-index: 4;
+    }
+    .today-label {
+      position: absolute; top: 2px;
+      transform: translateX(-50%);
+      font-size: 0.55rem; font-weight: 600;
+      color: #ef4444; background: white;
+      padding: 0 3px; border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    /* Bottom nav */
+    .bottom-nav {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 1px solid #e5e7eb;
+      display: flex; justify-content: space-around;
+      padding: 0.5rem 0 1.25rem;
+    }
+    .bottom-nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 2px; font-size: 0.6rem; color: #9ca3af;
+    }
+    .bottom-nav-item.active { color: #4f46e5; }
+    .bottom-nav-icon {
+      width: 20px; height: 20px;
+    }
+
+    /* Tap hint overlay */
+    .tap-hint {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0.5rem 0.75rem;
+      background: #eef2ff; border-bottom: 1px solid #c7d2fe;
+      font-size: 0.65rem; color: #4338ca;
+    }
+    .tap-hint svg { flex-shrink: 0; }
+
+    /* === Item Drawer (full-screen side panel) === */
+    .item-drawer-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 25;
+    }
+    .item-drawer {
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 100%;
+      background: white;
+      z-index: 30;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .item-drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: white;
+      position: sticky; top: 0; z-index: 5;
+    }
+    .item-drawer-header-left {
+      display: flex; align-items: center; gap: 8px;
+      min-width: 0;
+    }
+    .item-drawer-close {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; cursor: pointer;
+      color: #6b7280; flex-shrink: 0;
+    }
+    .item-drawer-close:hover { background: #f3f4f6; }
+
+    .item-drawer-body {
+      padding: 1rem;
+      flex: 1;
+    }
+    .item-drawer-title {
+      font-size: 1.1rem; font-weight: 600; color: #111827;
+      margin-bottom: 0.25rem;
+    }
+
+    .drawer-level-badge {
+      font-size: 0.6rem; font-weight: 600; padding: 2px 8px;
+      border-radius: 4px; text-transform: uppercase; white-space: nowrap;
+    }
+    .drawer-level-badge.initiative { background: #dbeafe; color: #1d4ed8; }
+    .drawer-level-badge.epic { background: #ede9fe; color: #6d28d9; }
+    .drawer-level-badge.goal { background: #fce7f3; color: #be185d; }
+    .drawer-level-badge.story { background: #dcfce7; color: #15803d; }
+
+    .drawer-section {
+      margin-bottom: 1.25rem;
+    }
+    .drawer-section-label {
+      font-size: 0.65rem; font-weight: 600; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 0.375rem;
+    }
+    .drawer-date-row {
+      display: flex; gap: 1rem;
+    }
+    .drawer-date-field {
+      flex: 1;
+    }
+    .drawer-date-label {
+      font-size: 0.6rem; font-weight: 500; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .drawer-date-input {
+      width: 100%; padding: 0.5rem 0.625rem;
+      border: 1px solid #d1d5db; border-radius: 8px;
+      font-size: 0.85rem; font-family: inherit; color: #111827;
+      background: white;
+    }
+    .drawer-date-input:focus {
+      outline: none; border-color: #4f46e5;
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    }
+
+    .drawer-description {
+      font-size: 0.8rem; color: #4b5563; line-height: 1.6;
+    }
+    .drawer-meta-row {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.75rem; color: #6b7280;
+    }
+    .drawer-meta-row + .drawer-meta-row {
+      margin-top: 0.375rem;
+    }
+    .drawer-parent-link {
+      color: #4f46e5; font-weight: 500; text-decoration: none;
+    }
+    .drawer-meta-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px;
+      background: #f3f4f6; font-size: 0.7rem; color: #374151;
+    }
+
+    .drawer-actions {
+      display: flex; gap: 0.5rem; margin-top: 1.5rem;
+      padding-top: 1rem; border-top: 1px solid #e5e7eb;
+    }
+    .drawer-btn {
+      flex: 1; padding: 0.625rem; border-radius: 8px;
+      font-size: 0.8rem; font-weight: 500;
+      text-align: center; cursor: pointer; border: none;
+    }
+    .drawer-btn-primary {
+      background: #4f46e5; color: white;
+    }
+    .drawer-btn-secondary {
+      background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;
+    }
+
+    /* Level badge used in timeline list styles (retained for landscape) */
+    .tl-level-badge {
+      font-size: 0.55rem; font-weight: 600; padding: 1px 5px;
+      border-radius: 3px; text-transform: uppercase;
+    }
+    .tl-level-badge.goal { background: #fce7f3; color: #be185d; }
+    .tl-level-badge.initiative { background: #dbeafe; color: #1d4ed8; }
+    .tl-level-badge.epic { background: #ede9fe; color: #6d28d9; }
+    .tl-level-badge.story { background: #dcfce7; color: #15803d; }
+
+    /* === Callout Note === */
+    .callout-note {
+      max-width: 780px; margin: 1.5rem auto;
+      padding: 1rem 1.25rem;
+      background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+      font-size: 0.85rem; color: #78350f; line-height: 1.6;
+    }
+    .callout-note strong { color: #92400e; }
+
+    /* === Recommendation Banner === */
+    .recommendation {
+      max-width: 700px; margin: 2rem auto;
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+      border: 2px solid #a5b4fc; border-radius: 12px;
+    }
+    .recommendation h3 {
+      font-family: 'Poppins', sans-serif;
+      color: #3730a3; margin-bottom: 0.5rem; font-size: 1rem;
+    }
+    .recommendation p {
+      color: #4338ca; font-size: 0.85rem; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- HEADER -->
+<!-- ============================================ -->
+<div class="concept-header">
+  <h1 class="font-display">Mobile Roadmap — View-Only</h1>
+  <p>A view-only mini Gantt for mobile in both portrait and landscape. Users can view the timeline and tap items to edit dates via the ItemDrawer. No drag-and-drop — the desktop Gantt uses mouse-only events that are incompatible with touch.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- DESIGN PRINCIPLES -->
+<!-- ============================================ -->
+<div class="design-notes">
+  <h3>Design Principles</h3>
+  <ul>
+    <li><strong>View-only always</strong> — No drag-and-drop or resize handles on mobile (desktop Gantt uses onMouseDown with 8px handles and 18-28px bars, far below Apple's 44px minimum touch target)</li>
+    <li><strong>Tap to edit via ItemDrawer</strong> — Tapping an item opens the existing ItemDrawer with date fields, consistent with all other modules</li>
+    <li><strong>Same zoom controls</strong> — 3M / 6M / 1Y / Fit presets work on mobile too</li>
+    <li><strong>Full information</strong> — Same data as desktop, just presented for touch viewing</li>
+    <li><strong>Familiar interaction</strong> — Scroll, pan feel native on mobile</li>
+    <li><strong>Landscape bonus</strong> — Wider viewport shows more of the timeline without scrolling</li>
+  </ul>
+</div>
+
+
+<!-- ============================================ -->
+<!-- PORTRAIT VIEW: PANNABLE MINI GANTT -->
+<!-- ============================================ -->
+<div class="section-divider">
+  <span class="scenario-label">PORTRAIT VIEW</span>
+  <h2 class="font-display">Pannable Mini Gantt</h2>
+  <p>The desktop Gantt chart, simplified for touch. Item labels pinned on the left, timeline scrolls horizontally. Tap any bar to open the ItemDrawer.</p>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Strengths</h4>
+    <ul>
+      <li>Closest to desktop — familiar mental model</li>
+      <li>Shows temporal relationships at a glance</li>
+      <li>Overlapping items are visually clear</li>
+      <li>Zoom presets work naturally</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Considerations</h4>
+    <ul>
+      <li>Small bars can be hard to tap precisely</li>
+      <li>Requires horizontal scrolling (not always intuitive)</li>
+      <li>Bar labels may be too small to read at some zoom levels</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Phone: Default view -->
+<div class="mobile-frame">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-bar-icons">
+      <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="4" width="3" height="8" rx="0.5" fill="#111"/><rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5" fill="#111"/><rect x="9" y="0.5" width="3" height="11.5" rx="0.5" fill="#111"/><rect x="13.5" y="3" width="2.5" height="9" rx="0.5" fill="#111"/></svg>
+    </div>
+  </div>
+
+  <div class="app-header">
+    <div class="app-header-left">
+      <div class="logo">P</div>
+      <span class="session-name">Q3 Product Roadmap</span>
+    </div>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="4" r="1.5" fill="#6b7280"/><circle cx="10" cy="10" r="1.5" fill="#6b7280"/><circle cx="10" cy="16" r="1.5" fill="#6b7280"/></svg>
+  </div>
+
+  <div class="zoom-bar">
+    <div class="zoom-pill">3M</div>
+    <div class="zoom-pill active">6M</div>
+    <div class="zoom-pill">1Y</div>
+    <div class="zoom-pill">Fit</div>
+    <div class="zoom-spacer"></div>
+    <span class="zoom-hint">Scroll to pan &rarr;</span>
+  </div>
+
+  <div class="tap-hint">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 2C8.9 2 8 2.9 8 4v6.6L6.3 9.3a1.5 1.5 0 00-2.1 2.1l4.5 5.3c.4.5 1 .8 1.6.8h4.2c1.4 0 2.5-1.1 2.5-2.5v-4a1.5 1.5 0 00-3 0v1a1.5 1.5 0 00-3 0V4c0-1.1-.9-2-2-2z" stroke="#4338ca" stroke-width="1.5" fill="none"/></svg>
+    Tap any bar to view details and edit dates
+  </div>
+
+  <div class="gantt-mobile" style="height: 508px; overflow: auto;">
+    <div class="gantt-mobile-inner" style="width: 700px;">
+      <!-- Timeline header -->
+      <div class="timeline-header" style="margin-left: 140px;">
+        <div class="timeline-months">
+          <div class="timeline-month" style="width: 11%;">Mar</div>
+          <div class="timeline-month" style="width: 18%;">Apr</div>
+          <div class="timeline-month" style="width: 18%;">May</div>
+          <div class="timeline-month" style="width: 18%;">Jun</div>
+          <div class="timeline-month" style="width: 18%;">Jul</div>
+          <div class="timeline-month" style="width: 17%;">Aug</div>
+        </div>
+        <div class="timeline-weeks">
+          <div class="timeline-week" style="width: 5.5%;">W12</div>
+          <div class="timeline-week" style="width: 5.5%;">W13</div>
+          <div class="timeline-week" style="width: 6%;">W14</div>
+          <div class="timeline-week" style="width: 6%;">W15</div>
+          <div class="timeline-week" style="width: 6%;">W16</div>
+          <div class="timeline-week" style="width: 6%;">W17</div>
+          <div class="timeline-week" style="width: 6%;">W18</div>
+          <div class="timeline-week" style="width: 6%;">W19</div>
+          <div class="timeline-week" style="width: 6%;">W20</div>
+          <div class="timeline-week" style="width: 6%;">W21</div>
+          <div class="timeline-week" style="width: 5.5%;">W22</div>
+          <div class="timeline-week" style="width: 5.5%;">W23</div>
+          <div class="timeline-week" style="width: 6%;">W24</div>
+          <div class="timeline-week" style="width: 6%;">W25</div>
+          <div class="timeline-week" style="width: 6%;">W26</div>
+          <div class="timeline-week" style="width: 6%;">W27</div>
+          <div class="timeline-week" style="width: 6%;">W28</div>
+          <div class="timeline-week" style="width: 5.5%;">W29</div>
+        </div>
+      </div>
+
+      <!-- Today marker -->
+      <div style="position: relative;">
+        <div class="today-marker" style="left: calc(140px + 16%);">
+          <span class="today-label">Today</span>
+        </div>
+      </div>
+
+      <!-- Gantt rows -->
+      <div class="gantt-rows">
+        <!-- Row 1: Goal -->
+        <div class="gantt-row">
+          <div class="gantt-row-label">
+            <div class="level-dot goal"></div>
+            Launch V2 Platform
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar goal" style="left: 8%; width: 65%;">
+              Launch V2 Platform
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Initiative -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1rem;">
+            <div class="level-dot initiative"></div>
+            User Onboarding
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar initiative" style="left: 8%; width: 32%;">
+              User Onboarding
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Epic -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1.5rem;">
+            <div class="level-dot epic"></div>
+            Sign-up Flow
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 8%; width: 14%;">
+              Sign-up Flow
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Story -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 2rem;">
+            <div class="level-dot story"></div>
+            Email verification
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar story" style="left: 10%; width: 7%;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Story -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 2rem;">
+            <div class="level-dot story"></div>
+            Social auth
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar story" style="left: 17%; width: 5%;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 6: Epic -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1.5rem;">
+            <div class="level-dot epic"></div>
+            Tutorial System
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 22%; width: 18%;">
+              Tutorial System
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 7: Initiative -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1rem;">
+            <div class="level-dot initiative"></div>
+            API Redesign
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar initiative" style="left: 25%; width: 40%;">
+              API Redesign
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 8: Epic -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1.5rem;">
+            <div class="level-dot epic"></div>
+            REST &rarr; GraphQL
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 25%; width: 20%;">
+              REST &rarr; GraphQL
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 9: Epic -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1.5rem;">
+            <div class="level-dot epic"></div>
+            Rate Limiting
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 45%; width: 12%;">
+              Rate Limiting
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 10: Epic -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1.5rem;">
+            <div class="level-dot epic"></div>
+            Webhooks v2
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 55%; width: 10%;">
+              Webhooks v2
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 11: Initiative -->
+        <div class="gantt-row">
+          <div class="gantt-row-label" style="padding-left: 1rem;">
+            <div class="level-dot initiative"></div>
+            Mobile App
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar initiative" style="left: 42%; width: 30%;">
+              Mobile App
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 12: Unscheduled -->
+        <div class="gantt-row" style="background: #fffbeb;">
+          <div class="gantt-row-label" style="padding-left: 1.5rem; background: #fffbeb;">
+            <div class="level-dot epic" style="opacity: 0.5;"></div>
+            <span style="color: #92400e;">Push Notifications</span>
+          </div>
+          <div class="gantt-bar-area">
+            <span style="font-size: 0.6rem; color: #b45309; padding: 0 8px; font-style: italic;">No dates set</span>
+          </div>
+        </div>
+
+        <!-- Row 13: Unscheduled -->
+        <div class="gantt-row" style="background: #fffbeb;">
+          <div class="gantt-row-label" style="background: #fffbeb;">
+            <div class="level-dot initiative" style="opacity: 0.5;"></div>
+            <span style="color: #92400e;">Analytics Dashboard</span>
+          </div>
+          <div class="gantt-bar-area">
+            <span style="font-size: 0.6rem; color: #b45309; padding: 0 8px; font-style: italic;">No dates set</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-nav-item">
+      <svg class="bottom-nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
+      Backlog
+    </div>
+    <div class="bottom-nav-item active">
+      <svg class="bottom-nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm5 0a1 1 0 011-1h2a1 1 0 011 1v8a1 1 0 01-1 1H8a1 1 0 01-1-1V4zm5 0a1 1 0 011-1h2a1 1 0 011 1v10a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+      Roadmap
+    </div>
+    <div class="bottom-nav-item">
+      <svg class="bottom-nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2L3 7v11h14V7l-7-5zm0 2.5L15 8v8H5V8l5-3.5z"/></svg>
+      Prioritise
+    </div>
+    <div class="bottom-nav-item">
+      <svg class="bottom-nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a4 4 0 00-4 4v2H4a1 1 0 00-1 1v8a1 1 0 001 1h12a1 1 0 001-1V9a1 1 0 00-1-1h-2V6a4 4 0 00-4-4zm-2 6V6a2 2 0 114 0v2H8z"/></svg>
+      Estimate
+    </div>
+    <div class="bottom-nav-item">
+      <svg class="bottom-nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm5-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H8a1 1 0 01-1-1V7zm5-4a1 1 0 011-1h2a1 1 0 011 1v13a1 1 0 01-1 1h-2a1 1 0 01-1-1V3z"/></svg>
+      Capacity
+    </div>
+  </div>
+</div>
+
+<!-- Phone: With ItemDrawer open -->
+<div class="section-divider" style="margin-top: 1rem; border-top: none; background: transparent; padding: 1rem;">
+  <span class="scenario-label">TAP TO EDIT — ITEMDRAWER</span>
+  <p style="font-size: 0.85rem;">Tapping a bar opens the ItemDrawer — the same full-screen side panel used in Backlog, Capacity, and all other modules. Slides in from the right with editable date fields.</p>
+</div>
+
+<div class="mobile-frame">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-bar-icons">
+      <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="4" width="3" height="8" rx="0.5" fill="#111"/><rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5" fill="#111"/><rect x="9" y="0.5" width="3" height="11.5" rx="0.5" fill="#111"/><rect x="13.5" y="3" width="2.5" height="9" rx="0.5" fill="#111"/></svg>
+    </div>
+  </div>
+
+  <!-- ItemDrawer covering full screen -->
+  <div class="item-drawer">
+    <div class="item-drawer-header">
+      <div class="item-drawer-header-left">
+        <span class="drawer-level-badge initiative">Initiative</span>
+        <span style="font-weight: 600; font-size: 0.85rem; color: #111827;">API Redesign</span>
+      </div>
+      <div class="item-drawer-close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#6b7280" stroke-width="2">
+          <line x1="5" y1="5" x2="15" y2="15"/>
+          <line x1="15" y1="5" x2="5" y2="15"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="item-drawer-body">
+      <!-- Title -->
+      <div class="item-drawer-title">API Redesign</div>
+
+      <!-- Ancestry breadcrumb -->
+      <div class="drawer-meta-row" style="margin-bottom: 1rem;">
+        <span style="color: #9ca3af;">in</span>
+        <a class="drawer-parent-link" href="#">Launch V2 Platform</a>
+        <span class="drawer-level-badge goal" style="font-size: 0.5rem; padding: 1px 5px;">Goal</span>
+      </div>
+
+      <!-- Dates section -->
+      <div class="drawer-section">
+        <div class="drawer-section-label">Schedule</div>
+        <div class="drawer-date-row">
+          <div class="drawer-date-field">
+            <div class="drawer-date-label">Start date</div>
+            <input type="date" class="drawer-date-input" value="2026-04-20">
+          </div>
+          <div class="drawer-date-field">
+            <div class="drawer-date-label">End date</div>
+            <input type="date" class="drawer-date-input" value="2026-07-15">
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="drawer-section">
+        <div class="drawer-section-label">Description</div>
+        <div class="drawer-description">
+          Migrate from REST to GraphQL, add rate limiting and webhooks v2. This initiative covers the full API modernisation effort for the V2 platform launch.
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="drawer-section">
+        <div class="drawer-section-label">Details</div>
+        <div class="drawer-meta-row">
+          <span class="drawer-meta-chip">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="#6b7280"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+            3 children
+          </span>
+          <span class="drawer-meta-chip">87 days</span>
+          <span class="drawer-meta-chip">Apr-Jul 2026</span>
+        </div>
+        <div class="drawer-meta-row" style="margin-top: 0.5rem;">
+          <span class="drawer-meta-chip">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="#6b7280"><circle cx="10" cy="10" r="3"/></svg>
+            In Progress
+          </span>
+          <span class="drawer-meta-chip">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="#6b7280"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
+            Sarah
+          </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="drawer-actions">
+        <div class="drawer-btn drawer-btn-secondary">Cancel</div>
+        <div class="drawer-btn drawer-btn-primary">Save Changes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================ -->
+<!-- LANDSCAPE VIEW -->
+<!-- ============================================ -->
+<div class="section-divider">
+  <span class="scenario-label">LANDSCAPE VIEW</span>
+  <h2 class="font-display">Wider Viewport, Same View-Only Gantt</h2>
+  <p>In landscape orientation, the same read-only mini Gantt benefits from the extra width. More of the timeline is visible without horizontal scrolling. Same interaction model — tap to open ItemDrawer.</p>
+</div>
+
+<div class="callout-note">
+  <strong>Why view-only in landscape too?</strong> The desktop Gantt uses mouse-only events (<code>onMouseDown</code>) with 8px resize handles and 18-28px bar heights, which are far below Apple's 44px minimum touch target. Adding touch support would require a complete rewrite of the drag/resize system. Landscape simply gives a wider, more comfortable view of the same read-only chart.
+</div>
+
+<!-- Landscape phone frame -->
+<div class="landscape-frame">
+  <div class="status-bar" style="padding: 0.25rem 1.25rem;">
+    <span style="font-size: 0.6rem;">9:41</span>
+    <div class="status-bar-icons">
+      <svg width="14" height="10" viewBox="0 0 16 12"><rect x="0" y="4" width="3" height="8" rx="0.5" fill="#111"/><rect x="4.5" y="2.5" width="3" height="9.5" rx="0.5" fill="#111"/><rect x="9" y="0.5" width="3" height="11.5" rx="0.5" fill="#111"/><rect x="13.5" y="3" width="2.5" height="9" rx="0.5" fill="#111"/></svg>
+    </div>
+  </div>
+
+  <div class="app-header" style="padding: 0.375rem 1rem;">
+    <div class="app-header-left">
+      <div class="logo" style="width: 20px; height: 20px; font-size: 0.55rem;">P</div>
+      <span class="session-name" style="font-size: 0.75rem;">Q3 Product Roadmap</span>
+    </div>
+    <div class="zoom-bar" style="padding: 0; background: transparent; border: none; gap: 0.25rem;">
+      <div class="zoom-pill" style="padding: 0.15rem 0.5rem; font-size: 0.6rem;">3M</div>
+      <div class="zoom-pill active" style="padding: 0.15rem 0.5rem; font-size: 0.6rem;">6M</div>
+      <div class="zoom-pill" style="padding: 0.15rem 0.5rem; font-size: 0.6rem;">1Y</div>
+      <div class="zoom-pill" style="padding: 0.15rem 0.5rem; font-size: 0.6rem;">Fit</div>
+    </div>
+  </div>
+
+  <div class="gantt-mobile" style="height: 268px; overflow: auto;">
+    <div class="gantt-mobile-inner" style="width: 900px;">
+      <!-- Timeline header -->
+      <div class="timeline-header" style="margin-left: 150px;">
+        <div class="timeline-months">
+          <div class="timeline-month" style="width: 8%;">Mar</div>
+          <div class="timeline-month" style="width: 13%;">Apr</div>
+          <div class="timeline-month" style="width: 14%;">May</div>
+          <div class="timeline-month" style="width: 14%;">Jun</div>
+          <div class="timeline-month" style="width: 14%;">Jul</div>
+          <div class="timeline-month" style="width: 13%;">Aug</div>
+          <div class="timeline-month" style="width: 12%;">Sep</div>
+          <div class="timeline-month" style="width: 12%;">Oct</div>
+        </div>
+        <div class="timeline-weeks">
+          <div class="timeline-week" style="width: 4%;">W12</div>
+          <div class="timeline-week" style="width: 4%;">W13</div>
+          <div class="timeline-week" style="width: 4.3%;">W14</div>
+          <div class="timeline-week" style="width: 4.3%;">W15</div>
+          <div class="timeline-week" style="width: 4.3%;">W16</div>
+          <div class="timeline-week" style="width: 4.3%;">W17</div>
+          <div class="timeline-week" style="width: 4.7%;">W18</div>
+          <div class="timeline-week" style="width: 4.7%;">W19</div>
+          <div class="timeline-week" style="width: 4.7%;">W20</div>
+          <div class="timeline-week" style="width: 4.7%;">W21</div>
+          <div class="timeline-week" style="width: 4.7%;">W22</div>
+          <div class="timeline-week" style="width: 4.7%;">W23</div>
+          <div class="timeline-week" style="width: 4.7%;">W24</div>
+          <div class="timeline-week" style="width: 4.7%;">W25</div>
+          <div class="timeline-week" style="width: 4.3%;">W26</div>
+          <div class="timeline-week" style="width: 4.3%;">W27</div>
+          <div class="timeline-week" style="width: 4.3%;">W28</div>
+          <div class="timeline-week" style="width: 4.3%;">W29</div>
+          <div class="timeline-week" style="width: 4%;">W30</div>
+          <div class="timeline-week" style="width: 4%;">W31</div>
+          <div class="timeline-week" style="width: 4%;">W32</div>
+          <div class="timeline-week" style="width: 4%;">W33</div>
+          <div class="timeline-week" style="width: 4%;">W34</div>
+          <div class="timeline-week" style="width: 4%;">W35</div>
+        </div>
+      </div>
+
+      <!-- Today marker -->
+      <div style="position: relative;">
+        <div class="today-marker" style="left: calc(150px + 12%);">
+          <span class="today-label">Today</span>
+        </div>
+      </div>
+
+      <!-- Gantt rows -->
+      <div class="gantt-rows">
+        <!-- Row 1: Goal -->
+        <div class="gantt-row" style="height: 34px;">
+          <div class="gantt-row-label" style="min-width: 150px; max-width: 150px;">
+            <div class="level-dot goal"></div>
+            Launch V2 Platform
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar goal" style="left: 5%; width: 50%; height: 22px;">
+              Launch V2 Platform
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Initiative -->
+        <div class="gantt-row" style="height: 34px;">
+          <div class="gantt-row-label" style="padding-left: 1rem; min-width: 150px; max-width: 150px;">
+            <div class="level-dot initiative"></div>
+            User Onboarding
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar initiative" style="left: 5%; width: 25%; height: 18px;">
+              User Onboarding
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Epic -->
+        <div class="gantt-row" style="height: 34px;">
+          <div class="gantt-row-label" style="padding-left: 1.5rem; min-width: 150px; max-width: 150px;">
+            <div class="level-dot epic"></div>
+            Sign-up Flow
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 5%; width: 11%; height: 16px;">
+              Sign-up Flow
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Epic -->
+        <div class="gantt-row" style="height: 34px;">
+          <div class="gantt-row-label" style="padding-left: 1.5rem; min-width: 150px; max-width: 150px;">
+            <div class="level-dot epic"></div>
+            Tutorial System
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar epic" style="left: 16%; width: 14%; height: 16px;">
+              Tutorial System
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Initiative -->
+        <div class="gantt-row" style="height: 34px;">
+          <div class="gantt-row-label" style="padding-left: 1rem; min-width: 150px; max-width: 150px;">
+            <div class="level-dot initiative"></div>
+            API Redesign
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar initiative" style="left: 19%; width: 31%; height: 18px;">
+              API Redesign
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 6: Initiative -->
+        <div class="gantt-row" style="height: 34px;">
+          <div class="gantt-row-label" style="padding-left: 1rem; min-width: 150px; max-width: 150px;">
+            <div class="level-dot initiative"></div>
+            Mobile App
+          </div>
+          <div class="gantt-bar-area">
+            <div class="gantt-bar initiative" style="left: 32%; width: 24%; height: 18px;">
+              Mobile App
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 7: Unscheduled -->
+        <div class="gantt-row" style="height: 34px; background: #fffbeb;">
+          <div class="gantt-row-label" style="min-width: 150px; max-width: 150px; background: #fffbeb;">
+            <div class="level-dot initiative" style="opacity: 0.5;"></div>
+            <span style="color: #92400e;">Analytics Dashboard</span>
+          </div>
+          <div class="gantt-bar-area">
+            <span style="font-size: 0.6rem; color: #b45309; padding: 0 8px; font-style: italic;">No dates set</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================ -->
+<!-- RECOMMENDATION -->
+<!-- ============================================ -->
+<div class="section-divider">
+  <h2 class="font-display">Recommendation</h2>
+</div>
+
+<div class="recommendation">
+  <h3>View-Only Mini Gantt + ItemDrawer</h3>
+  <p>
+    <strong>Use the pannable mini Gantt as a view-only chart in both portrait and landscape.</strong> It preserves the Gantt mental model and shows temporal overlaps — the whole reason people use a roadmap. The key adaptations for mobile:
+  </p>
+  <ul style="margin-top: 0.75rem; padding-left: 1.25rem; line-height: 1.8; color: #4338ca;">
+    <li><strong>No drag, no resize handles</strong> — purely visual. The desktop Gantt uses <code>onMouseDown</code> with 8px resize handles and 18-28px bar heights, far below Apple's 44px minimum touch target. Adding touch support would require a complete rewrite.</li>
+    <li><strong>Tap any bar &rarr; ItemDrawer</strong> — the same full-screen side panel used in Backlog, Capacity, and all other modules. Slides in from the right with editable start/end date fields using native date pickers.</li>
+    <li><strong>Consistent UX</strong> — using ItemDrawer (not a bottom sheet) means the same interaction pattern across every module in the app</li>
+    <li><strong>Pinned item labels</strong> on the left so you always know which row is which while scrolling the timeline</li>
+    <li><strong>Zoom presets</strong> (3M/6M/1Y/Fit) in a compact pill bar — same as desktop</li>
+    <li><strong>"Scroll to pan" hint</strong> disappears after first interaction</li>
+    <li><strong>Today marker</strong> stays visible for orientation</li>
+    <li><strong>Unscheduled items</strong> shown at the bottom with amber background — tapping opens drawer to set dates</li>
+    <li><strong>Landscape</strong> — same view-only Gantt, just wider and more comfortable. No additional features, just more timeline visible without scrolling.</li>
+  </ul>
+  <p style="margin-top: 1rem;">
+    This gives mobile users the same roadmap view as desktop — they're just reading it instead of dragging things around. The date picker in the ItemDrawer is actually <em>easier</em> than drag-and-drop for precise date entry anyway.
+  </p>
+</div>
+
+<div class="design-notes" style="margin-bottom: 4rem;">
+  <h3>Implementation Notes</h3>
+  <ul>
+    <li>Reuse the existing <code>getRoadmapDateTree()</code>, <code>getViewRange()</code>, and <code>dateToPixel()</code> utilities — same data, different renderer</li>
+    <li>Create a new <code>RoadmapMobileView</code> component (not the deprecated placeholder)</li>
+    <li>On bar tap, open the existing <code>ItemDrawer</code> — consistent with Backlog, Capacity, and all other modules</li>
+    <li>Use CSS <code>overflow-x: auto</code> with <code>-webkit-overflow-scrolling: touch</code> for smooth panning</li>
+    <li>Item labels use <code>position: sticky; left: 0</code> to stay pinned during horizontal scroll</li>
+    <li>No new database changes needed — reads the same <code>start_date</code>/<code>end_date</code> fields</li>
+    <li>The Gantt inner width should scale with zoom level (e.g. 600px for 3M, 900px for 6M, 1400px for 1Y)</li>
+    <li>View-only in both portrait and landscape — no touch-based drag/resize in either orientation</li>
+  </ul>
+</div>
+
+</body>
+</html>

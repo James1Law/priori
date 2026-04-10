@@ -316,4 +316,182 @@ describe('ItemDrawer', () => {
     render(<ItemDrawer {...defaultProps} item={itemWithoutMetrics} />)
     expect(screen.queryByText('Metrics')).not.toBeInTheDocument()
   })
+
+  describe('date validation enforcement', () => {
+    const parentItem: ItemWithScore = {
+      ...mockItem,
+      id: 'parent',
+      title: 'Parent Goal',
+      item_level: 0,
+      start_date: '2026-04-01',
+      end_date: '2026-04-29',
+    }
+
+    const childItem: ItemWithScore = {
+      ...mockItem,
+      id: 'child',
+      title: 'Child Epic',
+      item_level: 1,
+      parent_item_id: 'parent',
+      start_date: '2026-04-01',
+      end_date: '2026-04-29',
+      score: undefined,
+      effort_estimate: null,
+    }
+
+    const onSetItemDates = vi.fn()
+
+    it('disables save button when dates exceed parent bounds', () => {
+      render(
+        <ItemDrawer
+          {...defaultProps}
+          item={childItem}
+          allItems={[parentItem, childItem]}
+          onSetItemDates={onSetItemDates}
+        />
+      )
+
+      // Change end date to beyond parent's range
+      const endDateInput = screen.getAllByDisplayValue('2026-04-29')[0]
+      fireEvent.change(endDateInput, { target: { value: '2026-05-15' } })
+
+      // Error should show
+      expect(screen.getByText('Dates must be within parent bounds')).toBeInTheDocument()
+
+      // Save button should be disabled
+      const saveBtn = screen.getByRole('button', { name: /Save Changes/i })
+      expect(saveBtn).toBeDisabled()
+    })
+
+    it('does not call onSetItemDates when dates are invalid', () => {
+      render(
+        <ItemDrawer
+          {...defaultProps}
+          item={childItem}
+          allItems={[parentItem, childItem]}
+          onSetItemDates={onSetItemDates}
+        />
+      )
+
+      // Change end date to beyond parent's range
+      const endDateInput = screen.getAllByDisplayValue('2026-04-29')[0]
+      fireEvent.change(endDateInput, { target: { value: '2026-05-15' } })
+
+      // Try to click save (even if somehow enabled)
+      const saveBtn = screen.getByRole('button', { name: /Save Changes/i })
+      fireEvent.click(saveBtn)
+
+      // onSetItemDates should NOT have been called
+      expect(onSetItemDates).not.toHaveBeenCalled()
+    })
+
+    it('re-enables save button when dates are corrected', () => {
+      render(
+        <ItemDrawer
+          {...defaultProps}
+          item={childItem}
+          allItems={[parentItem, childItem]}
+          onSetItemDates={onSetItemDates}
+        />
+      )
+
+      // First break it
+      const endDateInput = screen.getAllByDisplayValue('2026-04-29')[0]
+      fireEvent.change(endDateInput, { target: { value: '2026-05-15' } })
+      expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled()
+
+      // Then fix it
+      fireEvent.change(endDateInput, { target: { value: '2026-04-20' } })
+      expect(screen.getByRole('button', { name: /Save Changes/i })).not.toBeDisabled()
+    })
+  })
+
+  describe('auto-save before adding child', () => {
+    const onSave = vi.fn()
+    const onSetItemDates = vi.fn()
+    const onAddChild = vi.fn()
+
+    const existingItem: ItemWithScore = {
+      ...mockItem,
+      id: 'existing-1',
+      title: 'Existing Goal',
+      item_level: 0,
+      start_date: '2026-04-01',
+      end_date: '2026-06-30',
+      score: undefined,
+    }
+
+    it('saves unsaved changes before adding child on existing item', async () => {
+      render(
+        <ItemDrawer
+          {...defaultProps}
+          item={existingItem}
+          onSave={onSave}
+          onSetItemDates={onSetItemDates}
+          onAddChild={onAddChild}
+          allItems={[existingItem]}
+        />
+      )
+
+      // Change dates (unsaved)
+      const endDateInput = screen.getAllByDisplayValue('2026-06-30')[0]
+      fireEvent.change(endDateInput, { target: { value: '2026-05-15' } })
+
+      // Open add child — click the button (last "Add initiative", the heading is first)
+      const addBtns = screen.getAllByText(/Add initiative/i)
+      fireEvent.click(addBtns[addBtns.length - 1])
+      const childInput = screen.getByPlaceholderText('New initiative...')
+      fireEvent.change(childInput, { target: { value: 'My Initiative' } })
+      // Submit — the inline form submit button just says "Add"
+      fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+
+      // onSave should have been called (auto-save the title/desc/status changes)
+      expect(onSave).toHaveBeenCalled()
+      // onSetItemDates should have been called (auto-save the date changes)
+      expect(onSetItemDates).toHaveBeenCalledWith('existing-1', '2026-04-01', '2026-05-15')
+      // onAddChild should have been called
+      expect(onAddChild).toHaveBeenCalledWith('existing-1', 0, 'My Initiative')
+    })
+
+    it('creates draft item before adding child on new item', async () => {
+      const onCreate = vi.fn().mockResolvedValue('real-uuid-123')
+
+      const draftItem: ItemWithScore = {
+        ...mockItem,
+        id: 'draft-12345',
+        title: '',
+        item_level: 0,
+        start_date: '2026-04-10',
+        end_date: '2026-05-10',
+        score: undefined,
+      }
+
+      render(
+        <ItemDrawer
+          {...defaultProps}
+          item={draftItem}
+          isNew={true}
+          onCreate={onCreate}
+          onAddChild={onAddChild}
+          allItems={[]}
+        />
+      )
+
+      // Fill in title (required for create)
+      fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Goal' } })
+
+      // Open add child — click the button (last "Add initiative")
+      const addBtns = screen.getAllByText(/Add initiative/i)
+      fireEvent.click(addBtns[addBtns.length - 1])
+      const childInput = screen.getByPlaceholderText('New initiative...')
+      fireEvent.change(childInput, { target: { value: 'Child Init' } })
+      // Submit — the inline form submit button just says "Add"
+      fireEvent.click(screen.getByRole('button', { name: 'Add' }))
+
+      // onCreate should have been called to persist the draft
+      expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'New Goal',
+      }))
+    })
+  })
 })
