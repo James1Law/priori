@@ -179,11 +179,12 @@ describe('PrioritisationPage', () => {
     })
   })
 
+  // Note: dual mobile/desktop layout means JSDOM renders both, so use getAllByText
   it('renders item titles in the table', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('Auth system')).toBeInTheDocument()
-      expect(screen.getByText('Dashboard widget')).toBeInTheDocument()
+      expect(screen.getAllByText('Auth system').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('Dashboard widget').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -191,10 +192,10 @@ describe('PrioritisationPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByText('RICE Score ▼')).toBeInTheDocument()
-      expect(screen.getByText('Reach')).toBeInTheDocument()
-      expect(screen.getByText('Impact')).toBeInTheDocument()
-      expect(screen.getByText('Confidence')).toBeInTheDocument()
-      expect(screen.getByText('Effort')).toBeInTheDocument()
+      expect(screen.getAllByText('Reach').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('Impact').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('Confidence').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('Effort').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -208,7 +209,7 @@ describe('PrioritisationPage', () => {
   it('renders score badge with value for scored items', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('18')).toBeInTheDocument()
+      expect(screen.getAllByText('18').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -224,24 +225,24 @@ describe('PrioritisationPage', () => {
   it('renders rank badges', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('1')).toBeInTheDocument()
-      expect(screen.getByText('2')).toBeInTheDocument()
+      expect(screen.getAllByText('1').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(1)
     })
   })
 
   it('shows status badges', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('In Progress')).toBeInTheDocument()
-      expect(screen.getByText('To Do')).toBeInTheDocument()
+      expect(screen.getAllByText('In Progress').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('To Do').length).toBeGreaterThanOrEqual(1)
     })
   })
 
   it('shows creator names', async () => {
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('by James')).toBeInTheDocument()
-      expect(screen.getByText('by Sarah')).toBeInTheDocument()
+      expect(screen.getAllByText('by James').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText('by Sarah').length).toBeGreaterThanOrEqual(1)
     })
   })
 

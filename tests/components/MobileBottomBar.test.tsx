@@ -15,18 +15,18 @@ describe('MobileBottomBar', () => {
   it('renders all five navigation buttons', () => {
     renderWithRouter()
 
-    expect(screen.getByRole('button', { name: /list/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /backlog/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /roadmap/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /score/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /prioritisation/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /poker/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /capacity/i })).toBeInTheDocument()
   })
 
-  it('highlights list button on backlog route', () => {
+  it('highlights backlog button on backlog route', () => {
     renderWithRouter('/s/test-slug')
 
-    const listBtn = screen.getByRole('button', { name: /list/i })
-    expect(listBtn).toHaveClass('bg-indigo-600')
+    const backlogBtn = screen.getByRole('button', { name: /backlog/i })
+    expect(backlogBtn).toHaveClass('bg-indigo-600')
   })
 
   it('highlights roadmap button on roadmap route', () => {
@@ -36,11 +36,11 @@ describe('MobileBottomBar', () => {
     expect(roadmapBtn).toHaveClass('bg-indigo-600')
   })
 
-  it('highlights score button on prioritise route', () => {
+  it('highlights prioritisation button on prioritise route', () => {
     renderWithRouter('/s/test-slug/prioritise')
 
-    const scoreBtn = screen.getByRole('button', { name: /score/i })
-    expect(scoreBtn).toHaveClass('bg-indigo-600')
+    const prioritiseBtn = screen.getByRole('button', { name: /prioritisation/i })
+    expect(prioritiseBtn).toHaveClass('bg-indigo-600')
   })
 
   it('highlights poker button on estimate route', () => {
@@ -60,7 +60,7 @@ describe('MobileBottomBar', () => {
   it('is fixed to bottom of screen', () => {
     renderWithRouter()
 
-    const container = screen.getByRole('button', { name: /list/i }).closest('div[class*="fixed"]')
+    const container = screen.getByRole('button', { name: /backlog/i }).closest('div[class*="fixed"]')
     expect(container).toBeInTheDocument()
   })
 

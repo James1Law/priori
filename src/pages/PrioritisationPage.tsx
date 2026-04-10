@@ -534,18 +534,18 @@ export default function PrioritisationPage() {
 
   return (
     <>
-      <div className="p-6 max-w-[1400px] mx-auto" data-testid="prioritisation-page">
+      <div className="px-3 py-4 sm:p-6 max-w-[1400px] mx-auto" data-testid="prioritisation-page">
         {/* Module Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-display font-bold text-gray-900">Prioritisation</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-gray-900">Prioritisation</h1>
             {/* Framework Selector */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5" data-testid="framework-selector">
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-gray-100 rounded-lg p-0.5 self-start" data-testid="framework-selector">
               {SUPPORTED_FRAMEWORKS.map(fw => (
                 <button
                   key={fw.value}
                   onClick={() => handleFrameworkChange(fw.value)}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-2.5 py-1.5 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     session.framework === fw.value
                       ? 'bg-white text-indigo-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
@@ -560,8 +560,8 @@ export default function PrioritisationPage() {
         </div>
 
         {/* Item Count + Criteria Editor toggle */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-gray-400">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="text-xs sm:text-sm text-gray-400">
             {items.length} item{items.length !== 1 ? 's' : ''} · {scoredCount} scored
           </div>
           {session.framework === 'weighted' && (
@@ -588,7 +588,7 @@ export default function PrioritisationPage() {
 
         {/* Scoring Table */}
         {items.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-12 text-center">
             <p className="text-gray-500 mb-4">No items to prioritise yet.</p>
             <button
               onClick={() => navigate(`/s/${slug}`)}
@@ -598,160 +598,298 @@ export default function PrioritisationPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <table className="w-full table-fixed" data-testid="scoring-table">
-              <colgroup>
-                <col style={{ width: '50px' }} />
-                <col />
-                <col style={{ width: '100px' }} />
-                <col style={{ width: '140px' }} />
-                {fwConfig.criteria.map(c => (
-                  <col key={c.key} style={{ width: '140px' }} />
-                ))}
-              </colgroup>
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">#</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Item</th>
-                  <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                  <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-indigo-600 whitespace-nowrap">
-                    {fwConfig.scoreLabel} ▼
-                  </th>
-                  {fwConfig.criteria.map(c => (
-                    <th key={c.key} className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap">
-                      {c.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {displayItems.map((item, idx) => {
-                  const isParent = hasChildrenFn(item.id, items)
-                  const isHierarchyItem = item.item_level > 0 || isParent
-                  const indent = item.item_level * 1.5 // rem
+          <>
+            {/* ── Mobile Card Layout ── */}
+            <div className="sm:hidden space-y-2" data-testid="scoring-cards">
+              {displayItems.map((item, idx) => {
+                const isParent = hasChildrenFn(item.id, items)
+                const isHierarchyItem = item.item_level > 0 || isParent
+                const indent = Math.min(item.item_level * 0.75, 2.25) // rem, clamped
 
-                  // Score: direct for leaves, rolled-up for parents
-                  let displayScore = item.score?.calculated_score || 0
-                  let isRolledUp = false
-                  let rolledUpMoscow: string | null = null
+                let displayScore = item.score?.calculated_score || 0
+                let isRolledUp = false
+                let rolledUpMoscow: string | null = null
 
-                  if (isParent) {
-                    const rollup = getRolledUpScore(item.id, items)
-                    displayScore = rollup.score ?? 0
-                    rolledUpMoscow = rollup.moscowCategory
-                    isRolledUp = true
-                  }
+                if (isParent) {
+                  const rollup = getRolledUpScore(item.id, items)
+                  displayScore = rollup.score ?? 0
+                  rolledUpMoscow = rollup.moscowCategory
+                  isRolledUp = true
+                }
 
-                  const isScored = displayScore > 0 || (isParent && rolledUpMoscow !== null)
+                const isScored = displayScore > 0 || (isParent && rolledUpMoscow !== null)
 
-                  // Expand/collapse
-                  const isExpanded = expandedIds.has(item.id)
-                  const childCount = isParent && !isExpanded
-                    ? items.filter(i => i.parent_item_id === item.id).length
-                    : 0
+                const isExpanded = expandedIds.has(item.id)
+                const childCount = isParent && !isExpanded
+                  ? items.filter(i => i.parent_item_id === item.id).length
+                  : 0
 
-                  // Level badge styles
-                  const levelBadgeStyles: Record<number, string> = {
-                    0: 'bg-pink-50 text-pink-700 border-pink-200',
-                    1: 'bg-blue-50 text-blue-700 border-blue-200',
-                    2: 'bg-purple-50 text-purple-700 border-purple-200',
-                    3: 'bg-amber-50 text-amber-700 border-amber-200',
-                    4: 'bg-slate-50 text-slate-600 border-slate-200',
-                  }
+                const levelBadgeStyles: Record<number, string> = {
+                  0: 'bg-pink-50 text-pink-700 border-pink-200',
+                  1: 'bg-blue-50 text-blue-700 border-blue-200',
+                  2: 'bg-purple-50 text-purple-700 border-purple-200',
+                  3: 'bg-amber-50 text-amber-700 border-amber-200',
+                  4: 'bg-slate-50 text-slate-600 border-slate-200',
+                }
 
-                  // Accent bar colours
-                  const accentColors: Record<number, string> = {
-                    0: '#f472b6', 1: '#60a5fa', 2: '#a78bfa', 3: '#fbbf24', 4: '#94a3b8',
-                  }
+                const accentColors: Record<number, string> = {
+                  0: '#f472b6', 1: '#60a5fa', 2: '#a78bfa', 3: '#fbbf24', 4: '#94a3b8',
+                }
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 transition-colors ${!isScored && !isParent ? 'opacity-50 hover:opacity-100' : ''}`}
-                      data-testid={`scoring-row-${item.id}`}
-                    >
-                      <td className="px-4 py-3 text-center">
+                return (
+                  <div
+                    key={item.id}
+                    className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${!isScored && !isParent ? 'opacity-60' : ''}`}
+                    style={{ marginLeft: `${indent}rem` }}
+                    data-testid={`scoring-row-${item.id}`}
+                  >
+                    {/* Accent bar for hierarchy items */}
+                    {isHierarchyItem && (
+                      <div
+                        className="h-1 w-full"
+                        style={{ backgroundColor: accentColors[item.item_level] || '#94a3b8' }}
+                      />
+                    )}
+                    <div className="p-3">
+                      {/* Row 1: Rank + Title + Score */}
+                      <div className="flex items-start gap-2">
                         <RankBadge rank={idx + 1} />
-                      </td>
-                      <td className="py-3 pr-4" style={{ paddingLeft: `${1 + indent}rem` }}>
-                        <div className="flex items-center gap-2">
-                          {/* Hierarchy decorations — fixed width block */}
-                          {isHierarchyItem && (
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <div
-                                className="w-[3px] h-8 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: accentColors[item.item_level] || '#94a3b8' }}
-                              />
-                              {isParent ? (
-                                <button
-                                  onClick={() => handleToggleExpand(item.id)}
-                                  className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            {isParent && (
+                              <button
+                                onClick={() => handleToggleExpand(item.id)}
+                                className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 flex-shrink-0"
+                              >
+                                <svg
+                                  className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 >
-                                  <svg
-                                    className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                  >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
-                                </button>
-                              ) : (
-                                <div className="w-5" />
-                              )}
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </button>
+                            )}
+                            <span className="font-semibold text-sm text-gray-900 truncate">{item.title}</span>
+                            {childCount > 0 && (
+                              <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded flex-shrink-0">{childCount}</span>
+                            )}
+                          </div>
+                          {/* Meta row: level badge + status + author */}
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            {isHierarchyItem && (
                               <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${levelBadgeStyles[item.item_level] || levelBadgeStyles[4]}`}>
                                 {ITEM_LEVEL_LABELS[item.item_level as ItemLevel]}
                               </span>
-                            </div>
-                          )}
-                          {/* Item content */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm text-gray-900 truncate">{item.title}</span>
-                              {childCount > 0 && (
-                                <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded flex-shrink-0">{childCount}</span>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-400 mt-0.5">{item.created_by ? `by ${item.created_by}` : ''}</div>
+                            )}
+                            <StatusBadge status={item.status} />
+                            {item.created_by && (
+                              <span className="text-[11px] text-gray-400">by {item.created_by}</span>
+                            )}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <StatusBadge status={item.status} />
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        {isRolledUp ? (
-                          <span className="inline-flex items-center gap-1">
-                            <ScoreBadge score={displayScore} framework={session.framework} />
-                            {isScored && <span className="text-[10px] text-gray-400 italic">avg</span>}
-                          </span>
-                        ) : (
-                          <ScoreBadge score={displayScore} framework={session.framework} />
-                        )}
-                      </td>
-                      {fwConfig.criteria.map(c => (
-                        <td key={c.key} className="px-4 py-3 text-center">
-                          {isParent ? (
-                            <span className="text-xs text-gray-300">—</span>
-                          ) : session.framework === 'moscow' ? (
-                            <MoscowSelect
-                              value={getCriterionValue(item, c.key) as string}
-                              onChange={(val) => handleCriterionChange(item.id, c.key, val)}
-                            />
+                        {/* Score on the right */}
+                        <div className="flex-shrink-0 flex flex-col items-end">
+                          {isRolledUp ? (
+                            <span className="inline-flex items-center gap-1">
+                              <ScoreBadge score={displayScore} framework={session.framework} />
+                              {isScored && <span className="text-[10px] text-gray-400 italic">avg</span>}
+                            </span>
                           ) : (
-                            <PipControl
-                              value={getCriterionValue(item, c.key) as number}
-                              maxPips={c.maxPips}
-                              color={c.color}
-                              onChange={(val) => handleCriterionChange(item.id, c.key, val)}
-                            />
+                            <ScoreBadge score={displayScore} framework={session.framework} />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Row 2: Inline scoring controls */}
+                      {!isParent && (
+                        <div className="mt-3 pt-2.5 border-t border-gray-100">
+                          {session.framework === 'moscow' ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{fwConfig.criteria[0]?.label}</span>
+                              <MoscowSelect
+                                value={getCriterionValue(item, fwConfig.criteria[0]?.key) as string}
+                                onChange={(val) => handleCriterionChange(item.id, fwConfig.criteria[0]?.key, val)}
+                              />
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                              {fwConfig.criteria.map(c => (
+                                <div key={c.key} className="flex items-center justify-between">
+                                  <span className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{c.label}</span>
+                                  <PipControl
+                                    value={getCriterionValue(item, c.key) as number}
+                                    maxPips={c.maxPips}
+                                    color={c.color}
+                                    onChange={(val) => handleCriterionChange(item.id, c.key, val)}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* ── Desktop Table Layout ── */}
+            <div className="hidden sm:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <table className="w-full table-fixed" data-testid="scoring-table">
+                <colgroup>
+                  <col style={{ width: '50px' }} />
+                  <col />
+                  <col style={{ width: '100px' }} />
+                  <col style={{ width: '140px' }} />
+                  {fwConfig.criteria.map(c => (
+                    <col key={c.key} style={{ width: '140px' }} />
+                  ))}
+                </colgroup>
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">#</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">Item</th>
+                    <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                    <th className="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-indigo-600 whitespace-nowrap">
+                      {fwConfig.scoreLabel} ▼
+                    </th>
+                    {fwConfig.criteria.map(c => (
+                      <th key={c.key} className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap">
+                        {c.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayItems.map((item, idx) => {
+                    const isParent = hasChildrenFn(item.id, items)
+                    const isHierarchyItem = item.item_level > 0 || isParent
+                    const indent = item.item_level * 1.5 // rem
+
+                    // Score: direct for leaves, rolled-up for parents
+                    let displayScore = item.score?.calculated_score || 0
+                    let isRolledUp = false
+                    let rolledUpMoscow: string | null = null
+
+                    if (isParent) {
+                      const rollup = getRolledUpScore(item.id, items)
+                      displayScore = rollup.score ?? 0
+                      rolledUpMoscow = rollup.moscowCategory
+                      isRolledUp = true
+                    }
+
+                    const isScored = displayScore > 0 || (isParent && rolledUpMoscow !== null)
+
+                    // Expand/collapse
+                    const isExpanded = expandedIds.has(item.id)
+                    const childCount = isParent && !isExpanded
+                      ? items.filter(i => i.parent_item_id === item.id).length
+                      : 0
+
+                    // Level badge styles
+                    const levelBadgeStyles: Record<number, string> = {
+                      0: 'bg-pink-50 text-pink-700 border-pink-200',
+                      1: 'bg-blue-50 text-blue-700 border-blue-200',
+                      2: 'bg-purple-50 text-purple-700 border-purple-200',
+                      3: 'bg-amber-50 text-amber-700 border-amber-200',
+                      4: 'bg-slate-50 text-slate-600 border-slate-200',
+                    }
+
+                    // Accent bar colours
+                    const accentColors: Record<number, string> = {
+                      0: '#f472b6', 1: '#60a5fa', 2: '#a78bfa', 3: '#fbbf24', 4: '#94a3b8',
+                    }
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 transition-colors ${!isScored && !isParent ? 'opacity-50 hover:opacity-100' : ''}`}
+                        data-testid={`scoring-row-${item.id}`}
+                      >
+                        <td className="px-4 py-3 text-center">
+                          <RankBadge rank={idx + 1} />
+                        </td>
+                        <td className="py-3 pr-4" style={{ paddingLeft: `${1 + indent}rem` }}>
+                          <div className="flex items-center gap-2">
+                            {/* Hierarchy decorations — fixed width block */}
+                            {isHierarchyItem && (
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <div
+                                  className="w-[3px] h-8 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: accentColors[item.item_level] || '#94a3b8' }}
+                                />
+                                {isParent ? (
+                                  <button
+                                    onClick={() => handleToggleExpand(item.id)}
+                                    className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
+                                  >
+                                    <svg
+                                      className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                  </button>
+                                ) : (
+                                  <div className="w-5" />
+                                )}
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${levelBadgeStyles[item.item_level] || levelBadgeStyles[4]}`}>
+                                  {ITEM_LEVEL_LABELS[item.item_level as ItemLevel]}
+                                </span>
+                              </div>
+                            )}
+                            {/* Item content */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-sm text-gray-900 truncate">{item.title}</span>
+                                {childCount > 0 && (
+                                  <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 rounded flex-shrink-0">{childCount}</span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-400 mt-0.5">{item.created_by ? `by ${item.created_by}` : ''}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <StatusBadge status={item.status} />
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          {isRolledUp ? (
+                            <span className="inline-flex items-center gap-1">
+                              <ScoreBadge score={displayScore} framework={session.framework} />
+                              {isScored && <span className="text-[10px] text-gray-400 italic">avg</span>}
+                            </span>
+                          ) : (
+                            <ScoreBadge score={displayScore} framework={session.framework} />
                           )}
                         </td>
-                      ))}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        {fwConfig.criteria.map(c => (
+                          <td key={c.key} className="px-4 py-3 text-center">
+                            {isParent ? (
+                              <span className="text-xs text-gray-300">—</span>
+                            ) : session.framework === 'moscow' ? (
+                              <MoscowSelect
+                                value={getCriterionValue(item, c.key) as string}
+                                onChange={(val) => handleCriterionChange(item.id, c.key, val)}
+                              />
+                            ) : (
+                              <PipControl
+                                value={getCriterionValue(item, c.key) as number}
+                                maxPips={c.maxPips}
+                                color={c.color}
+                                onChange={(val) => handleCriterionChange(item.id, c.key, val)}
+                              />
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

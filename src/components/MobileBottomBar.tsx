@@ -15,7 +15,7 @@ function getNavItems(slug: string): NavItem[] {
   return [
     {
       id: 'backlog',
-      label: 'List',
+      label: 'Backlog',
       path: `/s/${slug}`,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +35,7 @@ function getNavItems(slug: string): NavItem[] {
     },
     {
       id: 'prioritise',
-      label: 'Score',
+      label: 'Prioritisation',
       path: `/s/${slug}/prioritise`,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
