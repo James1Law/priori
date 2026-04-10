@@ -18,7 +18,7 @@ interface ItemDrawerProps {
   onNavigateToItem?: (item: ItemWithScore) => void
   onAddChild?: (parentId: string, parentLevel: number, title: string) => void
   isNew?: boolean
-  onCreate?: (item: { title: string; description: string; status: ItemStatus; item_level: number; start_date: string | null; end_date: string | null }) => Promise<string | undefined> | void
+  onCreate?: (item: { title: string; description: string; status: ItemStatus; item_level: number; start_date: string | null; end_date: string | null }) => Promise<string | undefined | void> | void
 }
 
 const STATUS_OPTIONS: { value: ItemStatus; label: string; bgClass: string; textClass: string }[] = [

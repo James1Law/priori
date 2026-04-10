@@ -1251,7 +1251,6 @@ export default function SessionPage() {
           setItems(prev => [...prev, created])
           // Also update the editing item to the real record so drawer reflects saved state
           setEditingItem(created)
-          setIsNewItem(false)
           return created.id
         }}
       />

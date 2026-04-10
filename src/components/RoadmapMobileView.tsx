@@ -43,13 +43,6 @@ const LEVEL_DOT_COLOURS: Record<number, string> = {
   3: 'bg-green-500',
 }
 
-const LEVEL_BADGE_STYLES: Record<number, string> = {
-  0: 'bg-pink-100 text-pink-700',
-  1: 'bg-blue-100 text-blue-700',
-  2: 'bg-purple-100 text-purple-700',
-  3: 'bg-green-100 text-green-700',
-}
-
 const LEVEL_BAR_STYLES: Record<number, { height: number; classes: string }> = {
   0: { height: 32, classes: 'bg-gradient-to-r from-pink-600 to-pink-500 font-semibold' },
   1: { height: 28, classes: 'bg-gradient-to-r from-blue-600 to-blue-500' },
