@@ -1249,8 +1249,6 @@ export default function SessionPage() {
           }
           const created: ItemWithScore = { ...(data as Item), score: undefined }
           setItems(prev => [...prev, created])
-          // Also update the editing item to the real record so drawer reflects saved state
-          setEditingItem(created)
           return created.id
         }}
       />

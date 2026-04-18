@@ -250,12 +250,14 @@ export default function ItemDrawer({
     setIsAddingChild(false)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim() || dateError) return
 
     if (isNew && onCreate) {
-      // Create new item via callback — no DB record exists yet
-      onCreate({
+      // Create new item via callback — no DB record exists yet.
+      // Await so the drawer only closes after the parent finishes persisting
+      // (and any post-create state updates have settled).
+      await onCreate({
         title: title.trim(),
         description: description.trim(),
         status,
@@ -284,6 +286,8 @@ export default function ItemDrawer({
         onClearItemDates(item.id)
       }
     }
+
+    onClose()
   }
 
   const handleDelete = () => {

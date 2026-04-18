@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ItemDrawer from '../../src/components/ItemDrawer'
 import type { ItemWithScore, RoadmapPeriod } from '../../src/types/database'
 
@@ -223,6 +223,48 @@ describe('ItemDrawer', () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Updated Title',
     }))
+  })
+
+  it('closes the drawer after saving an existing item', async () => {
+    const onSave = vi.fn()
+    const onClose = vi.fn()
+    render(<ItemDrawer {...defaultProps} onSave={onSave} onClose={onClose} />)
+
+    const titleInput = screen.getByLabelText('Title')
+    fireEvent.change(titleInput, { target: { value: 'Updated Title' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+  })
+
+  it('awaits onCreate then closes the drawer when creating a new item', async () => {
+    const onCreate = vi.fn().mockResolvedValue('new-id')
+    const onClose = vi.fn()
+    const draftItem: ItemWithScore = {
+      ...mockItem,
+      id: 'draft-1',
+      title: '',
+      score: undefined,
+    }
+
+    render(
+      <ItemDrawer
+        {...defaultProps}
+        item={draftItem}
+        isNew={true}
+        onCreate={onCreate}
+        onClose={onClose}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Item' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+
+    await waitFor(() => expect(onCreate).toHaveBeenCalled())
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    // Order matters: onCreate must resolve before onClose is invoked
+    expect(onCreate.mock.invocationCallOrder[0]).toBeLessThan(onClose.mock.invocationCallOrder[0])
   })
 
   it('calls onDelete when Delete button clicked', () => {
