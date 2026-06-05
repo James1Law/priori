@@ -246,4 +246,11 @@ describe('PrioritisationPage', () => {
     })
   })
 
+  it('renders FAB for adding items', async () => {
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add item/i })).toBeInTheDocument()
+    })
+  })
+
 })

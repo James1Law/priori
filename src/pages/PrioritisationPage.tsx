@@ -12,6 +12,7 @@ import WeightedCriteriaEditor from '../components/WeightedCriteriaEditor'
 import type { WeightedCriterion } from '../lib/weighted'
 import { useSessionContext } from '../contexts/SessionContext'
 import ItemDrawer from '../components/ItemDrawer'
+import FAB from '../components/FAB'
 
 // ── Framework Configuration ──
 
@@ -892,6 +893,9 @@ export default function PrioritisationPage() {
           </>
         )}
       </div>
+
+      {/* FAB for adding items */}
+      <FAB onClick={() => sessionContext.addItemAndEdit()} />
 
       {/* Item Drawer */}
       <ItemDrawer
