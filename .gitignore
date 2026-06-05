@@ -28,5 +28,9 @@ dist-ssr
 .env.local
 .env.production
 
+# Playwright output
+playwright-report/
+test-results/
+
 # Nimbalyst local plans (not checked into version control)
 nimbalyst-local/
