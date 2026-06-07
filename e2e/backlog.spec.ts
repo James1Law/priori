@@ -6,14 +6,16 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
-// Helper to add an item via the FAB + BottomSheet
+// Helper to add an item via the desktop header button + ItemDrawer
 async function addItem(page: import('@playwright/test').Page, title: string) {
-  await page.locator('button[aria-label="Add item"]').click()
-  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
-  await page.fill('input[placeholder="Item title (required)"]', title)
-  await page.click('[data-testid="submit-item-button"]')
+  await page.locator('[data-testid="header-add-item-btn"]').click()
+  await expect(page.locator('[data-testid="item-drawer"]')).toBeVisible()
+  await page.fill('#drawer-title-input', title)
+  await page.locator('[data-testid="item-drawer"]').locator('button:has-text("Create")').click()
+  // Drawer closes once the item is created
+  await expect(page.locator('[data-testid="item-drawer"]')).not.toBeVisible({ timeout: 5000 })
   // Wait for item to appear in the list
-  await expect(page.locator(`text=${title}`)).toBeVisible({ timeout: 10000 })
+  await expect(page.locator(`text=${title}`).first()).toBeVisible({ timeout: 10000 })
 }
 
 test.describe('Backlog View', () => {
@@ -72,7 +74,7 @@ test.describe('Backlog View', () => {
 
     // Drawer should open
     await expect(page.locator('[data-testid="item-drawer"]')).toBeVisible()
-    await expect(page.locator('text=Item Details')).toBeVisible()
+    await expect(page.locator('text=Edit Item')).toBeVisible()
   })
 
   // Note: Drag-and-drop tests with dnd-kit require complex event simulation

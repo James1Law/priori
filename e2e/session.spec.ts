@@ -7,24 +7,27 @@ async function dismissNameModal(page: import('@playwright/test').Page) {
   await page.click('button:has-text("Join Session")')
 }
 
-// Helper to add an item via the FAB + BottomSheet
+// Helper to add an item via the desktop header button + ItemDrawer
 async function addItem(page: import('@playwright/test').Page, title: string, description?: string) {
-  await page.locator('button[aria-label="Add item"]').click()
+  await page.locator('[data-testid="header-add-item-btn"]').click()
 
-  // Wait for bottom sheet to open
-  await expect(page.locator('input[placeholder="Item title (required)"]')).toBeVisible()
+  // Wait for the item drawer to open
+  await expect(page.locator('[data-testid="item-drawer"]')).toBeVisible()
 
   // Fill in the form
-  await page.fill('input[placeholder="Item title (required)"]', title)
+  await page.fill('#drawer-title-input', title)
   if (description) {
-    await page.fill('textarea[placeholder="Description (optional)"]', description)
+    await page.fill('#drawer-description', description)
   }
 
-  // Submit using the specific form submit button
-  await page.click('[data-testid="submit-item-button"]')
+  // Create the item
+  await page.locator('[data-testid="item-drawer"]').locator('button:has-text("Create")').click()
+
+  // Drawer closes once the item is created
+  await expect(page.locator('[data-testid="item-drawer"]')).not.toBeVisible({ timeout: 5000 })
 
   // Wait for item to appear in the list
-  await expect(page.locator(`text=${title}`)).toBeVisible()
+  await expect(page.locator(`text=${title}`).first()).toBeVisible()
 }
 
 test.describe('Session Creation and Basic Functionality', () => {
