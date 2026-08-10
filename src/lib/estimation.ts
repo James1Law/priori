@@ -15,6 +15,26 @@ export function getVoteDisplay(vote: number | null): string {
   return vote.toString()
 }
 
+// Format a second count as m:ss for the voting countdown
+export function formatCountdown(seconds: number): string {
+  const clamped = Math.max(0, seconds)
+  const minutes = Math.floor(clamped / 60)
+  const secs = clamped % 60
+  return `${minutes}:${String(secs).padStart(2, '0')}`
+}
+
+// Whole seconds until an ISO deadline; 0 once passed, null when no
+// (or an unparseable) deadline is set
+export function getRemainingSeconds(
+  endsAt: string | null,
+  nowMs: number
+): number | null {
+  if (!endsAt) return null
+  const ends = Date.parse(endsAt)
+  if (Number.isNaN(ends)) return null
+  return Math.max(0, Math.round((ends - nowMs) / 1000))
+}
+
 export interface VoteStats {
   average: number | null
   median: number | null
