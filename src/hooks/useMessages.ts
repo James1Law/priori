@@ -56,8 +56,11 @@ export function useMessages(
   useEffect(() => {
     if (!sessionId) return
 
+    // Unique topic per hook instance — SessionLayout and SessionPage can both
+    // mount this hook, and identical topics on one socket make one channel's
+    // teardown unsubscribe the other server-side
     const channel = supabase
-      .channel(`messages:session_id=eq.${sessionId}`)
+      .channel(`messages:session_id=eq.${sessionId}:${crypto.randomUUID()}`)
       .on(
         'postgres_changes',
         {
