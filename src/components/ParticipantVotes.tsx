@@ -1,4 +1,5 @@
 import type { EstimationVote } from '../types/database'
+import { getVoteDisplay } from '../lib/estimation'
 
 interface Participant {
   name: string
@@ -11,14 +12,6 @@ interface ParticipantVotesProps {
   revealed: boolean
   currentParticipantName: string | null
   hostName: string | null
-}
-
-// Map vote values to display text
-function getVoteDisplay(vote: number | null): string {
-  if (vote === null) return ''
-  if (vote === -1) return '?'
-  if (vote === -2) return '☕'
-  return vote.toString()
 }
 
 export default function ParticipantVotes({

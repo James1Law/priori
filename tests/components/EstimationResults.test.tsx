@@ -166,6 +166,52 @@ describe('EstimationResults', () => {
       expect(onAccept).toHaveBeenCalledWith(5)
     })
 
+    it('lets the host accept a custom value when there is no consensus', () => {
+      const onAccept = vi.fn()
+      // Spread votes — no consensus, so no suggested Accept button
+      const votes = [
+        createVote('Alice', 1),
+        createVote('Bob', 8),
+        createVote('Carol', 21),
+      ]
+      render(
+        <EstimationResults {...defaultProps} votes={votes} revealed={true} onAccept={onAccept} />
+      )
+      // No suggested-value Accept button in no-consensus state
+      expect(screen.queryByText(/Accept \d+ SP/)).not.toBeInTheDocument()
+      // But the host can open the value picker and accept any value
+      fireEvent.click(screen.getByText('Choose value'))
+      fireEvent.click(screen.getByRole('button', { name: 'Accept 8 story points' }))
+      expect(onAccept).toHaveBeenCalledWith(8)
+    })
+
+    it('offers the custom value picker alongside the suggested value on consensus', () => {
+      const onAccept = vi.fn()
+      const votes = [
+        createVote('Alice', 5),
+        createVote('Bob', 5),
+        createVote('Carol', 8),
+      ]
+      render(
+        <EstimationResults {...defaultProps} votes={votes} revealed={true} onAccept={onAccept} />
+      )
+      expect(screen.getByText(/Accept 5 SP/)).toBeInTheDocument()
+      fireEvent.click(screen.getByText('Choose value'))
+      fireEvent.click(screen.getByRole('button', { name: 'Accept 13 story points' }))
+      expect(onAccept).toHaveBeenCalledWith(13)
+    })
+
+    it('does not show the custom value picker to non-hosts', () => {
+      const votes = [
+        createVote('Alice', 1),
+        createVote('Bob', 8),
+      ]
+      render(
+        <EstimationResults {...defaultProps} votes={votes} revealed={true} isHost={false} />
+      )
+      expect(screen.queryByText('Choose value')).not.toBeInTheDocument()
+    })
+
     it('calls onRevote when Re-vote clicked', () => {
       const onRevote = vi.fn()
       const votes = [createVote('Alice', 5)]

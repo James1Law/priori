@@ -112,8 +112,13 @@ vi.mock('../../src/contexts/SessionContext', () => ({
   useSessionContext: () => mockContextValue,
 }))
 
+const { mockSubmitVote, mockClearVotes } = vi.hoisted(() => ({
+  mockSubmitVote: vi.fn(),
+  mockClearVotes: vi.fn(),
+}))
+
 vi.mock('../../src/hooks/useEstimationVotes', () => ({
-  useEstimationVotes: () => ({ votes: [], submitVote: vi.fn(), clearVotes: vi.fn() }),
+  useEstimationVotes: () => ({ votes: [], submitVote: mockSubmitVote, clearVotes: mockClearVotes }),
 }))
 
 vi.mock('../../src/components/ItemDrawer', () => ({
@@ -127,6 +132,8 @@ beforeEach(() => {
   singleCallCount = 0
   mockSessionOverride = null
   mockContextValue = { ...defaultContextValue }
+  mockSubmitVote.mockClear()
+  mockClearVotes.mockClear()
 })
 
 function renderWithRouter() {
@@ -195,6 +202,49 @@ describe('EstimationFlowPage', () => {
       })
       fireEvent.click(screen.getByText('First item'))
       expect(screen.getByText(/Start as Host/).closest('button')).not.toBeDisabled()
+    })
+  })
+
+  describe('Voting round behaviour', () => {
+    const activeVotingSession = {
+      ...mockSession,
+      estimation_host: 'James',
+      estimation_item_ids: ['item-1', 'item-2'],
+      estimation_session_id: 'sess-1',
+      current_estimation_item_id: 'item-1',
+    }
+
+    it('locks the voting cards once votes are revealed', async () => {
+      mockSessionOverride = { ...activeVotingSession, estimation_revealed: true }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      expect(screen.getByRole('button', { name: '5 story points' })).toBeDisabled()
+    })
+
+    it('keeps voting cards enabled before reveal', async () => {
+      mockSessionOverride = { ...activeVotingSession, estimation_revealed: false }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      expect(screen.getByRole('button', { name: '5 story points' })).not.toBeDisabled()
+    })
+
+    it('clears votes when the host skips an item', async () => {
+      mockSessionOverride = { ...activeVotingSession, estimation_revealed: true }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('Skip')).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText('Skip'))
+      await waitFor(() => {
+        expect(mockClearVotes).toHaveBeenCalled()
+      })
     })
   })
 
