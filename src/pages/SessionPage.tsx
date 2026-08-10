@@ -18,7 +18,6 @@ import BottomSheet from '../components/BottomSheet'
 import MobileMenu from '../components/MobileMenu'
 import MobileChatModal from '../components/MobileChatModal'
 import { useParticipantName } from '../hooks/useParticipantName'
-import { usePresence } from '../hooks/usePresence'
 import { useCutoffs } from '../hooks/useCutoffs'
 import { useMessages } from '../hooks/useMessages'
 import { useUnreadCount } from '../hooks/useUnreadCount'
@@ -112,11 +111,10 @@ export default function SessionPage() {
   const { messages, loading: messagesLoading, sendMessage } = useMessages(session?.id || null, participantName)
   const { unreadCount } = useUnreadCount(session?.id || null, messages, isChatOpen)
 
-  // Presence tracking
-  const { participantCount } = usePresence(
-    session?.id || null,
-    participantName
-  )
+  // Presence comes from the shared channel in SessionLayout — opening a second
+  // channel on the same topic here would kill the layout's subscription when
+  // this page unmounts, freezing the participant list until a full refresh
+  const participantCount = sessionContext.participantCount
 
 
   // Cutoffs hook

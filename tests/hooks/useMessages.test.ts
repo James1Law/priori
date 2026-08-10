@@ -51,7 +51,7 @@ vi.mock('../../src/lib/supabase', () => {
 })
 
 // Import mocks after vi.mock
-import { __mocks__ } from '../../src/lib/supabase'
+import { supabase, __mocks__ } from '../../src/lib/supabase'
 const { mockSelect, mockInsert, mockOrder, mockLimit, mockEq, mockSingle } = __mocks__ as {
   mockSelect: ReturnType<typeof vi.fn>
   mockInsert: ReturnType<typeof vi.fn>
@@ -260,6 +260,20 @@ describe('useMessages', () => {
     })
 
     expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('uses a unique channel topic per hook instance so concurrent mounts do not kill each other', async () => {
+    // SessionLayout and SessionPage can both mount this hook for the same
+    // session — identical topics on one socket make one channel's teardown
+    // unsubscribe the other server-side, freezing chat until a refresh
+    renderHook(() => useMessages('session-1', 'Bob'))
+    renderHook(() => useMessages('session-1', 'Alice'))
+
+    const channelMock = supabase.channel as ReturnType<typeof vi.fn>
+    const topics = channelMock.mock.calls.map((call) => call[0] as string)
+    expect(topics).toHaveLength(2)
+    expect(new Set(topics).size).toBe(2)
+    topics.forEach((topic) => expect(topic).toContain('session-1'))
   })
 
   it('does not send empty messages', async () => {
