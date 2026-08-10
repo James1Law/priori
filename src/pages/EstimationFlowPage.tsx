@@ -10,6 +10,7 @@ import EstimationResults from '../components/EstimationResults'
 import ItemDrawer from '../components/ItemDrawer'
 import FAB from '../components/FAB'
 import CopyInviteLink from '../components/CopyInviteLink'
+import { FIBONACCI_VALUES } from '../lib/estimation'
 import { useEstimationVotes } from '../hooks/useEstimationVotes'
 import { useSessionContext } from '../contexts/SessionContext'
 
@@ -497,6 +498,42 @@ export default function EstimationFlowPage() {
     }
   }
 
+  // Keyboard shortcuts — number keys 1–8 vote the matching deck card,
+  // R reveals (host only). Ignored while typing or after reveal.
+  useEffect(() => {
+    if (!currentEstimationItemId) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target.isContentEditable
+      ) {
+        return
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+
+      const digit = Number.parseInt(e.key, 10)
+      if (!Number.isNaN(digit) && digit >= 1 && digit <= FIBONACCI_VALUES.length) {
+        if (!estimationRevealed) {
+          e.preventDefault()
+          submitVote(FIBONACCI_VALUES[digit - 1])
+        }
+        return
+      }
+
+      if ((e.key === 'r' || e.key === 'R') && isHost && !estimationRevealed && votes.some(v => v.vote !== null)) {
+        e.preventDefault()
+        handleReveal()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  })
+
   // Handler: End current session and return to lobby (stays on estimation page)
   const handleEndSession = async () => {
     if (session) {
@@ -867,7 +904,13 @@ export default function EstimationFlowPage() {
                     revealed={estimationRevealed}
                     hasNextItem={hasNextItem}
                     isHost={isHost}
+                    participantCount={participantsList.length}
                   />
+
+                  {/* Keyboard hint — desktop only */}
+                  <p className="hidden lg:block text-center text-xs text-gray-400 mt-4">
+                    Tip: press 1–8 to vote{isHost ? ' · R to reveal' : ''}
+                  </p>
                 </div>
               ) : itemsToEstimate.every(item => item.story_points !== null && item.story_points !== undefined) ? (
                 /* All items estimated - completion state */

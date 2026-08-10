@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { EstimationVote } from '../types/database'
-import { FIBONACCI_VALUES } from '../lib/estimation'
+import { FIBONACCI_VALUES, getVoteStats } from '../lib/estimation'
+import ConfettiBurst from './ConfettiBurst'
 
 interface EstimationResultsProps {
   votes: EstimationVote[]
@@ -11,6 +12,7 @@ interface EstimationResultsProps {
   revealed: boolean
   hasNextItem: boolean
   isHost: boolean
+  participantCount?: number
 }
 
 // Get the index of a vote value in the Fibonacci sequence
@@ -123,6 +125,7 @@ export default function EstimationResults({
   revealed,
   hasNextItem,
   isHost,
+  participantCount = 0,
 }: EstimationResultsProps) {
   // Count how many have voted (excluding null votes)
   const votedCount = votes.filter((v) => v.vote !== null).length
@@ -138,10 +141,18 @@ export default function EstimationResults({
     if (!revealed) setShowValuePicker(false)
   }, [revealed])
 
+  // Everyone in the room has cast a vote — the host can reveal immediately
+  const allVotesIn = participantCount > 0 && votedCount >= participantCount
+
   if (!revealed) {
     // Show Reveal button for host, waiting message for participants
     return (
       <div className="mt-3 flex flex-col items-center gap-2">
+        {allVotesIn && (
+          <p className="text-sm font-medium text-green-600" role="status">
+            All votes are in!
+          </p>
+        )}
         {isHost ? (
           <button
             onClick={onReveal}
@@ -153,6 +164,7 @@ export default function EstimationResults({
                   ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:shadow-lg'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }
+              ${allVotesIn ? 'animate-pulse motion-reduce:animate-none' : ''}
             `}
           >
             Reveal Votes
@@ -166,12 +178,21 @@ export default function EstimationResults({
     )
   }
 
+  const stats = getVoteStats(votes)
+  const maxDistributionCount = stats.distribution.reduce(
+    (max, d) => Math.max(max, d.count),
+    0
+  )
+
   // Get suggested value for Accept button
   const suggestedValue = consensus?.value
 
   // Show consensus indicator and action buttons
   return (
     <div className="mt-3 space-y-3">
+      {/* Celebrate a clean consensus */}
+      {consensus?.type === 'consensus' && <ConfettiBurst />}
+
       {/* Consensus indicator */}
       <div
         className={`
@@ -205,6 +226,37 @@ export default function EstimationResults({
           <p className="text-sm text-gray-600 mt-2">
             Different view: {consensus.outliers.join(', ')}
           </p>
+        )}
+
+        {/* Vote stats — fuel for the discussion */}
+        {stats.average !== null && stats.median !== null && (
+          <div className="mt-3 pt-3 border-t border-black/5">
+            <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+              <span>
+                Average <span className="font-semibold text-gray-900">{Number.isInteger(stats.average) ? stats.average : stats.average.toFixed(1)}</span>
+              </span>
+              <span>
+                Median <span className="font-semibold text-gray-900">{Number.isInteger(stats.median) ? stats.median : stats.median.toFixed(1)}</span>
+              </span>
+            </div>
+            {stats.distribution.length > 1 && (
+              <div
+                data-testid="vote-distribution"
+                className="flex items-end justify-center gap-3 mt-3"
+              >
+                {stats.distribution.map((d) => (
+                  <div key={d.value} className="flex flex-col items-center gap-1">
+                    <span className="text-xs text-gray-500">×{d.count}</span>
+                    <div
+                      className="w-6 rounded-t bg-indigo-400/70"
+                      style={{ height: `${8 + (d.count / maxDistributionCount) * 32}px` }}
+                    />
+                    <span className="text-xs font-semibold text-gray-700">{d.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

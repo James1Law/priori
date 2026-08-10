@@ -74,7 +74,7 @@ export default function ParticipantVotes({
               {/* Status icon */}
               {hasVoted ? (
                 revealed ? (
-                  <span className="w-5 h-5 rounded bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                  <span className="w-5 h-5 rounded bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 animate-vote-flip">
                     {getVoteDisplay(vote?.vote ?? null)}
                   </span>
                 ) : (

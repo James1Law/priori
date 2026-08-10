@@ -112,13 +112,14 @@ vi.mock('../../src/contexts/SessionContext', () => ({
   useSessionContext: () => mockContextValue,
 }))
 
-const { mockSubmitVote, mockClearVotes } = vi.hoisted(() => ({
+const { mockSubmitVote, mockClearVotes, mockVotes } = vi.hoisted(() => ({
   mockSubmitVote: vi.fn(),
   mockClearVotes: vi.fn(),
+  mockVotes: [] as { id: string; item_id: string; session_id: string; participant_name: string; vote: number | null; created_at: string }[],
 }))
 
 vi.mock('../../src/hooks/useEstimationVotes', () => ({
-  useEstimationVotes: () => ({ votes: [], submitVote: mockSubmitVote, clearVotes: mockClearVotes }),
+  useEstimationVotes: () => ({ votes: mockVotes, submitVote: mockSubmitVote, clearVotes: mockClearVotes }),
 }))
 
 vi.mock('../../src/components/ItemDrawer', () => ({
@@ -134,6 +135,7 @@ beforeEach(() => {
   mockContextValue = { ...defaultContextValue }
   mockSubmitVote.mockClear()
   mockClearVotes.mockClear()
+  mockVotes.length = 0
 })
 
 function renderWithRouter() {
@@ -244,6 +246,75 @@ describe('EstimationFlowPage', () => {
       fireEvent.click(screen.getByText('Skip'))
       await waitFor(() => {
         expect(mockClearVotes).toHaveBeenCalled()
+      })
+    })
+  })
+
+  describe('Keyboard shortcuts', () => {
+    const activeVotingSession = {
+      ...mockSession,
+      estimation_host: 'James',
+      estimation_item_ids: ['item-1', 'item-2'],
+      estimation_session_id: 'sess-1',
+      current_estimation_item_id: 'item-1',
+    }
+
+    it('votes with number keys mapped to the deck', async () => {
+      mockSessionOverride = { ...activeVotingSession }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      // Key 5 → fifth card in the deck [0,1,2,3,5,8,13,21] = 5 points
+      fireEvent.keyDown(document, { key: '5' })
+      expect(mockSubmitVote).toHaveBeenCalledWith(5)
+      // Key 8 → eighth card = 21 points
+      fireEvent.keyDown(document, { key: '8' })
+      expect(mockSubmitVote).toHaveBeenCalledWith(21)
+    })
+
+    it('does not vote from keys while typing in an input', async () => {
+      mockSessionOverride = { ...activeVotingSession }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      fireEvent.keyDown(input, { key: '5' })
+      expect(mockSubmitVote).not.toHaveBeenCalled()
+      input.remove()
+    })
+
+    it('does not vote from keys after reveal', async () => {
+      mockSessionOverride = { ...activeVotingSession, estimation_revealed: true }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      fireEvent.keyDown(document, { key: '5' })
+      expect(mockSubmitVote).not.toHaveBeenCalled()
+    })
+
+    it('reveals votes with the R key for the host', async () => {
+      mockSessionOverride = { ...activeVotingSession }
+      mockContextValue.items = mockItems
+      mockVotes.push({
+        id: 'v1', item_id: 'item-1', session_id: 'session-1',
+        participant_name: 'Sarah', vote: 5, created_at: '2024-01-01',
+      })
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      fireEvent.keyDown(document, { key: 'r' })
+      await waitFor(() => {
+        expect(mockChain.update).toHaveBeenCalledWith(
+          expect.objectContaining({ estimation_revealed: true })
+        )
       })
     })
   })
