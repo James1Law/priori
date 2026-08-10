@@ -9,6 +9,7 @@ import ParticipantVotes from '../components/ParticipantVotes'
 import EstimationResults from '../components/EstimationResults'
 import ItemDrawer from '../components/ItemDrawer'
 import FAB from '../components/FAB'
+import CopyInviteLink from '../components/CopyInviteLink'
 import { useEstimationVotes } from '../hooks/useEstimationVotes'
 import { useSessionContext } from '../contexts/SessionContext'
 
@@ -51,6 +52,37 @@ export default function EstimationFlowPage() {
   // Session ended state — when host clears estimation but participant is still on page
   const [sessionEnded, setSessionEnded] = useState(false)
   const [prevEstimationSessionId, setPrevEstimationSessionId] = useState<string | null>(null)
+
+  // Host absence — if the host disappears from presence for a grace period,
+  // offer remaining participants a takeover so the room can't get stuck
+  const [hostAbsent, setHostAbsent] = useState(false)
+  const hostName = session?.estimation_host || null
+  const hostPresent = hostName ? participants.some(p => p.name === hostName) : true
+
+  useEffect(() => {
+    if (!hostName || hostPresent || isHost) {
+      setHostAbsent(false)
+      return
+    }
+    // Grace period so a host refreshing their page doesn't trigger the banner
+    const timer = setTimeout(() => setHostAbsent(true), 10000)
+    return () => clearTimeout(timer)
+  }, [hostName, hostPresent, isHost])
+
+  const handleClaimHost = async () => {
+    if (!session || !participantName) return
+    const { error } = await supabase
+      .from('sessions')
+      .update({ estimation_host: participantName } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error claiming host:', error)
+    } else {
+      setSession(prev => prev ? { ...prev, estimation_host: participantName } : null)
+      setHostAbsent(false)
+    }
+  }
 
   // Planning Poker state (synced to session)
   const currentEstimationItemId = session?.current_estimation_item_id || null
@@ -520,8 +552,12 @@ export default function EstimationFlowPage() {
     )
   }
 
-  // Participants from context are already in the right format
-  const participantsList = participants
+  // Only people actually on the estimation page belong in the poker room —
+  // someone sitting on the backlog must not count as a missing voter.
+  // Participants without page info (older clients) are kept visible.
+  const participantsList = participants.filter(
+    p => !p.page || p.page.endsWith('/estimate')
+  )
 
   return (
     <>
@@ -557,9 +593,10 @@ export default function EstimationFlowPage() {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Poker Planner</h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-3">
                 Select items to estimate, then start the session. Others can join using the same URL.
               </p>
+              {slug && <CopyInviteLink slug={slug} />}
             </div>
 
             {allItems.length === 0 ? (
@@ -680,6 +717,21 @@ export default function EstimationFlowPage() {
           </div>
         ) : (
           // Main estimation view
+          <>
+          {/* Host-absent banner — takeover keeps the room from getting stuck */}
+          {hostAbsent && !isHost && (
+            <div className="mx-3 lg:mx-4 mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-800">
+                The host ({session?.estimation_host}) seems to have left the session.
+              </p>
+              <button
+                onClick={handleClaimHost}
+                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+              >
+                Take over as host
+              </button>
+            </div>
+          )}
           <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
             {/* Queue sidebar */}
             <div className="lg:w-80 lg:border-r lg:border-gray-200 p-3 lg:p-4 bg-gray-50 lg:bg-white">
@@ -896,6 +948,7 @@ export default function EstimationFlowPage() {
                       ? 'Select an item from the queue or click "Start Estimation" to begin.'
                       : 'Waiting for the host to start estimation.'}
                   </p>
+                  {slug && <CopyInviteLink slug={slug} className="mt-4" />}
                   <div className="flex items-center gap-1.5 mt-4">
                     {isHost ? (
                       <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
@@ -914,6 +967,7 @@ export default function EstimationFlowPage() {
               )}
             </div>
           </div>
+          </>
         )}
       </main>
 
