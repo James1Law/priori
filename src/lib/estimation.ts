@@ -14,3 +14,35 @@ export function getVoteDisplay(vote: number | null): string {
   if (vote === SPECIAL_COFFEE) return '☕'
   return vote.toString()
 }
+
+export interface VoteStats {
+  average: number | null
+  median: number | null
+  distribution: { value: number; count: number }[]
+}
+
+// Average, median and per-value distribution over numeric votes.
+// Special votes (?, coffee) and unsubmitted votes are excluded.
+export function getVoteStats(votes: { vote: number | null }[]): VoteStats {
+  const values = votes
+    .map((v) => v.vote)
+    .filter((v): v is number => v !== null && v >= 0)
+    .sort((a, b) => a - b)
+
+  if (values.length === 0) {
+    return { average: null, median: null, distribution: [] }
+  }
+
+  const average = values.reduce((sum, v) => sum + v, 0) / values.length
+  const mid = Math.floor(values.length / 2)
+  const median =
+    values.length % 2 === 0 ? (values[mid - 1] + values[mid]) / 2 : values[mid]
+
+  const counts = new Map<number, number>()
+  values.forEach((v) => counts.set(v, (counts.get(v) || 0) + 1))
+  const distribution = Array.from(counts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => a.value - b.value)
+
+  return { average, median, distribution }
+}
