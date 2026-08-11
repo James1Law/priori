@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   getVoteStats,
   getVoteDisplay,
+  formatCountdown,
+  getRemainingSeconds,
   SPECIAL_UNCERTAIN,
   SPECIAL_COFFEE,
 } from '../../src/lib/estimation'
@@ -47,6 +49,36 @@ describe('getVoteStats', () => {
     expect(stats.average).toBeNull()
     expect(stats.median).toBeNull()
     expect(stats.distribution).toEqual([])
+  })
+})
+
+describe('formatCountdown', () => {
+  it('formats seconds as m:ss', () => {
+    expect(formatCountdown(90)).toBe('1:30')
+    expect(formatCountdown(60)).toBe('1:00')
+    expect(formatCountdown(9)).toBe('0:09')
+    expect(formatCountdown(0)).toBe('0:00')
+  })
+
+  it('clamps negatives to zero', () => {
+    expect(formatCountdown(-5)).toBe('0:00')
+  })
+})
+
+describe('getRemainingSeconds', () => {
+  it('returns whole seconds until the deadline', () => {
+    const now = Date.parse('2026-01-01T00:00:00Z')
+    expect(getRemainingSeconds('2026-01-01T00:00:45Z', now)).toBe(45)
+  })
+
+  it('returns zero once the deadline has passed', () => {
+    const now = Date.parse('2026-01-01T00:01:00Z')
+    expect(getRemainingSeconds('2026-01-01T00:00:45Z', now)).toBe(0)
+  })
+
+  it('returns null with no deadline or an invalid one', () => {
+    expect(getRemainingSeconds(null, Date.now())).toBeNull()
+    expect(getRemainingSeconds('not-a-date', Date.now())).toBeNull()
   })
 })
 

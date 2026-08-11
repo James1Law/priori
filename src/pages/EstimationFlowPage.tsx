@@ -10,6 +10,8 @@ import EstimationResults from '../components/EstimationResults'
 import ItemDrawer from '../components/ItemDrawer'
 import FAB from '../components/FAB'
 import CopyInviteLink from '../components/CopyInviteLink'
+import VotingTimer from '../components/VotingTimer'
+import SessionRecap from '../components/SessionRecap'
 import { FIBONACCI_VALUES } from '../lib/estimation'
 import { useEstimationVotes } from '../hooks/useEstimationVotes'
 import { useSessionContext } from '../contexts/SessionContext'
@@ -348,6 +350,7 @@ export default function EstimationFlowPage() {
       .update({
         current_estimation_item_id: itemId,
         estimation_revealed: false, // Reset reveal state when changing items
+        estimation_timer_ends_at: null, // A timer never outlives its item
       } as never)
       .eq('id', session.id)
 
@@ -358,6 +361,7 @@ export default function EstimationFlowPage() {
         ...prev,
         current_estimation_item_id: itemId,
         estimation_revealed: false,
+        estimation_timer_ends_at: null,
       } : null)
     }
   }
@@ -416,19 +420,70 @@ export default function EstimationFlowPage() {
     }
   }
 
-  // Handler: Reveal votes
+  // Handler: Reveal votes (also stops any running timer)
   const handleReveal = async () => {
     if (!session) return
 
     const { error } = await supabase
       .from('sessions')
-      .update({ estimation_revealed: true } as never)
+      .update({ estimation_revealed: true, estimation_timer_ends_at: null } as never)
       .eq('id', session.id)
 
     if (error) {
       console.error('Error revealing votes:', error)
     } else {
-      setSession(prev => prev ? { ...prev, estimation_revealed: true } : null)
+      setSession(prev => prev ? { ...prev, estimation_revealed: true, estimation_timer_ends_at: null } : null)
+    }
+  }
+
+  // Handler: Start a voting timer for the current item
+  const handleStartTimer = async (seconds: number) => {
+    if (!session) return
+    const endsAt = new Date(Date.now() + seconds * 1000).toISOString()
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({
+        estimation_timer_ends_at: endsAt,
+        estimation_timer_duration: seconds,
+      } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error starting timer:', error)
+    } else {
+      setSession(prev => prev ? {
+        ...prev,
+        estimation_timer_ends_at: endsAt,
+        estimation_timer_duration: seconds,
+      } : null)
+    }
+  }
+
+  // Handler: Cancel a running voting timer
+  const handleCancelTimer = async () => {
+    if (!session) return
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({ estimation_timer_ends_at: null } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error cancelling timer:', error)
+    } else {
+      setSession(prev => prev ? { ...prev, estimation_timer_ends_at: null } : null)
+    }
+  }
+
+  // Handler: Timer ran out — the host's client reveals (avoids every
+  // client racing to write); with no votes yet the timer just clears
+  const handleTimerExpire = () => {
+    if (!isHost || estimationRevealed) return
+    if (votes.some(v => v.vote !== null)) {
+      handleReveal()
+    } else {
+      handleCancelTimer()
     }
   }
 
@@ -545,6 +600,7 @@ export default function EstimationFlowPage() {
           estimation_revealed: false,
           estimation_host: null,
           estimation_session_id: null,
+          estimation_timer_ends_at: null,
         } as never)
         .eq('id', session.id)
 
@@ -574,6 +630,7 @@ export default function EstimationFlowPage() {
           estimation_revealed: false,
           estimation_host: null,
           estimation_session_id: null,
+          estimation_timer_ends_at: null,
         } as never)
         .eq('id', session.id)
     }
@@ -870,6 +927,16 @@ export default function EstimationFlowPage() {
                   {/* Current item display */}
                   <CurrentEstimationItem item={currentItem} />
 
+                  {/* Voting timer — host starts it, everyone sees it */}
+                  <VotingTimer
+                    endsAt={session?.estimation_timer_ends_at || null}
+                    isHost={isHost}
+                    revealed={estimationRevealed}
+                    onStart={handleStartTimer}
+                    onCancel={handleCancelTimer}
+                    onExpire={handleTimerExpire}
+                  />
+
                   {/* Card selection — locked once votes are revealed so the
                       consensus the host is looking at can't shift underneath them */}
                   <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6">
@@ -937,6 +1004,7 @@ export default function EstimationFlowPage() {
                     You've estimated all {itemsToEstimate.length} item{itemsToEstimate.length !== 1 ? 's' : ''}.
                     The story points have been saved to your backlog.
                   </p>
+                  <SessionRecap items={itemsToEstimate} />
                   <div className="flex flex-col sm:flex-row gap-3">
                     {isHost && (
                       <button

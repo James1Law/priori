@@ -76,8 +76,9 @@ let mockSessionOverride: typeof mockSession | null = null
   return { data: null, error: null }
 })
 
-// Return items from order() call
-;(mockChain.order as ReturnType<typeof vi.fn>).mockImplementation(() => ({ data: mockItems, error: null }))
+// Return items from order() call — overridable per test
+let mockItemsOverride: typeof mockItems | null = null
+;(mockChain.order as ReturnType<typeof vi.fn>).mockImplementation(() => ({ data: mockItemsOverride || mockItems, error: null }))
 
 vi.mock('../../src/lib/supabase', () => ({
   supabase: {
@@ -132,6 +133,7 @@ import EstimationFlowPage from '../../src/pages/EstimationFlowPage'
 beforeEach(() => {
   singleCallCount = 0
   mockSessionOverride = null
+  mockItemsOverride = null
   mockContextValue = { ...defaultContextValue }
   mockSubmitVote.mockClear()
   mockClearVotes.mockClear()
@@ -316,6 +318,82 @@ describe('EstimationFlowPage', () => {
           expect.objectContaining({ estimation_revealed: true })
         )
       })
+    })
+  })
+
+  describe('Voting timer', () => {
+    it('lets the host start a timer for the current item', async () => {
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1', 'item-2'],
+        estimation_session_id: 'sess-1',
+        current_estimation_item_id: 'item-1',
+      }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('60s')).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText('60s'))
+      await waitFor(() => {
+        expect(mockChain.update).toHaveBeenCalledWith(
+          expect.objectContaining({ estimation_timer_duration: 60 })
+        )
+      })
+    })
+  })
+
+  describe('Session recap', () => {
+    it('shows a recap with per-item points and total when all items are estimated', async () => {
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1', 'item-2'],
+        estimation_session_id: 'sess-1',
+      }
+      mockItemsOverride = [
+        { ...mockItems[0], story_points: 3 },
+        { ...mockItems[1], story_points: 5 },
+      ]
+      mockContextValue.items = mockItemsOverride
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/Estimation Complete/i)).toBeInTheDocument()
+      })
+      // Titles appear in both the queue and the recap list
+      expect(screen.getAllByText('First item').length).toBeGreaterThan(1)
+      expect(screen.getAllByText('Second item').length).toBeGreaterThan(1)
+      expect(screen.getByText(/8 SP/)).toBeInTheDocument()
+    })
+
+    it('copies a plain-text summary to the clipboard', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { clipboard: { writeText } })
+
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1', 'item-2'],
+        estimation_session_id: 'sess-1',
+      }
+      mockItemsOverride = [
+        { ...mockItems[0], story_points: 3 },
+        { ...mockItems[1], story_points: 5 },
+      ]
+      mockContextValue.items = mockItemsOverride
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/Copy summary/i)).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText(/Copy summary/i))
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalled()
+      })
+      const summary = writeText.mock.calls[0][0] as string
+      expect(summary).toContain('First item — 3 SP')
+      expect(summary).toContain('Second item — 5 SP')
+      expect(summary).toContain('Total: 8 SP')
     })
   })
 
