@@ -28,6 +28,7 @@ describe('Sidebar', () => {
       expect(screen.getByTestId('sidebar-nav-capacity')).toHaveTextContent('Capacity Planning')
       expect(screen.getByTestId('sidebar-nav-prioritise')).toHaveTextContent('Prioritisation')
       expect(screen.getByTestId('sidebar-nav-estimate')).toHaveTextContent('Poker Planner')
+      expect(screen.getByTestId('sidebar-nav-import-export')).toHaveTextContent('Import / Export')
     })
 
     it('renders Coming Soon items with Soon badge', () => {
@@ -36,7 +37,6 @@ describe('Sidebar', () => {
       expect(screen.getByTestId('sidebar-nav-sprints')).toHaveTextContent('Sprints')
       expect(screen.getByTestId('sidebar-nav-analytics')).toHaveTextContent('Analytics')
       expect(screen.getByTestId('sidebar-nav-integrations')).toHaveTextContent('Integrations')
-      expect(screen.getByTestId('sidebar-nav-import-export')).toHaveTextContent('Import / Export')
       expect(screen.getByTestId('sidebar-nav-dashboards')).toHaveTextContent('Dashboards')
     })
 
@@ -125,6 +125,12 @@ describe('Sidebar', () => {
 
       expect(screen.getByTestId('sidebar-nav-estimate').className).toContain('bg-indigo-50')
     })
+
+    it('highlights Import / Export when on import-export route', () => {
+      renderSidebar({}, '/s/test-session/import-export')
+
+      expect(screen.getByTestId('sidebar-nav-import-export').className).toContain('bg-indigo-50')
+    })
   })
 
   describe('Coming Soon items are not clickable', () => {
@@ -158,15 +164,19 @@ describe('getActiveModule', () => {
   it('returns estimate for estimate path', () => {
     expect(getActiveModule('/s/my-slug/estimate')).toBe('estimate')
   })
+
+  it('returns import-export for import-export path', () => {
+    expect(getActiveModule('/s/my-slug/import-export')).toBe('import-export')
+  })
 })
 
 describe('Module and Coming Soon item counts', () => {
-  it('has 5 active modules', () => {
-    expect(MODULE_ITEMS).toHaveLength(5)
+  it('has 6 active modules', () => {
+    expect(MODULE_ITEMS).toHaveLength(6)
   })
 
-  it('has 5 Coming Soon items', () => {
-    expect(COMING_SOON_ITEMS).toHaveLength(5)
+  it('has 4 Coming Soon items', () => {
+    expect(COMING_SOON_ITEMS).toHaveLength(4)
   })
 
   it('all Coming Soon items are disabled', () => {

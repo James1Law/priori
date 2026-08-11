@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-export type SidebarModule = 'backlog' | 'roadmap' | 'capacity' | 'prioritise' | 'estimate'
+export type SidebarModule = 'backlog' | 'roadmap' | 'capacity' | 'prioritise' | 'estimate' | 'import-export'
 
 interface SidebarProps {
   slug: string
@@ -65,6 +65,15 @@ const MODULE_ITEMS: NavItem[] = [
       </svg>
     ),
   },
+  {
+    id: 'import-export',
+    label: 'Import / Export',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+      </svg>
+    ),
+  },
 ]
 
 const COMING_SOON_ITEMS: NavItem[] = [
@@ -99,16 +108,6 @@ const COMING_SOON_ITEMS: NavItem[] = [
     ),
   },
   {
-    id: 'import-export',
-    label: 'Import / Export',
-    disabled: true,
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-      </svg>
-    ),
-  },
-  {
     id: 'dashboards',
     label: 'Dashboards',
     disabled: true,
@@ -127,11 +126,13 @@ function getRouteForModule(slug: string, moduleId: string): string {
     case 'capacity': return `/s/${slug}/capacity`
     case 'prioritise': return `/s/${slug}/prioritise`
     case 'estimate': return `/s/${slug}/estimate`
+    case 'import-export': return `/s/${slug}/import-export`
     default: return `/s/${slug}`
   }
 }
 
 function getActiveModule(pathname: string): SidebarModule {
+  if (pathname.endsWith('/import-export')) return 'import-export'
   if (pathname.endsWith('/roadmap')) return 'roadmap'
   if (pathname.endsWith('/capacity')) return 'capacity'
   if (pathname.endsWith('/prioritise')) return 'prioritise'

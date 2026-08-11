@@ -173,6 +173,7 @@ Items support a 5-level hierarchy: **Goal → Initiative → Epic → Story → 
 - **Estimation Flow** — Dedicated `/s/:slug/estimate` route for Planning Poker. Lobby for item selection → "Start as Host" → two-step queue selection → voting → reveal → accept. Host controls (Reveal/Accept/Skip/End Session), participant presence with 5s polling, session sync, in-estimation chat, and Add Item support
 - **Roadmap View** — Date-based Gantt chart at `/s/:slug/roadmap` with drag-to-position, resize, and zoom controls. Mobile: view-only pannable Gantt (no drag/resize), tap bars to edit dates via ItemDrawer
 - **Capacity Planning** — Compare backlog effort vs team capacity with utilisation metrics, info tooltips, click-to-edit items
+- **Import / Export** — CSV import with Jira export auto-detection (issue key kept in title, status mapping, duplicate flagging, preview before import) plus the existing CSV export, at `/s/:slug/import-export`
 - **Team Chat** — Real-time messaging with typing indicators
 - **Mobile Support** — Sidebar visible at 640px+ (auto-collapses to icon rail at medium widths), mobile bottom bar with all 5 modules below 640px, dual-layout responsive design with clamped hierarchy indentation, colour accent bars, compact controls. Touch devices always get view-only Gantt via `isTouchDevice()` check.
 
@@ -185,6 +186,7 @@ Items support a 5-level hierarchy: **Goal → Initiative → Epic → Story → 
 /s/:slug/score        → Scoring flow for selected items
 /s/:slug/estimate     → Planning Poker estimation flow (lobby → session)
 /s/:slug/capacity     → Capacity planning view
+/s/:slug/import-export → Import/Export module (CSV import with Jira detection, CSV export)
 /s/:slug/item/:id     → Backlog with item drawer open
 ```
 
