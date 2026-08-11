@@ -50,7 +50,7 @@ tests/              # Unit tests (mirror src structure)
 e2e/                # Playwright E2E tests
 docs/               # PRDs, specs, and CHANGELOG
 plans/              # Design mockups (.mockup.html)
-supabase/           # Database migrations (001–016)
+supabase/           # Database migrations (001–017)
 ```
 
 ## Development Rules
@@ -94,6 +94,8 @@ Several components (BacklogList, CapacityItemList) use a dual-layout pattern:
 | estimation_item_ids | uuid[] | Items in estimation queue |
 | estimation_host | text | Participant name of estimation host |
 | estimation_session_id | uuid | Unique ID per estimation round |
+| estimation_timer_ends_at | timestamptz | Voting timer deadline (null = none) |
+| estimation_timer_duration | integer | Last timer duration in seconds |
 | capacity_team_size | integer | Team size (default 5) |
 | capacity_working_days | integer | Working days in period (default 65) |
 | capacity_focus_factor | real | Focus factor 0.1–1.0 (default 0.6) |

@@ -46,6 +46,8 @@ export interface Session {
   estimation_item_ids: string[] // Array of item IDs selected for estimation
   estimation_host: string | null // Participant name of the estimation host
   estimation_session_id: string | null // Unique ID per estimation round
+  estimation_timer_ends_at?: string | null // Voting timer deadline (NULL = no timer)
+  estimation_timer_duration?: number | null // Last timer duration in seconds
   // Capacity planning settings
   capacity_team_size: number
   capacity_working_days: number

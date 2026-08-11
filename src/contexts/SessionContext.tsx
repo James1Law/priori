@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate, Outlet } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Score } from '../types/database'
 import AppShell from '../components/AppShell'
@@ -17,7 +17,7 @@ interface SessionContextValue {
   setSession: React.Dispatch<React.SetStateAction<Session | null>>
   participantName: string | null
   participantCount: number
-  participants: { name: string; joinedAt: string }[]
+  participants: { name: string; joinedAt: string; page?: string | null }[]
   refetchData: () => Promise<void>
   editingItem: ItemWithScore | null
   setEditingItem: React.Dispatch<React.SetStateAction<ItemWithScore | null>>
@@ -36,6 +36,7 @@ export function useSessionContext(): SessionContextValue {
 export default function SessionLayout() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [session, setSession] = useState<Session | null>(null)
   const [items, setItems] = useState<ItemWithScore[]>([])
@@ -52,7 +53,7 @@ export default function SessionLayout() {
   }, [])
 
   const { name: participantName, setName: setParticipantName, needsName } = useParticipantName()
-  const { participantCount, participants } = usePresence(session?.id || null, participantName)
+  const { participantCount, participants } = usePresence(session?.id || null, participantName, location.pathname)
   const { messages, loading: messagesLoading, sendMessage } = useMessages(session?.id || null, participantName)
   const { unreadCount } = useUnreadCount(session?.id || null, messages, isChatOpen)
 
@@ -251,7 +252,7 @@ export default function SessionLayout() {
       setSession,
       participantName,
       participantCount,
-      participants: participants.map(p => ({ name: p.name, joinedAt: p.joinedAt })),
+      participants: participants.map(p => ({ name: p.name, joinedAt: p.joinedAt, page: p.page })),
       refetchData: fetchData,
       editingItem,
       setEditingItem,

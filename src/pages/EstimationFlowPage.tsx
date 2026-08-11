@@ -9,6 +9,10 @@ import ParticipantVotes from '../components/ParticipantVotes'
 import EstimationResults from '../components/EstimationResults'
 import ItemDrawer from '../components/ItemDrawer'
 import FAB from '../components/FAB'
+import CopyInviteLink from '../components/CopyInviteLink'
+import VotingTimer from '../components/VotingTimer'
+import SessionRecap from '../components/SessionRecap'
+import { FIBONACCI_VALUES } from '../lib/estimation'
 import { useEstimationVotes } from '../hooks/useEstimationVotes'
 import { useSessionContext } from '../contexts/SessionContext'
 
@@ -51,6 +55,37 @@ export default function EstimationFlowPage() {
   // Session ended state — when host clears estimation but participant is still on page
   const [sessionEnded, setSessionEnded] = useState(false)
   const [prevEstimationSessionId, setPrevEstimationSessionId] = useState<string | null>(null)
+
+  // Host absence — if the host disappears from presence for a grace period,
+  // offer remaining participants a takeover so the room can't get stuck
+  const [hostAbsent, setHostAbsent] = useState(false)
+  const hostName = session?.estimation_host || null
+  const hostPresent = hostName ? participants.some(p => p.name === hostName) : true
+
+  useEffect(() => {
+    if (!hostName || hostPresent || isHost) {
+      setHostAbsent(false)
+      return
+    }
+    // Grace period so a host refreshing their page doesn't trigger the banner
+    const timer = setTimeout(() => setHostAbsent(true), 10000)
+    return () => clearTimeout(timer)
+  }, [hostName, hostPresent, isHost])
+
+  const handleClaimHost = async () => {
+    if (!session || !participantName) return
+    const { error } = await supabase
+      .from('sessions')
+      .update({ estimation_host: participantName } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error claiming host:', error)
+    } else {
+      setSession(prev => prev ? { ...prev, estimation_host: participantName } : null)
+      setHostAbsent(false)
+    }
+  }
 
   // Planning Poker state (synced to session)
   const currentEstimationItemId = session?.current_estimation_item_id || null
@@ -315,6 +350,7 @@ export default function EstimationFlowPage() {
       .update({
         current_estimation_item_id: itemId,
         estimation_revealed: false, // Reset reveal state when changing items
+        estimation_timer_ends_at: null, // A timer never outlives its item
       } as never)
       .eq('id', session.id)
 
@@ -325,6 +361,7 @@ export default function EstimationFlowPage() {
         ...prev,
         current_estimation_item_id: itemId,
         estimation_revealed: false,
+        estimation_timer_ends_at: null,
       } : null)
     }
   }
@@ -383,19 +420,70 @@ export default function EstimationFlowPage() {
     }
   }
 
-  // Handler: Reveal votes
+  // Handler: Reveal votes (also stops any running timer)
   const handleReveal = async () => {
     if (!session) return
 
     const { error } = await supabase
       .from('sessions')
-      .update({ estimation_revealed: true } as never)
+      .update({ estimation_revealed: true, estimation_timer_ends_at: null } as never)
       .eq('id', session.id)
 
     if (error) {
       console.error('Error revealing votes:', error)
     } else {
-      setSession(prev => prev ? { ...prev, estimation_revealed: true } : null)
+      setSession(prev => prev ? { ...prev, estimation_revealed: true, estimation_timer_ends_at: null } : null)
+    }
+  }
+
+  // Handler: Start a voting timer for the current item
+  const handleStartTimer = async (seconds: number) => {
+    if (!session) return
+    const endsAt = new Date(Date.now() + seconds * 1000).toISOString()
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({
+        estimation_timer_ends_at: endsAt,
+        estimation_timer_duration: seconds,
+      } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error starting timer:', error)
+    } else {
+      setSession(prev => prev ? {
+        ...prev,
+        estimation_timer_ends_at: endsAt,
+        estimation_timer_duration: seconds,
+      } : null)
+    }
+  }
+
+  // Handler: Cancel a running voting timer
+  const handleCancelTimer = async () => {
+    if (!session) return
+
+    const { error } = await supabase
+      .from('sessions')
+      .update({ estimation_timer_ends_at: null } as never)
+      .eq('id', session.id)
+
+    if (error) {
+      console.error('Error cancelling timer:', error)
+    } else {
+      setSession(prev => prev ? { ...prev, estimation_timer_ends_at: null } : null)
+    }
+  }
+
+  // Handler: Timer ran out — the host's client reveals (avoids every
+  // client racing to write); with no votes yet the timer just clears
+  const handleTimerExpire = () => {
+    if (!isHost || estimationRevealed) return
+    if (votes.some(v => v.vote !== null)) {
+      handleReveal()
+    } else {
+      handleCancelTimer()
     }
   }
 
@@ -465,6 +553,42 @@ export default function EstimationFlowPage() {
     }
   }
 
+  // Keyboard shortcuts — number keys 1–8 vote the matching deck card,
+  // R reveals (host only). Ignored while typing or after reveal.
+  useEffect(() => {
+    if (!currentEstimationItemId) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target.isContentEditable
+      ) {
+        return
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+
+      const digit = Number.parseInt(e.key, 10)
+      if (!Number.isNaN(digit) && digit >= 1 && digit <= FIBONACCI_VALUES.length) {
+        if (!estimationRevealed) {
+          e.preventDefault()
+          submitVote(FIBONACCI_VALUES[digit - 1])
+        }
+        return
+      }
+
+      if ((e.key === 'r' || e.key === 'R') && isHost && !estimationRevealed && votes.some(v => v.vote !== null)) {
+        e.preventDefault()
+        handleReveal()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  })
+
   // Handler: End current session and return to lobby (stays on estimation page)
   const handleEndSession = async () => {
     if (session) {
@@ -476,6 +600,7 @@ export default function EstimationFlowPage() {
           estimation_revealed: false,
           estimation_host: null,
           estimation_session_id: null,
+          estimation_timer_ends_at: null,
         } as never)
         .eq('id', session.id)
 
@@ -505,6 +630,7 @@ export default function EstimationFlowPage() {
           estimation_revealed: false,
           estimation_host: null,
           estimation_session_id: null,
+          estimation_timer_ends_at: null,
         } as never)
         .eq('id', session.id)
     }
@@ -520,8 +646,12 @@ export default function EstimationFlowPage() {
     )
   }
 
-  // Participants from context are already in the right format
-  const participantsList = participants
+  // Only people actually on the estimation page belong in the poker room —
+  // someone sitting on the backlog must not count as a missing voter.
+  // Participants without page info (older clients) are kept visible.
+  const participantsList = participants.filter(
+    p => !p.page || p.page.endsWith('/estimate')
+  )
 
   return (
     <>
@@ -557,9 +687,10 @@ export default function EstimationFlowPage() {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Poker Planner</h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-3">
                 Select items to estimate, then start the session. Others can join using the same URL.
               </p>
+              {slug && <CopyInviteLink slug={slug} />}
             </div>
 
             {allItems.length === 0 ? (
@@ -680,6 +811,21 @@ export default function EstimationFlowPage() {
           </div>
         ) : (
           // Main estimation view
+          <>
+          {/* Host-absent banner — takeover keeps the room from getting stuck */}
+          {hostAbsent && !isHost && (
+            <div className="mx-3 lg:mx-4 mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-sm text-amber-800">
+                The host ({session?.estimation_host}) seems to have left the session.
+              </p>
+              <button
+                onClick={handleClaimHost}
+                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+              >
+                Take over as host
+              </button>
+            </div>
+          )}
           <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
             {/* Queue sidebar */}
             <div className="lg:w-80 lg:border-r lg:border-gray-200 p-3 lg:p-4 bg-gray-50 lg:bg-white">
@@ -781,6 +927,16 @@ export default function EstimationFlowPage() {
                   {/* Current item display */}
                   <CurrentEstimationItem item={currentItem} />
 
+                  {/* Voting timer — host starts it, everyone sees it */}
+                  <VotingTimer
+                    endsAt={session?.estimation_timer_ends_at || null}
+                    isHost={isHost}
+                    revealed={estimationRevealed}
+                    onStart={handleStartTimer}
+                    onCancel={handleCancelTimer}
+                    onExpire={handleTimerExpire}
+                  />
+
                   {/* Card selection — locked once votes are revealed so the
                       consensus the host is looking at can't shift underneath them */}
                   <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6">
@@ -815,7 +971,13 @@ export default function EstimationFlowPage() {
                     revealed={estimationRevealed}
                     hasNextItem={hasNextItem}
                     isHost={isHost}
+                    participantCount={participantsList.length}
                   />
+
+                  {/* Keyboard hint — desktop only */}
+                  <p className="hidden lg:block text-center text-xs text-gray-400 mt-4">
+                    Tip: press 1–8 to vote{isHost ? ' · R to reveal' : ''}
+                  </p>
                 </div>
               ) : itemsToEstimate.every(item => item.story_points !== null && item.story_points !== undefined) ? (
                 /* All items estimated - completion state */
@@ -842,6 +1004,7 @@ export default function EstimationFlowPage() {
                     You've estimated all {itemsToEstimate.length} item{itemsToEstimate.length !== 1 ? 's' : ''}.
                     The story points have been saved to your backlog.
                   </p>
+                  <SessionRecap items={itemsToEstimate} />
                   <div className="flex flex-col sm:flex-row gap-3">
                     {isHost && (
                       <button
@@ -896,6 +1059,7 @@ export default function EstimationFlowPage() {
                       ? 'Select an item from the queue or click "Start Estimation" to begin.'
                       : 'Waiting for the host to start estimation.'}
                   </p>
+                  {slug && <CopyInviteLink slug={slug} className="mt-4" />}
                   <div className="flex items-center gap-1.5 mt-4">
                     {isHost ? (
                       <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
@@ -914,6 +1078,7 @@ export default function EstimationFlowPage() {
               )}
             </div>
           </div>
+          </>
         )}
       </main>
 

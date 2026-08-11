@@ -3,3 +3,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Poker Planner reveal animations */
+@keyframes vote-flip {
+  from {
+    transform: rotateY(90deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-vote-flip {
+  animation: vote-flip 0.35s ease-out backwards;
+}
+
+@keyframes confetti-fall {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(var(--confetti-drift, 0px), 105vh, 0) rotate(720deg);
+    opacity: 0.7;
+  }
+}
+
+.animate-confetti-fall {
+  animation: confetti-fall 2s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-vote-flip,
+  .animate-confetti-fall {
+    animation: none;
+  }
+}

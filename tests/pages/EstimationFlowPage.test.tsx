@@ -76,8 +76,9 @@ let mockSessionOverride: typeof mockSession | null = null
   return { data: null, error: null }
 })
 
-// Return items from order() call
-;(mockChain.order as ReturnType<typeof vi.fn>).mockImplementation(() => ({ data: mockItems, error: null }))
+// Return items from order() call — overridable per test
+let mockItemsOverride: typeof mockItems | null = null
+;(mockChain.order as ReturnType<typeof vi.fn>).mockImplementation(() => ({ data: mockItemsOverride || mockItems, error: null }))
 
 vi.mock('../../src/lib/supabase', () => ({
   supabase: {
@@ -112,13 +113,14 @@ vi.mock('../../src/contexts/SessionContext', () => ({
   useSessionContext: () => mockContextValue,
 }))
 
-const { mockSubmitVote, mockClearVotes } = vi.hoisted(() => ({
+const { mockSubmitVote, mockClearVotes, mockVotes } = vi.hoisted(() => ({
   mockSubmitVote: vi.fn(),
   mockClearVotes: vi.fn(),
+  mockVotes: [] as { id: string; item_id: string; session_id: string; participant_name: string; vote: number | null; created_at: string }[],
 }))
 
 vi.mock('../../src/hooks/useEstimationVotes', () => ({
-  useEstimationVotes: () => ({ votes: [], submitVote: mockSubmitVote, clearVotes: mockClearVotes }),
+  useEstimationVotes: () => ({ votes: mockVotes, submitVote: mockSubmitVote, clearVotes: mockClearVotes }),
 }))
 
 vi.mock('../../src/components/ItemDrawer', () => ({
@@ -131,9 +133,11 @@ import EstimationFlowPage from '../../src/pages/EstimationFlowPage'
 beforeEach(() => {
   singleCallCount = 0
   mockSessionOverride = null
+  mockItemsOverride = null
   mockContextValue = { ...defaultContextValue }
   mockSubmitVote.mockClear()
   mockClearVotes.mockClear()
+  mockVotes.length = 0
 })
 
 function renderWithRouter() {
@@ -248,6 +252,151 @@ describe('EstimationFlowPage', () => {
     })
   })
 
+  describe('Keyboard shortcuts', () => {
+    const activeVotingSession = {
+      ...mockSession,
+      estimation_host: 'James',
+      estimation_item_ids: ['item-1', 'item-2'],
+      estimation_session_id: 'sess-1',
+      current_estimation_item_id: 'item-1',
+    }
+
+    it('votes with number keys mapped to the deck', async () => {
+      mockSessionOverride = { ...activeVotingSession }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      // Key 5 → fifth card in the deck [0,1,2,3,5,8,13,21] = 5 points
+      fireEvent.keyDown(document, { key: '5' })
+      expect(mockSubmitVote).toHaveBeenCalledWith(5)
+      // Key 8 → eighth card = 21 points
+      fireEvent.keyDown(document, { key: '8' })
+      expect(mockSubmitVote).toHaveBeenCalledWith(21)
+    })
+
+    it('does not vote from keys while typing in an input', async () => {
+      mockSessionOverride = { ...activeVotingSession }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      fireEvent.keyDown(input, { key: '5' })
+      expect(mockSubmitVote).not.toHaveBeenCalled()
+      input.remove()
+    })
+
+    it('does not vote from keys after reveal', async () => {
+      mockSessionOverride = { ...activeVotingSession, estimation_revealed: true }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      fireEvent.keyDown(document, { key: '5' })
+      expect(mockSubmitVote).not.toHaveBeenCalled()
+    })
+
+    it('reveals votes with the R key for the host', async () => {
+      mockSessionOverride = { ...activeVotingSession }
+      mockContextValue.items = mockItems
+      mockVotes.push({
+        id: 'v1', item_id: 'item-1', session_id: 'session-1',
+        participant_name: 'Sarah', vote: 5, created_at: '2024-01-01',
+      })
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: '5 story points' })).toBeInTheDocument()
+      })
+      fireEvent.keyDown(document, { key: 'r' })
+      await waitFor(() => {
+        expect(mockChain.update).toHaveBeenCalledWith(
+          expect.objectContaining({ estimation_revealed: true })
+        )
+      })
+    })
+  })
+
+  describe('Voting timer', () => {
+    it('lets the host start a timer for the current item', async () => {
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1', 'item-2'],
+        estimation_session_id: 'sess-1',
+        current_estimation_item_id: 'item-1',
+      }
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText('60s')).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText('60s'))
+      await waitFor(() => {
+        expect(mockChain.update).toHaveBeenCalledWith(
+          expect.objectContaining({ estimation_timer_duration: 60 })
+        )
+      })
+    })
+  })
+
+  describe('Session recap', () => {
+    it('shows a recap with per-item points and total when all items are estimated', async () => {
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1', 'item-2'],
+        estimation_session_id: 'sess-1',
+      }
+      mockItemsOverride = [
+        { ...mockItems[0], story_points: 3 },
+        { ...mockItems[1], story_points: 5 },
+      ]
+      mockContextValue.items = mockItemsOverride
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/Estimation Complete/i)).toBeInTheDocument()
+      })
+      // Titles appear in both the queue and the recap list
+      expect(screen.getAllByText('First item').length).toBeGreaterThan(1)
+      expect(screen.getAllByText('Second item').length).toBeGreaterThan(1)
+      expect(screen.getByText(/8 SP/)).toBeInTheDocument()
+    })
+
+    it('copies a plain-text summary to the clipboard', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { clipboard: { writeText } })
+
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1', 'item-2'],
+        estimation_session_id: 'sess-1',
+      }
+      mockItemsOverride = [
+        { ...mockItems[0], story_points: 3 },
+        { ...mockItems[1], story_points: 5 },
+      ]
+      mockContextValue.items = mockItemsOverride
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/Copy summary/i)).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText(/Copy summary/i))
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalled()
+      })
+      const summary = writeText.mock.calls[0][0] as string
+      expect(summary).toContain('First item — 3 SP')
+      expect(summary).toContain('Second item — 5 SP')
+      expect(summary).toContain('Total: 8 SP')
+    })
+  })
+
   describe('Participant indicators', () => {
     it('shows participants in the sidebar when session is active', async () => {
       // Session has an active host — should show the main estimation view
@@ -267,6 +416,127 @@ describe('EstimationFlowPage', () => {
         expect(screen.getByText(/James \(you\)/)).toBeInTheDocument()
       })
       expect(screen.getByText('Sarah')).toBeInTheDocument()
+    })
+
+    it('only shows participants who are on the estimation page', async () => {
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1'],
+        estimation_session_id: 'sess-1',
+      }
+      mockContextValue.items = mockItems
+      mockContextValue.participants = [
+        { name: 'James', joinedAt: '2024-01-01', page: '/s/test-session/estimate' },
+        // Sarah is in the session but sitting on the backlog page —
+        // she is not in the poker room and must not count as a non-voter
+        { name: 'Sarah', joinedAt: '2024-01-01', page: '/s/test-session' },
+      ]
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/James \(you\)/)).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Sarah')).not.toBeInTheDocument()
+    })
+
+    it('still shows participants whose presence has no page info', async () => {
+      // Older clients (pre-deploy) track presence without a page — treat
+      // them as present rather than hiding them
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1'],
+        estimation_session_id: 'sess-1',
+      }
+      mockContextValue.items = mockItems
+      mockContextValue.participants = [
+        { name: 'James', joinedAt: '2024-01-01', page: '/s/test-session/estimate' },
+        { name: 'Sarah', joinedAt: '2024-01-01' },
+      ]
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/James \(you\)/)).toBeInTheDocument()
+      })
+      expect(screen.getByText('Sarah')).toBeInTheDocument()
+    })
+  })
+
+  describe('Claim host', () => {
+    it('offers takeover when the host is no longer present', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        mockSessionOverride = {
+          ...mockSession,
+          estimation_host: 'Sarah',
+          estimation_item_ids: ['item-1'],
+          estimation_session_id: 'sess-1',
+        }
+        mockContextValue.items = mockItems
+        // Sarah (the host) is absent from presence
+        mockContextValue.participants = [{ name: 'James', joinedAt: '2024-01-01' }]
+        renderWithRouter()
+        await waitFor(() => {
+          expect(screen.getAllByText(/Waiting for/i).length).toBeGreaterThan(0)
+        })
+        expect(screen.queryByText(/Take over as host/i)).not.toBeInTheDocument()
+
+        // Grace period passes with the host still absent
+        await vi.advanceTimersByTimeAsync(11000)
+        expect(screen.getByText(/Take over as host/i)).toBeInTheDocument()
+
+        fireEvent.click(screen.getByText(/Take over as host/i))
+        await waitFor(() => {
+          expect(mockChain.update).toHaveBeenCalledWith(
+            expect.objectContaining({ estimation_host: 'James' })
+          )
+        })
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('does not offer takeover while the host is present', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        mockSessionOverride = {
+          ...mockSession,
+          estimation_host: 'Sarah',
+          estimation_item_ids: ['item-1'],
+          estimation_session_id: 'sess-1',
+        }
+        mockContextValue.items = mockItems
+        mockContextValue.participants = [
+          { name: 'James', joinedAt: '2024-01-01' },
+          { name: 'Sarah', joinedAt: '2024-01-01' },
+        ]
+        renderWithRouter()
+        await waitFor(() => {
+          expect(screen.getAllByText(/Waiting for/i).length).toBeGreaterThan(0)
+        })
+        await vi.advanceTimersByTimeAsync(11000)
+        expect(screen.queryByText(/Take over as host/i)).not.toBeInTheDocument()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  describe('Invite link', () => {
+    it('lobby offers a copy invite link button', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { clipboard: { writeText } })
+
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/Copy invite link/i)).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText(/Copy invite link/i))
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith(
+          expect.stringContaining('/s/test-session/estimate')
+        )
+      })
     })
   })
 })

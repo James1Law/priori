@@ -27,6 +27,70 @@ describe('EstimationResults', () => {
     isHost: true,
   }
 
+  describe('All votes in', () => {
+    it('announces when every participant has voted', () => {
+      const votes = [createVote('Alice', 5), createVote('Bob', 8)]
+      render(
+        <EstimationResults {...defaultProps} votes={votes} participantCount={2} />
+      )
+      expect(screen.getByText(/All votes are in/i)).toBeInTheDocument()
+    })
+
+    it('does not announce while votes are outstanding', () => {
+      const votes = [createVote('Alice', 5)]
+      render(
+        <EstimationResults {...defaultProps} votes={votes} participantCount={3} />
+      )
+      expect(screen.queryByText(/All votes are in/i)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Vote stats (when revealed)', () => {
+    it('shows average and median alongside the consensus banner', () => {
+      const votes = [
+        createVote('Alice', 3),
+        createVote('Bob', 5),
+        createVote('Carol', 8),
+      ]
+      render(<EstimationResults {...defaultProps} votes={votes} revealed={true} />)
+      expect(screen.getByText(/Average/i)).toBeInTheDocument()
+      expect(screen.getByText(/5\.3/)).toBeInTheDocument()
+      expect(screen.getByText(/Median/i)).toBeInTheDocument()
+    })
+
+    it('shows the vote distribution', () => {
+      const votes = [
+        createVote('Alice', 5),
+        createVote('Bob', 5),
+        createVote('Carol', 8),
+      ]
+      render(<EstimationResults {...defaultProps} votes={votes} revealed={true} />)
+      expect(screen.getByTestId('vote-distribution')).toBeInTheDocument()
+    })
+  })
+
+  describe('Consensus celebration', () => {
+    it('bursts confetti on consensus', () => {
+      const votes = [
+        createVote('Alice', 5),
+        createVote('Bob', 5),
+        createVote('Carol', 5),
+      ]
+      render(<EstimationResults {...defaultProps} votes={votes} revealed={true} />)
+      expect(screen.getByTestId('consensus-confetti')).toBeInTheDocument()
+    })
+
+    it('does not burst confetti when votes are spread', () => {
+      const votes = [
+        createVote('Alice', 1),
+        createVote('Bob', 8),
+        createVote('Carol', 21),
+      ]
+      render(<EstimationResults {...defaultProps} votes={votes} revealed={true} />)
+      expect(screen.queryByTestId('consensus-confetti')).not.toBeInTheDocument()
+    })
+  })
+
   describe('Reveal Button', () => {
     it('shows Reveal Votes button when not revealed', () => {
       render(<EstimationResults {...defaultProps} />)
