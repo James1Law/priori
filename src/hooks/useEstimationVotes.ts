@@ -112,62 +112,50 @@ export function useEstimationVotes(
     }
   }, [sessionId, itemId])
 
-  // Submit or update a vote
+  // Submit or update a vote — upsert keyed on the table's
+  // UNIQUE(item_id, participant_name) constraint so rapid re-votes
+  // and duplicate tabs can't race an insert into a constraint error
   const submitVote = useCallback(
     async (vote: number | null) => {
       if (!sessionId || !itemId || !participantName) return
 
       try {
-        // Check if a vote already exists for this participant/item
-        const existingVote = votes.find(
-          (v) => v.participant_name === participantName
-        )
-
-        if (existingVote) {
-          // Update existing vote
-          const { error: updateError } = await supabase
-            .from('estimation_votes')
-            .update({ vote } as never)
-            .eq('id', existingVote.id)
-
-          if (updateError) {
-            throw updateError
-          }
-
-          // Optimistic update
-          setVotes((prev) =>
-            prev.map((v) =>
-              v.id === existingVote.id ? { ...v, vote } : v
-            )
+        const { data, error: upsertError } = await supabase
+          .from('estimation_votes')
+          .upsert(
+            {
+              session_id: sessionId,
+              item_id: itemId,
+              participant_name: participantName,
+              vote,
+            } as never,
+            { onConflict: 'item_id,participant_name' }
           )
-        } else {
-          // Create new vote
-          const { data, error: insertError } = await supabase
-            .from('estimation_votes')
-            .insert([
-              {
-                session_id: sessionId,
-                item_id: itemId,
-                participant_name: participantName,
-                vote,
-              } as never,
-            ])
-            .select()
-            .single()
+          .select()
+          .single()
 
-          if (insertError) {
-            throw insertError
-          }
-
-          // Optimistic update
-          setVotes((prev) => [...prev, data as EstimationVote])
+        if (upsertError) {
+          throw upsertError
         }
+
+        const savedVote = data as EstimationVote
+        setVotes((prev) => {
+          const existing = prev.find(
+            (v) => v.participant_name === participantName
+          )
+          if (existing) {
+            return prev.map((v) =>
+              v.participant_name === participantName ? { ...v, ...savedVote } : v
+            )
+          }
+          return [...prev, savedVote]
+        })
       } catch (err) {
         console.error('Error submitting vote:', err)
         setError('Failed to submit vote')
       }
     },
-    [sessionId, itemId, participantName, votes]
+    [sessionId, itemId, participantName]
   )
 
   // Clear all votes for the current item (used after accepting estimate)

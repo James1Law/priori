@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import type { EstimationVote } from '../types/database'
+import { FIBONACCI_VALUES } from '../lib/estimation'
 
 interface EstimationResultsProps {
   votes: EstimationVote[]
@@ -11,13 +13,9 @@ interface EstimationResultsProps {
   isHost: boolean
 }
 
-// Fibonacci sequence for determining "adjacent" values
-const FIBONACCI_ORDER = [0, 1, 2, 3, 5, 8, 13, 21]
-
 // Get the index of a vote value in the Fibonacci sequence
 function getFibonacciIndex(vote: number): number {
-  const index = FIBONACCI_ORDER.indexOf(vote)
-  return index === -1 ? -1 : index
+  return (FIBONACCI_VALUES as readonly number[]).indexOf(vote)
 }
 
 // Check if two votes are within one step of each other
@@ -133,6 +131,13 @@ export default function EstimationResults({
   // Calculate consensus if revealed
   const consensus = revealed ? calculateConsensus(votes) : null
 
+  // Custom value picker — lets the host accept any value after discussion,
+  // which is the only way to record an estimate when votes are spread
+  const [showValuePicker, setShowValuePicker] = useState(false)
+  useEffect(() => {
+    if (!revealed) setShowValuePicker(false)
+  }, [revealed])
+
   if (!revealed) {
     // Show Reveal button for host, waiting message for participants
     return (
@@ -205,35 +210,66 @@ export default function EstimationResults({
 
       {/* Action buttons — host only */}
       {isHost ? (
-        <div className="flex flex-wrap justify-center gap-3">
-          {/* Accept & Next button */}
-          {suggestedValue !== undefined && (
-            <button
-              onClick={() => onAccept(suggestedValue)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
-            >
-              Accept {suggestedValue} SP{hasNextItem ? ' & Next' : ''}
-            </button>
-          )}
+        <>
+          <div className="flex flex-wrap justify-center gap-3">
+            {/* Accept & Next button */}
+            {suggestedValue !== undefined && (
+              <button
+                onClick={() => onAccept(suggestedValue)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm"
+              >
+                Accept {suggestedValue} SP{hasNextItem ? ' & Next' : ''}
+              </button>
+            )}
 
-          {/* Re-vote button */}
-          <button
-            onClick={onRevote}
-            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors shadow-sm"
-          >
-            Re-vote
-          </button>
-
-          {/* Skip button */}
-          {hasNextItem && (
+            {/* Accept a different (or any) value after discussion */}
             <button
-              onClick={onSkip}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+              onClick={() => setShowValuePicker((prev) => !prev)}
+              className={`px-4 py-2 font-medium rounded-lg transition-colors shadow-sm border ${
+                showValuePicker
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+              aria-expanded={showValuePicker}
             >
-              Skip
+              Choose value
             </button>
+
+            {/* Re-vote button */}
+            <button
+              onClick={onRevote}
+              className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors shadow-sm"
+            >
+              Re-vote
+            </button>
+
+            {/* Skip button */}
+            {hasNextItem && (
+              <button
+                onClick={onSkip}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+              >
+                Skip
+              </button>
+            )}
+          </div>
+
+          {/* Custom value picker */}
+          {showValuePicker && (
+            <div className="flex flex-wrap justify-center gap-2 pt-1">
+              {FIBONACCI_VALUES.map((value) => (
+                <button
+                  key={value}
+                  onClick={() => onAccept(value)}
+                  aria-label={`Accept ${value} story points`}
+                  className="w-10 h-10 rounded-lg border-2 border-gray-300 bg-white text-gray-900 font-semibold hover:border-green-500 hover:bg-green-50 hover:text-green-700 transition-colors"
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
           )}
-        </div>
+        </>
       ) : (
         <p className="text-center text-sm text-gray-500">Waiting for host to decide...</p>
       )}

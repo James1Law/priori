@@ -1,8 +1,4 @@
-// Fibonacci sequence for story point estimation
-// -1 = uncertain (?), -2 = coffee break
-const FIBONACCI_VALUES = [0, 1, 2, 3, 5, 8, 13, 21] as const
-const SPECIAL_UNCERTAIN = -1
-const SPECIAL_COFFEE = -2
+import { FIBONACCI_VALUES, SPECIAL_UNCERTAIN, SPECIAL_COFFEE } from '../lib/estimation'
 
 interface EstimationCardsProps {
   selectedValue: number | null

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Session, Item, ItemWithScore, Score } from '../types/database'
 import EstimationQueue from '../components/EstimationQueue'
@@ -15,11 +15,6 @@ import { useSessionContext } from '../contexts/SessionContext'
 export default function EstimationFlowPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const location = useLocation()
-
-  // Get selected item IDs - from navigation state initially, then from session
-  const navigationSelectedIds = (location.state as { selectedItemIds?: string[] })?.selectedItemIds || []
-  const [initializedEstimation, setInitializedEstimation] = useState(false)
 
   const [session, setSession] = useState<Session | null>(null)
   const [allItems, setAllItems] = useState<ItemWithScore[]>([])
@@ -44,10 +39,8 @@ export default function EstimationFlowPage() {
     }
   }, [sessionContext.items])
 
-  // Host role — the person who navigated here with selectedItemIds is the host
+  // Host role — the participant who started the session from the lobby
   const isHost = session?.estimation_host === participantName && participantName !== null
-  // Track whether this client initiated the estimation (navigated with selectedItemIds)
-  const isInitiator = navigationSelectedIds.length > 0
 
   // Queue preview — host clicks item to highlight, then confirms to start estimation
   const [selectedQueueItemId, setSelectedQueueItemId] = useState<string | null>(null)
@@ -88,13 +81,9 @@ export default function EstimationFlowPage() {
   )
 
   // Determine which item IDs to use for estimation
-  // - Initiator with nav IDs: use those (fresh selection from backlog)
   // - Participant joining active session: use session.estimation_item_ids (shared by host)
-  // - Standalone (sidebar entry, no active session): use all items
+  // - Standalone (no active session): use all items
   const estimationItemIds = useMemo(() => {
-    if (navigationSelectedIds.length > 0) {
-      return navigationSelectedIds
-    }
     // Only use session's item IDs if there's an active host (someone started a session)
     if (session?.estimation_host && session?.estimation_item_ids && session.estimation_item_ids.length > 0) {
       return session.estimation_item_ids
@@ -104,45 +93,11 @@ export default function EstimationFlowPage() {
       return allItems.map(item => item.id)
     }
     return []
-  }, [session?.estimation_host, session?.estimation_item_ids, navigationSelectedIds, allItems])
+  }, [session?.estimation_host, session?.estimation_item_ids, allItems])
 
   // Lobby state — items selected by user before starting as host
   const [lobbySelectedIds, setLobbySelectedIds] = useState<Set<string>>(new Set())
-  const isInLobby = !isInitiator && !session?.estimation_host
-
-  // Sync estimation state to session on entry (only for backlog initiator flow)
-  useEffect(() => {
-    if (!session || initializedEstimation || !participantName) return
-
-    const hasNavigationIds = navigationSelectedIds.length > 0
-
-    if (hasNavigationIds) {
-      // Host is entering with a selection from backlog — save selection, set host, generate new session ID
-      const newSessionId = crypto.randomUUID()
-      supabase
-        .from('sessions')
-        .update({
-          estimation_item_ids: navigationSelectedIds,
-          estimation_host: participantName,
-          estimation_session_id: newSessionId,
-        } as never)
-        .eq('id', session.id)
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error saving estimation state:', error)
-          } else {
-            setSession(prev => prev ? {
-              ...prev,
-              estimation_item_ids: navigationSelectedIds,
-              estimation_host: participantName,
-              estimation_session_id: newSessionId,
-            } : null)
-          }
-        })
-    }
-    // Sidebar entry without active session: don't auto-assign host — show lobby instead
-    setInitializedEstimation(true)
-  }, [session, navigationSelectedIds, initializedEstimation, participantName])
+  const isInLobby = !session?.estimation_host
 
   // Handler: Start as host from lobby
   const handleStartAsHost = async () => {
@@ -186,17 +141,16 @@ export default function EstimationFlowPage() {
 
     if (currentSessionId !== prevEstimationSessionId) {
       if (currentSessionId === null) {
-        // Host ended the session
-        if (!isInitiator) {
-          setSessionEnded(true)
-        }
+        // Host ended the session (the host's own End Session handler
+        // resets this state immediately after, so only participants see it)
+        setSessionEnded(true)
       } else {
         // New estimation round started — clear session ended state
         setSessionEnded(false)
       }
       setPrevEstimationSessionId(currentSessionId)
     }
-  }, [session?.estimation_session_id, prevEstimationSessionId, isInitiator])
+  }, [session?.estimation_session_id, prevEstimationSessionId])
 
   // Get items for estimation (either selected items or all items)
   const itemsToEstimate = useMemo(() => {
@@ -500,8 +454,10 @@ export default function EstimationFlowPage() {
     }
   }
 
-  // Handler: Skip current item
-  const handleSkip = () => {
+  // Handler: Skip current item — clear its votes so returning to it
+  // later starts a fresh round rather than showing stale votes
+  const handleSkip = async () => {
+    await clearVotes()
     if (nextUnestimatedItem) {
       handleCurrentItemChange(nextUnestimatedItem.id)
     } else {
@@ -532,7 +488,6 @@ export default function EstimationFlowPage() {
         estimation_session_id: null,
       } : null)
       setSelectedQueueItemId(null)
-      setInitializedEstimation(false)
       setSessionEnded(false)
       setPrevEstimationSessionId(null)
     }
@@ -826,12 +781,19 @@ export default function EstimationFlowPage() {
                   {/* Current item display */}
                   <CurrentEstimationItem item={currentItem} />
 
-                  {/* Card selection */}
+                  {/* Card selection — locked once votes are revealed so the
+                      consensus the host is looking at can't shift underneath them */}
                   <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6">
                     <EstimationCards
                       selectedValue={selectedVote}
                       onSelect={submitVote}
+                      disabled={estimationRevealed}
                     />
+                    {estimationRevealed && (
+                      <p className="text-center text-xs text-gray-400 mt-2">
+                        Votes revealed — voting is locked until the next round
+                      </p>
+                    )}
                   </div>
 
                   {/* Participant votes */}
