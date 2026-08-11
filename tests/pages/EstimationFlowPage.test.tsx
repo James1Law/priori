@@ -268,5 +268,126 @@ describe('EstimationFlowPage', () => {
       })
       expect(screen.getByText('Sarah')).toBeInTheDocument()
     })
+
+    it('only shows participants who are on the estimation page', async () => {
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1'],
+        estimation_session_id: 'sess-1',
+      }
+      mockContextValue.items = mockItems
+      mockContextValue.participants = [
+        { name: 'James', joinedAt: '2024-01-01', page: '/s/test-session/estimate' },
+        // Sarah is in the session but sitting on the backlog page —
+        // she is not in the poker room and must not count as a non-voter
+        { name: 'Sarah', joinedAt: '2024-01-01', page: '/s/test-session' },
+      ]
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/James \(you\)/)).toBeInTheDocument()
+      })
+      expect(screen.queryByText('Sarah')).not.toBeInTheDocument()
+    })
+
+    it('still shows participants whose presence has no page info', async () => {
+      // Older clients (pre-deploy) track presence without a page — treat
+      // them as present rather than hiding them
+      mockSessionOverride = {
+        ...mockSession,
+        estimation_host: 'James',
+        estimation_item_ids: ['item-1'],
+        estimation_session_id: 'sess-1',
+      }
+      mockContextValue.items = mockItems
+      mockContextValue.participants = [
+        { name: 'James', joinedAt: '2024-01-01', page: '/s/test-session/estimate' },
+        { name: 'Sarah', joinedAt: '2024-01-01' },
+      ]
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/James \(you\)/)).toBeInTheDocument()
+      })
+      expect(screen.getByText('Sarah')).toBeInTheDocument()
+    })
+  })
+
+  describe('Claim host', () => {
+    it('offers takeover when the host is no longer present', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        mockSessionOverride = {
+          ...mockSession,
+          estimation_host: 'Sarah',
+          estimation_item_ids: ['item-1'],
+          estimation_session_id: 'sess-1',
+        }
+        mockContextValue.items = mockItems
+        // Sarah (the host) is absent from presence
+        mockContextValue.participants = [{ name: 'James', joinedAt: '2024-01-01' }]
+        renderWithRouter()
+        await waitFor(() => {
+          expect(screen.getAllByText(/Waiting for/i).length).toBeGreaterThan(0)
+        })
+        expect(screen.queryByText(/Take over as host/i)).not.toBeInTheDocument()
+
+        // Grace period passes with the host still absent
+        await vi.advanceTimersByTimeAsync(11000)
+        expect(screen.getByText(/Take over as host/i)).toBeInTheDocument()
+
+        fireEvent.click(screen.getByText(/Take over as host/i))
+        await waitFor(() => {
+          expect(mockChain.update).toHaveBeenCalledWith(
+            expect.objectContaining({ estimation_host: 'James' })
+          )
+        })
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('does not offer takeover while the host is present', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        mockSessionOverride = {
+          ...mockSession,
+          estimation_host: 'Sarah',
+          estimation_item_ids: ['item-1'],
+          estimation_session_id: 'sess-1',
+        }
+        mockContextValue.items = mockItems
+        mockContextValue.participants = [
+          { name: 'James', joinedAt: '2024-01-01' },
+          { name: 'Sarah', joinedAt: '2024-01-01' },
+        ]
+        renderWithRouter()
+        await waitFor(() => {
+          expect(screen.getAllByText(/Waiting for/i).length).toBeGreaterThan(0)
+        })
+        await vi.advanceTimersByTimeAsync(11000)
+        expect(screen.queryByText(/Take over as host/i)).not.toBeInTheDocument()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  describe('Invite link', () => {
+    it('lobby offers a copy invite link button', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.assign(navigator, { clipboard: { writeText } })
+
+      mockContextValue.items = mockItems
+      renderWithRouter()
+      await waitFor(() => {
+        expect(screen.getByText(/Copy invite link/i)).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText(/Copy invite link/i))
+      await waitFor(() => {
+        expect(writeText).toHaveBeenCalledWith(
+          expect.stringContaining('/s/test-session/estimate')
+        )
+      })
+    })
   })
 })
