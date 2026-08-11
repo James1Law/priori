@@ -4,6 +4,24 @@ Detailed history of features implemented across all phases.
 
 ---
 
+## Import / Export Module
+
+### Features
+- **Import from CSV** — The greyed-out "Import / Export" sidebar module is now live at `/s/:slug/import-export`. Upload or drag-and-drop a CSV to bulk-create backlog items.
+- **Jira Export Auto-Detection** — CSVs exported from Jira (List view → Export → CSV) are recognised by their `Issue key` + `Summary` headers. The issue key is kept in the title (e.g. "CR-7489 — Promotion - onBOARD Promote & rank change execution") so items stay traceable back to Jira. Multi-line quoted descriptions import intact.
+- **Generic CSV Support** — Any CSV with a Title, Summary or Name column also imports; Description and Status columns are mapped when present.
+- **Status Mapping** — Source statuses map onto priori's: Done/Closed/Resolved/Released → done; In Progress/In Development/In Review/In Testing → in progress; everything else (e.g. "Ready for Refinement") → todo.
+- **Duplicate Detection** — Rows whose Jira key (or exact title) already exists in the session are flagged "Already in session" and deselected by default, so re-importing the same Jira filter doesn't create duplicates.
+- **Import Preview** — Parsed items are shown in a checkbox table before anything is written; import only what's ticked.
+- **Export CSV** — The existing CSV export is also available from the module, alongside import.
+
+### Tests
+- 29 unit tests for `importCsv` (RFC 4180 parsing, Jira detection, status mapping, duplicate detection) using a real Jira export as fixture
+- 10 unit tests for `ImportExportPage` (preview, duplicate handling, import payload, error states, export)
+- Updated Sidebar tests for the promoted module and new route
+
+---
+
 ## Mobile Roadmap
 
 ### Features

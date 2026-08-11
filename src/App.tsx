@@ -6,6 +6,7 @@ import SessionPage from './pages/SessionPage'
 import ScoringFlowPage from './pages/ScoringFlowPage'
 import EstimationFlowPage from './pages/EstimationFlowPage'
 import PrioritisationPage from './pages/PrioritisationPage'
+import ImportExportPage from './pages/ImportExportPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="item/:itemId" element={<SessionPage />} />
             <Route path="score" element={<ScoringFlowPage />} />
             <Route path="estimate" element={<EstimationFlowPage />} />
+            <Route path="import-export" element={<ImportExportPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

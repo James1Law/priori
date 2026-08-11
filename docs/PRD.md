@@ -460,7 +460,7 @@ Extend Priori beyond scoring/evaluation into **planning and communication**. Ins
 **Acceptance Criteria:**
 - [ ] Dark mode (system-preference-aware)
 - [ ] Keyboard shortcuts for power users
-- [ ] Import from CSV (bulk item creation)
+- [x] Import from CSV (bulk item creation) — Import/Export module with Jira export auto-detection, duplicate flagging, and preview
 
 ---
 
